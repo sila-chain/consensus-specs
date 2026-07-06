@@ -51,12 +51,12 @@ def compute_fork_version(epoch: Epoch) -> Version:
         return HEZE_FORK_VERSION
     if epoch >= GLOAS_FORK_EPOCH:
         return GLOAS_FORK_VERSION
-    if epoch >= FULU_FORK_EPOCH:
-        return FULU_FORK_VERSION
+    if epoch >= SILA_FULU_FORK_EPOCH:
+        return SILA_FULU_FORK_VERSION
     if epoch >= ELECTRA_FORK_EPOCH:
         return ELECTRA_FORK_VERSION
-    if epoch >= DENEB_FORK_EPOCH:
-        return DENEB_FORK_VERSION
+    if epoch >= SILA_DENEB_FORK_EPOCH:
+        return SILA_DENEB_FORK_VERSION
     if epoch >= CAPELLA_FORK_EPOCH:
         return CAPELLA_FORK_VERSION
     if epoch >= BELLATRIX_FORK_EPOCH:
@@ -120,12 +120,12 @@ the network, assuming the alias `message = signed_inclusion_list.message`:
 
 ##### BeaconBlocksByRange v2
 
-**Protocol ID:** `/eth2/beacon_chain/req/beacon_blocks_by_range/2/`
+**Protocol ID:** `/sil2/beacon_chain/req/beacon_blocks_by_range/2/`
 
 The Heze fork-digest is introduced to the `context` enum to specify Heze beacon
 block type.
 
-<!-- eth_consensus_specs: skip -->
+<!-- sil_consensus_specs: skip -->
 
 | `fork_version`           | Chunk SSZ type                |
 | ------------------------ | ----------------------------- |
@@ -133,20 +133,20 @@ block type.
 | `ALTAIR_FORK_VERSION`    | `altair.SignedBeaconBlock`    |
 | `BELLATRIX_FORK_VERSION` | `bellatrix.SignedBeaconBlock` |
 | `CAPELLA_FORK_VERSION`   | `capella.SignedBeaconBlock`   |
-| `DENEB_FORK_VERSION`     | `deneb.SignedBeaconBlock`     |
+| `SILA_DENEB_FORK_VERSION`     | `sila_deneb.SignedBeaconBlock`     |
 | `ELECTRA_FORK_VERSION`   | `electra.SignedBeaconBlock`   |
-| `FULU_FORK_VERSION`      | `fulu.SignedBeaconBlock`      |
+| `SILA_FULU_FORK_VERSION`      | `sila_fulu.SignedBeaconBlock`      |
 | `GLOAS_FORK_VERSION`     | `gloas.SignedBeaconBlock`     |
 | `HEZE_FORK_VERSION`      | `heze.SignedBeaconBlock`      |
 
 ##### BeaconBlocksByRoot v2
 
-**Protocol ID:** `/eth2/beacon_chain/req/beacon_blocks_by_root/2/`
+**Protocol ID:** `/sil2/beacon_chain/req/beacon_blocks_by_root/2/`
 
 The Heze fork-digest is introduced to the `context` enum to specify Heze beacon
 block type.
 
-<!-- eth_consensus_specs: skip -->
+<!-- sil_consensus_specs: skip -->
 
 | `fork_version`           | Chunk SSZ type                |
 | ------------------------ | ----------------------------- |
@@ -154,22 +154,22 @@ block type.
 | `ALTAIR_FORK_VERSION`    | `altair.SignedBeaconBlock`    |
 | `BELLATRIX_FORK_VERSION` | `bellatrix.SignedBeaconBlock` |
 | `CAPELLA_FORK_VERSION`   | `capella.SignedBeaconBlock`   |
-| `DENEB_FORK_VERSION`     | `deneb.SignedBeaconBlock`     |
+| `SILA_DENEB_FORK_VERSION`     | `sila_deneb.SignedBeaconBlock`     |
 | `ELECTRA_FORK_VERSION`   | `electra.SignedBeaconBlock`   |
-| `FULU_FORK_VERSION`      | `fulu.SignedBeaconBlock`      |
+| `SILA_FULU_FORK_VERSION`      | `sila_fulu.SignedBeaconBlock`      |
 | `GLOAS_FORK_VERSION`     | `gloas.SignedBeaconBlock`     |
 | `HEZE_FORK_VERSION`      | `heze.SignedBeaconBlock`      |
 
 ##### InclusionListByCommitteeIndices v1
 
-**Protocol ID:** `/eth2/beacon_chain/req/inclusion_list_by_committee_indices/1/`
+**Protocol ID:** `/sil2/beacon_chain/req/inclusion_list_by_committee_indices/1/`
 
 For each successful `response_chunk`, the `ForkDigest` context epoch is
 determined by `compute_epoch_at_slot(signed_inclusion_list.message.slot)`.
 
 Per `fork_version = compute_fork_version(epoch)`:
 
-<!-- eth_consensus_specs: skip -->
+<!-- sil_consensus_specs: skip -->
 
 | `fork_version`      | Chunk SSZ type             |
 | ------------------- | -------------------------- |

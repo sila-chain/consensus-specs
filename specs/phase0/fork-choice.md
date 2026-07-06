@@ -102,10 +102,10 @@ handlers must not modify `store`.
    [UNIX time](https://en.wikipedia.org/wiki/Unix_time).
 2. **Honest clocks**: Honest nodes are assumed to have clocks synchronized
    within `SLOT_DURATION_MS` milliseconds of each other.
-3. **Eth1 data**: The large `ETH1_FOLLOW_DISTANCE` specified in the
+3. **Sil1 data**: The large `SIL1_FOLLOW_DISTANCE` specified in the
    [honest validator document](./validator.md) should ensure that
-   `state.latest_eth1_data` of the canonical beacon chain remains consistent
-   with the canonical Ethereum proof-of-work chain. If not, emergency manual
+   `state.latest_sil1_data` of the canonical beacon chain remains consistent
+   with the canonical Sila proof-of-work chain. If not, emergency manual
    intervention will be required.
 4. **Manual forks**: Manual forks may arbitrarily change the fork choice rule
    but are expected to be enacted at epoch transitions, with the fork details

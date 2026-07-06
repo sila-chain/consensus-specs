@@ -29,8 +29,8 @@ def upgrade_lc_header_to_gloas(pre: electra.LightClientHeader) -> LightClientHea
 
     epoch = compute_epoch_at_slot(pre.beacon.slot)
 
-    if epoch >= DENEB_FORK_EPOCH:
-        BLOCK_HASH_GINDEX = get_generalized_index(deneb.ExecutionPayloadHeader, "block_hash")
+    if epoch >= SILA_DENEB_FORK_EPOCH:
+        BLOCK_HASH_GINDEX = get_generalized_index(sila_deneb.ExecutionPayloadHeader, "block_hash")
         return LightClientHeader(
             beacon=pre.beacon,
             execution_block_hash=pre.execution.block_hash,
@@ -48,7 +48,7 @@ def upgrade_lc_header_to_gloas(pre: electra.LightClientHeader) -> LightClientHea
             parent_hash=pre.execution.parent_hash,
             fee_recipient=pre.execution.fee_recipient,
             state_root=pre.execution.state_root,
-            receipts_root=pre.execution.receipts_root,
+            recsipts_root=pre.execution.recsipts_root,
             logs_bloom=pre.execution.logs_bloom,
             prev_randao=pre.execution.prev_randao,
             block_number=pre.execution.block_number,

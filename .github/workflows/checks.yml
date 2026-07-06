@@ -93,13 +93,13 @@ jobs:
           - altair
           - bellatrix
           - capella
-          - deneb
+          - sila_deneb
           - electra
-          - fulu
+          - sila_fulu
           - gloas
           - heze
-          - eip8025
-          - eip8148
+          - sip8025
+          - sip8148
     steps:
       - name: Checkout repository
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0

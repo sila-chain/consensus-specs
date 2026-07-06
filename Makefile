@@ -7,12 +7,12 @@ ALL_EXECUTABLE_SPEC_NAMES = \
 	altair    \
 	bellatrix \
 	capella   \
-	deneb     \
+	sila_deneb     \
 	electra   \
-	fulu      \
+	sila_fulu      \
 	gloas     \
 	heze      \
-	eip8025
+	sip8025
 
 # A list of fake targets.
 .PHONY: \
@@ -63,7 +63,7 @@ help-verbose:
 	@echo "  Filtering:"
 	@echo "    k=<name>           Run only tests matching this name"
 	@echo "    fork=<fork>        Run only tests for this fork (phase0, altair, bellatrix, capella, etc.)"
-	@echo "    preset=<preset>    Preset to use: mainnet, minimal (default: minimal)"
+	@echo "    preset=<preset>    Preset to use: sila_mainnet, minimal (default: minimal)"
 	@echo ""
 	@echo "  Libraries:"
 	@echo "    kzg=<type>         KZG library: spec, ckzg (default: ckzg)"
@@ -76,12 +76,12 @@ help-verbose:
 	@echo "  Examples:"
 	@echo "    make test"
 	@echo "    make test k=test_verify_kzg_proof"
-	@echo "    make test fork=deneb"
-	@echo "    make test preset=mainnet"
-	@echo "    make test preset=mainnet fork=deneb k=test_verify_kzg_proof"
+	@echo "    make test fork=sila_deneb"
+	@echo "    make test preset=sila_mainnet"
+	@echo "    make test preset=sila_mainnet fork=sila_deneb k=test_verify_kzg_proof"
 	@echo "    make test reftests=true"
-	@echo "    make test reftests=true fork=fulu"
-	@echo "    make test reftests=true preset=mainnet fork=fulu k=invalid_committee_index"
+	@echo "    make test reftests=true fork=sila_fulu"
+	@echo "    make test reftests=true preset=sila_mainnet fork=sila_fulu k=invalid_committee_index"
 	@echo "    make test coverage=true k=test_process_attestation"
 	@echo "    make test coverage=true fork=electra"
 	@echo ""
@@ -126,7 +126,7 @@ help-verbose:
 	@echo "    make comptests"
 	@echo "    make comptests fc_gen_config=standard"
 	@echo "    make comptests comptests_dir=./compliance-spec-tests/tests"
-	@echo "    make comptests fc_gen_config=standard fork=deneb preset=mainnet threads=8"
+	@echo "    make comptests fc_gen_config=standard fork=sila_deneb preset=sila_mainnet threads=8"
 	@echo "    make comptests fc_gen_config=tiny fork=gloas group_slice_index=0 group_slice_count=4"
 	@echo ""
 	@echo "$(BOLD)DOCUMENTATION$(NORM)"
@@ -207,9 +207,9 @@ test: KZG := --kzg-type=$(if $(kzg),$(kzg),ckzg)
 # Output
 test: MAYBE_VERBOSE := $(if $(filter true,$(verbose)),-v)
 test: MAYBE_REFTESTS := $(if $(filter true,$(reftests)),--reftests --reftests-output=$(REFTESTS_DIR))
-test: COVERAGE_PRESETS := $(if $(preset),$(preset),$(if $(filter true,$(reftests)),minimal mainnet,minimal))
-test: COV_SCOPE_SINGLE := $(foreach P,$(COVERAGE_PRESETS), --cov=eth_consensus_specs.$(fork).$P)
-test: COV_SCOPE_ALL := $(foreach P,$(COVERAGE_PRESETS),$(foreach S,$(ALL_EXECUTABLE_SPEC_NAMES), --cov=eth_consensus_specs.$S.$P))
+test: COVERAGE_PRESETS := $(if $(preset),$(preset),$(if $(filter true,$(reftests)),minimal sila_mainnet,minimal))
+test: COV_SCOPE_SINGLE := $(foreach P,$(COVERAGE_PRESETS), --cov=sil_consensus_specs.$(fork).$P)
+test: COV_SCOPE_ALL := $(foreach P,$(COVERAGE_PRESETS),$(foreach S,$(ALL_EXECUTABLE_SPEC_NAMES), --cov=sil_consensus_specs.$S.$P))
 test: COV_SCOPE := $(if $(filter true,$(coverage)),$(if $(fork),$(COV_SCOPE_SINGLE),$(COV_SCOPE_ALL)))
 test: COVERAGE := $(if $(filter true,$(coverage)),--coverage $(COV_SCOPE) --cov-report="html:$(COV_REPORT_DIR)" --cov-report="json:$(COV_REPORT_DIR)/coverage.json" --cov-branch --no-cov-on-fail)
 test: _pyspec
@@ -227,7 +227,7 @@ test: _pyspec
 		--self-contained-html \
 		$(MAYBE_REFTESTS) \
 		$(COVERAGE) \
-		$(PYSPEC_DIR)/eth_consensus_specs
+		$(PYSPEC_DIR)/sil_consensus_specs
 
 
 ###############################################################################
@@ -259,7 +259,7 @@ LINT_DIFF_BEFORE := .lint_diff_before
 LINT_DIFF_AFTER := .lint_diff_after
 MARKDOWN_FILES := $(shell find $(CURDIR) -name '*.md' -not -path '$(CURDIR)/.git/*' -not -path '$(CURDIR)/.venv/*')
 MYPY_PACKAGE_BASE := $(subst /,.,$(PYSPEC_DIR:$(CURDIR)/%=%))
-MYPY_SCOPE := $(foreach S,$(ALL_EXECUTABLE_SPEC_NAMES), -p $(MYPY_PACKAGE_BASE).eth_consensus_specs.$S)
+MYPY_SCOPE := $(foreach S,$(ALL_EXECUTABLE_SPEC_NAMES), -p $(MYPY_PACKAGE_BASE).sil_consensus_specs.$S)
 
 # Check for mistakes.
 lint: _pyspec

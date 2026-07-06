@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from eth_consensus_specs.test.helpers.constants import ELECTRA, MINIMAL
+from sil_consensus_specs.test.helpers.constants import ELECTRA, MINIMAL
 from tests.generators.compliance_runners.gen_base.pytest_support import (
     add_comptests_pytest_options,
     configure_generator_context,

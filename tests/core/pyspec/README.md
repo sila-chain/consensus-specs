@@ -43,7 +43,7 @@ make test fork=phase0
 *Note*: these options can be used together, like:
 
 ```shell
-make test preset=minimal k=test_verify_kzg_proof fork=deneb
+make test preset=minimal k=test_verify_kzg_proof fork=sila_deneb
 ```
 
 ### How to generate coverage reports

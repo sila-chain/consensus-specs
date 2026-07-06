@@ -27,7 +27,7 @@ def block_to_light_client_header(block: SignedBeaconBlock) -> LightClientHeader:
             parent_hash=payload.parent_hash,
             fee_recipient=payload.fee_recipient,
             state_root=payload.state_root,
-            receipts_root=payload.receipts_root,
+            recsipts_root=payload.recsipts_root,
             logs_bloom=payload.logs_bloom,
             prev_randao=payload.prev_randao,
             block_number=payload.block_number,

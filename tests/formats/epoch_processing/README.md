@@ -51,7 +51,7 @@ focus of the handler.
 
 Sub-transitions:
 
-- `eth1_data_reset` (>=Phase0)
+- `sil1_data_reset` (>=Phase0)
 - `historical_roots_update` (>=Phase0,\<=Bellatrix)
 - `justification_and_finalization` (>=Phase0)
 - `participation_record_updates` (==Phase0)

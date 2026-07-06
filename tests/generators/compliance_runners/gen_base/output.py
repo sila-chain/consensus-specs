@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from eth_consensus_specs.test.utils.dumper import Dumper
+    from sil_consensus_specs.test.utils.dumper import Dumper
 
     from .gen_typing import TestCaseResult
 

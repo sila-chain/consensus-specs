@@ -104,18 +104,18 @@ The parameter that is required for executing `on_block(store, block)`.
 
 The file is located in the same folder (see below).
 
-`blobs` and `proofs` are new fields from Deneb EIP-4844. These fields indicate
+`blobs` and `proofs` are new fields from SilaDeneb SIP-4844. These fields indicate
 the expected values from `retrieve_blobs_and_proofs()` helper inside
 `is_data_available()` helper. If these two fields are not provided,
 `retrieve_blobs_and_proofs()` returns empty lists.
 
-`columns` is a new field in Fulu EIP-7594. This field indicate the expected
+`columns` is a new field in SilaFulu SIP-7594. This field indicate the expected
 values from `retrieve_column_sidecars` helper inside `is_data_available()`
 helper. If this field is an empty array, `retrieve_column_sidecars` should throw
 an exception (not enough data sampled). If this field is not provided,
 `retrieve_column_sidecars` returns an empty list.
 
-Post-Deneb and pre-Fulu, `columns` should not be present. Post-Fulu `blobs` and
+Post-SilaDeneb and pre-SilaFulu, `columns` should not be present. Post-SilaFulu `blobs` and
 `proofs` should not be present.
 
 After this step, the `store` object may have been updated.
@@ -169,13 +169,13 @@ Optional step for optimistic sync tests.
 ```
 
 This step sets the
-[`payloadStatus`](https://github.com/ethereum/execution-apis/blob/main/src/engine/paris.md#payloadstatusv1)
+[`payloadStatus`](https://github.com/sila-chain/execution-apis/blob/main/src/engine/paris.md#payloadstatusv1)
 value that execution-layer client mock returns in responses to the following
 Engine API calls:
 
-- [`engine_newPayloadV1(payload)`](https://github.com/ethereum/execution-apis/blob/main/src/engine/paris.md#engine_newpayloadv1)
+- [`engine_newPayloadV1(payload)`](https://github.com/sila-chain/execution-apis/blob/main/src/engine/paris.md#engine_newpayloadv1)
   if `payload.blockHash == payload_info.block_hash`
-- [`engine_forkchoiceUpdatedV1(forkchoiceState, ...)`](https://github.com/ethereum/execution-apis/blob/main/src/engine/paris.md#engine_forkchoiceupdatedv1)
+- [`engine_forkchoiceUpdatedV1(forkchoiceState, ...)`](https://github.com/sila-chain/execution-apis/blob/main/src/engine/paris.md#engine_forkchoiceupdatedv1)
   if `forkchoiceState.headBlockHash == payload_info.block_hash`
 
 *Note*: Status of a payload must be *initialized* via `on_payload_info` before

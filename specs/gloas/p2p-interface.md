@@ -68,22 +68,22 @@ longer required in Gloas. The KZG commitments are now located at
 class DataColumnSidecar(Container):
     index: ColumnIndex
     column: List[Cell, MAX_BLOB_COMMITMENTS_PER_BLOCK]
-    # [Modified in Gloas:EIP7732]
+    # [Modified in Gloas:SIP7732]
     # Removed `kzg_commitments`
     kzg_proofs: List[KZGProof, MAX_BLOB_COMMITMENTS_PER_BLOCK]
-    # [Modified in Gloas:EIP7732]
+    # [Modified in Gloas:SIP7732]
     # Removed `signed_block_header`
-    # [Modified in Gloas:EIP7732]
+    # [Modified in Gloas:SIP7732]
     # Removed `kzg_commitments_inclusion_proof`
-    # [New in Gloas:EIP7732]
+    # [New in Gloas:SIP7732]
     slot: Slot
-    # [New in Gloas:EIP7732]
+    # [New in Gloas:SIP7732]
     beacon_block_root: Root
 ```
 
 #### New `ProposerPreferences`
 
-*[New in Gloas:EIP7732]*
+*[New in Gloas:SIP7732]*
 
 ```python
 class ProposerPreferences(Container):
@@ -96,7 +96,7 @@ class ProposerPreferences(Container):
 
 #### New `SignedProposerPreferences`
 
-*[New in Gloas:EIP7732]*
+*[New in Gloas:SIP7732]*
 
 ```python
 class SignedProposerPreferences(Container):
@@ -123,7 +123,7 @@ class Seen:
     sync_message_validator_slots: Set[Tuple[Slot, ValidatorIndex, uint64]]
     bls_to_execution_change_indices: Set[ValidatorIndex]
     data_column_sidecar_tuples: Set[Tuple[Slot, ValidatorIndex, ColumnIndex]]
-    # [Modified in Gloas:EIP7732]
+    # [Modified in Gloas:SIP7732]
     # Removed `partial_data_column_headers`
 ```
 
@@ -136,12 +136,12 @@ def compute_fork_version(epoch: Epoch) -> Version:
     """
     if epoch >= GLOAS_FORK_EPOCH:
         return GLOAS_FORK_VERSION
-    if epoch >= FULU_FORK_EPOCH:
-        return FULU_FORK_VERSION
+    if epoch >= SILA_FULU_FORK_EPOCH:
+        return SILA_FULU_FORK_VERSION
     if epoch >= ELECTRA_FORK_EPOCH:
         return ELECTRA_FORK_VERSION
-    if epoch >= DENEB_FORK_EPOCH:
-        return DENEB_FORK_VERSION
+    if epoch >= SILA_DENEB_FORK_EPOCH:
+        return SILA_DENEB_FORK_VERSION
     if epoch >= CAPELLA_FORK_EPOCH:
         return CAPELLA_FORK_VERSION
     if epoch >= BELLATRIX_FORK_EPOCH:
@@ -156,7 +156,7 @@ def compute_fork_version(epoch: Epoch) -> Version:
 ```python
 def verify_data_column_sidecar_kzg_proofs(
     sidecar: DataColumnSidecar,
-    # [New in Gloas:EIP7732]
+    # [New in Gloas:SIP7732]
     kzg_commitments: List[KZGCommitment, MAX_BLOB_COMMITMENTS_PER_BLOCK],
 ) -> bool:
     """
@@ -167,7 +167,7 @@ def verify_data_column_sidecar_kzg_proofs(
 
     # Batch verify that the cells match the corresponding commitments and proofs
     return verify_cell_kzg_proof_batch(
-        # [Modified in Gloas:EIP7732]
+        # [Modified in Gloas:SIP7732]
         commitments_bytes=kzg_commitments,
         cell_indices=cell_indices,
         cells=sidecar.column,
@@ -180,7 +180,7 @@ def verify_data_column_sidecar_kzg_proofs(
 ```python
 def verify_data_column_sidecar(
     sidecar: DataColumnSidecar,
-    # [New in Gloas:EIP7732]
+    # [New in Gloas:SIP7732]
     kzg_commitments: List[KZGCommitment, MAX_BLOB_COMMITMENTS_PER_BLOCK],
 ) -> bool:
     """
@@ -190,12 +190,12 @@ def verify_data_column_sidecar(
     if sidecar.index >= NUMBER_OF_COLUMNS:
         return False
 
-    # [Modified in Gloas:EIP7732]
+    # [Modified in Gloas:SIP7732]
     # A sidecar for zero blobs is invalid
     if len(sidecar.column) == 0:
         return False
 
-    # [Modified in Gloas:EIP7732]
+    # [Modified in Gloas:SIP7732]
     # The column length must be equal to the number of commitments/proofs
     if len(sidecar.column) != len(kzg_commitments) or len(sidecar.column) != len(
         sidecar.kzg_proofs
@@ -257,7 +257,7 @@ The following validations are removed:
 
 ###### Modified `beacon_block`
 
-*[Modified in Gloas:EIP7732]*
+*[Modified in Gloas:SIP7732]*
 
 The *type* of the payload of this topic changes to the (modified)
 `SignedBeaconBlock` found in [the beacon-chain changes](./beacon-chain.md).
@@ -403,7 +403,7 @@ def is_gas_limit_target_compatible(
 ) -> bool:
     """
     Check if ``gas_limit`` is compatible with ``target_gas_limit`` under the
-    EIP-1559 transition rule from ``parent_gas_limit``.
+    SIP-1559 transition rule from ``parent_gas_limit``.
     """
     max_gas_limit_difference = max(parent_gas_limit // 1024, 1) - 1
     min_gas_limit = parent_gas_limit - max_gas_limit_difference
@@ -424,7 +424,7 @@ bid at regular time intervals.
 
 ###### New `proposer_preferences`
 
-*[New in Gloas:EIP7732]*
+*[New in Gloas:SIP7732]*
 
 This topic is used to propagate signed proposer preferences as
 `SignedProposerPreferences`. These messages allow validators to communicate
@@ -502,7 +502,7 @@ The following validations are removed:
 
 ###### Modified `data_column_sidecar_{subnet_id}`
 
-*[Modified in Gloas:EIP7732]*
+*[Modified in Gloas:SIP7732]*
 
 The following validations MUST pass before forwarding the
 `sidecar: DataColumnSidecar` on the network, assuming the alias
@@ -534,12 +534,12 @@ the sidecar.
 
 ##### BeaconBlocksByRange v2
 
-**Protocol ID:** `/eth2/beacon_chain/req/beacon_blocks_by_range/2/`
+**Protocol ID:** `/sil2/beacon_chain/req/beacon_blocks_by_range/2/`
 
 The Gloas fork-digest is introduced to the `context` enum to specify Gloas
 beacon block type.
 
-<!-- eth_consensus_specs: skip -->
+<!-- sil_consensus_specs: skip -->
 
 | `fork_version`           | Chunk SSZ type                |
 | ------------------------ | ----------------------------- |
@@ -547,19 +547,19 @@ beacon block type.
 | `ALTAIR_FORK_VERSION`    | `altair.SignedBeaconBlock`    |
 | `BELLATRIX_FORK_VERSION` | `bellatrix.SignedBeaconBlock` |
 | `CAPELLA_FORK_VERSION`   | `capella.SignedBeaconBlock`   |
-| `DENEB_FORK_VERSION`     | `deneb.SignedBeaconBlock`     |
+| `SILA_DENEB_FORK_VERSION`     | `sila_deneb.SignedBeaconBlock`     |
 | `ELECTRA_FORK_VERSION`   | `electra.SignedBeaconBlock`   |
-| `FULU_FORK_VERSION`      | `fulu.SignedBeaconBlock`      |
+| `SILA_FULU_FORK_VERSION`      | `sila_fulu.SignedBeaconBlock`      |
 | `GLOAS_FORK_VERSION`     | `gloas.SignedBeaconBlock`     |
 
 ##### BeaconBlocksByRoot v2
 
-**Protocol ID:** `/eth2/beacon_chain/req/beacon_blocks_by_root/2/`
+**Protocol ID:** `/sil2/beacon_chain/req/beacon_blocks_by_root/2/`
 
 The Gloas fork-digest is introduced to the `context` enum to specify Gloas
 beacon block type.
 
-<!-- eth_consensus_specs: skip -->
+<!-- sil_consensus_specs: skip -->
 
 | `fork_version`           | Chunk SSZ type                |
 | ------------------------ | ----------------------------- |
@@ -567,15 +567,15 @@ beacon block type.
 | `ALTAIR_FORK_VERSION`    | `altair.SignedBeaconBlock`    |
 | `BELLATRIX_FORK_VERSION` | `bellatrix.SignedBeaconBlock` |
 | `CAPELLA_FORK_VERSION`   | `capella.SignedBeaconBlock`   |
-| `DENEB_FORK_VERSION`     | `deneb.SignedBeaconBlock`     |
+| `SILA_DENEB_FORK_VERSION`     | `sila_deneb.SignedBeaconBlock`     |
 | `ELECTRA_FORK_VERSION`   | `electra.SignedBeaconBlock`   |
-| `FULU_FORK_VERSION`      | `fulu.SignedBeaconBlock`      |
+| `SILA_FULU_FORK_VERSION`      | `sila_fulu.SignedBeaconBlock`      |
 | `GLOAS_FORK_VERSION`     | `gloas.SignedBeaconBlock`     |
 
 ##### ExecutionPayloadEnvelopesByRange v1
 
 **Protocol ID:**
-`/eth2/beacon_chain/req/execution_payload_envelopes_by_range/1/`
+`/sil2/beacon_chain/req/execution_payload_envelopes_by_range/1/`
 
 Request Content:
 
@@ -605,7 +605,7 @@ determined by `compute_epoch_at_slot(beacon_block.slot)` based on the
 
 Per `fork_version = compute_fork_version(epoch)`:
 
-<!-- eth_consensus_specs: skip -->
+<!-- sil_consensus_specs: skip -->
 
 | `fork_version`       | Chunk SSZ type                         |
 | -------------------- | -------------------------------------- |
@@ -613,7 +613,7 @@ Per `fork_version = compute_fork_version(epoch)`:
 
 ##### ExecutionPayloadEnvelopesByRoot v1
 
-**Protocol ID:** `/eth2/beacon_chain/req/execution_payload_envelopes_by_root/1/`
+**Protocol ID:** `/sil2/beacon_chain/req/execution_payload_envelopes_by_root/1/`
 
 Request Content:
 
@@ -664,7 +664,7 @@ determined by `compute_epoch_at_slot(beacon_block.slot)` based on the
 
 Per `fork_version = compute_fork_version(epoch)`:
 
-<!-- eth_consensus_specs: skip -->
+<!-- sil_consensus_specs: skip -->
 
 | `fork_version`       | Chunk SSZ type                         |
 | -------------------- | -------------------------------------- |

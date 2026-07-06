@@ -9,8 +9,8 @@ class ElectraSpecBuilder(BaseSpecBuilder):
     @classmethod
     def imports(cls, preset_name: str):
         return f"""
-from eth_consensus_specs.deneb import {preset_name} as deneb
-from eth_consensus_specs.utils.ssz.ssz_impl import ssz_serialize, ssz_deserialize
+from sil_consensus_specs.sila_deneb import {preset_name} as sila_deneb
+from sil_consensus_specs.utils.ssz.ssz_impl import ssz_serialize, ssz_deserialize
 """
 
     @classmethod
@@ -25,13 +25,13 @@ from eth_consensus_specs.utils.ssz.ssz_impl import ssz_serialize, ssz_deserializ
     def deprecate_functions(cls) -> set[str]:
         return {
             "get_validator_activation_churn_limit",
-            "upgrade_lc_bootstrap_to_deneb",
-            "upgrade_lc_finality_update_to_deneb",
-            "upgrade_lc_header_to_deneb",
-            "upgrade_lc_optimistic_update_to_deneb",
-            "upgrade_lc_store_to_deneb",
-            "upgrade_lc_update_to_deneb",
-            "upgrade_to_deneb",
+            "upgrade_lc_bootstrap_to_sila_deneb",
+            "upgrade_lc_finality_update_to_sila_deneb",
+            "upgrade_lc_header_to_sila_deneb",
+            "upgrade_lc_optimistic_update_to_sila_deneb",
+            "upgrade_lc_store_to_sila_deneb",
+            "upgrade_lc_update_to_sila_deneb",
+            "upgrade_to_sila_deneb",
         }
 
     @classmethod

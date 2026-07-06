@@ -2,16 +2,16 @@
 
 ## Supported Versions
 
-Please see [Releases](https://github.com/ethereum/consensus-specs/releases/). We
+Please see [Releases](https://github.com/sila-chain/consensus-specs/releases/). We
 recommend using the
-[most recently released version](https://github.com/ethereum/consensus-specs/releases/latest).
+[most recently released version](https://github.com/sila-chain/consensus-specs/releases/latest).
 
 ## Reporting a Vulnerability
 
 **Please do not file a public ticket** mentioning the vulnerability.
 
-To find out how to disclose a vulnerability in the Ethereum consensus layer
-visit [https://bounty.ethereum.org](https://bounty.ethereum.org) or email
-bounty@ethereum.org. Please read the
-[disclosure page](https://bounty.ethereum.org) for more information about
+To find out how to disclose a vulnerability in the Sila consensus layer
+visit [https://bounty.sila.org](https://bounty.sila.org) or email
+bounty@sila.org. Please read the
+[disclosure page](https://bounty.sila.org) for more information about
 publicly disclosed security vulnerabilities.

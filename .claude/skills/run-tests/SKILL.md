@@ -31,10 +31,10 @@ directories in `./specs/_features/`.
 ## Filter by preset
 
 Tests can be run against a preset via the `preset=<preset>` flag. There are
-three presets: general, minimal, and mainnet. By default, `make test` only runs
+three presets: general, minimal, and sila_mainnet. By default, `make test` only runs
 minimal tests. The general tests cover things like BLS, KZG, and SSZ tests. The
 minimal tests are fast to execute but do not cover the full range of possible
-situations. The mainnet tests are very slow and should only be run in targeted
+situations. The sila_mainnet tests are very slow and should only be run in targeted
 commands. Note that there are some tests which are only executed under a single
 preset.
 
@@ -44,7 +44,7 @@ Reference tests can be generated for clients to ensure compliance with the
 specifications. Enable reference tests outputs with the `reftests=true` flag.
 These are written to `./reftests` at the project root; this directory is
 automatically created. Unlike `make test`, `reftests=true` runs all presets
-(general, minimal, mainnet) by default; this can be overridden by using the
+(general, minimal, sila_mainnet) by default; this can be overridden by using the
 `preset=<preset>` flag. The framework deletes individual test case directories
 before regenerating them, so targeted reruns will update existing reference
 tests. If a test case function was deleted, `make test reftests=true` will not

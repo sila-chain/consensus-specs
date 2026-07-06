@@ -18,8 +18,8 @@
 
 This upgrade updates light client data to include the Electra changes to the
 generalized indices of [`BeaconState`](../beacon-chain.md). It extends the
-[Deneb Light Client specifications](../../deneb/light-client/sync-protocol.md).
-The [fork document](./fork.md) explains how to upgrade existing Deneb based
+[SilaDeneb Light Client specifications](../../sila_deneb/light-client/sync-protocol.md).
+The [fork document](./fork.md) explains how to upgrade existing SilaDeneb based
 deployments to Electra.
 
 Additional documents describe the impact of the upgrade on certain roles:

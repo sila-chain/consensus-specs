@@ -26,12 +26,12 @@ capella:
       - 'presets/*/capella.yaml'
       - 'pysetup/spec_builders/capella.py'
 
-deneb:
+sila_deneb:
   - changed-files:
     - any-glob-to-any-file:
-      - 'specs/deneb/**'
-      - 'presets/*/deneb.yaml'
-      - 'pysetup/spec_builders/deneb.py'
+      - 'specs/sila_deneb/**'
+      - 'presets/*/sila_deneb.yaml'
+      - 'pysetup/spec_builders/sila_deneb.py'
 
 electra:
   - changed-files:
@@ -40,12 +40,12 @@ electra:
       - 'presets/*/electra.yaml'
       - 'pysetup/spec_builders/electra.py'
 
-fulu:
+sila_fulu:
   - changed-files:
     - any-glob-to-any-file:
-      - 'specs/fulu/**'
-      - 'presets/*/fulu.yaml'
-      - 'pysetup/spec_builders/fulu.py'
+      - 'specs/sila_fulu/**'
+      - 'presets/*/sila_fulu.yaml'
+      - 'pysetup/spec_builders/sila_fulu.py'
 
 gloas:
   - changed-files:
@@ -61,26 +61,26 @@ heze:
       - 'presets/*/heze.yaml'
       - 'pysetup/spec_builders/heze.py'
 
-eip6914:
+sip6914:
   - changed-files:
     - any-glob-to-any-file:
-      - 'specs/_features/eip6914/**'
-      - 'presets/*/eip6914.yaml'
-      - 'pysetup/spec_builders/eip6914.py'
+      - 'specs/_features/sip6914/**'
+      - 'presets/*/sip6914.yaml'
+      - 'pysetup/spec_builders/sip6914.py'
 
-eip8025:
+sip8025:
   - changed-files:
     - any-glob-to-any-file:
-      - 'specs/_features/eip8025/**'
-      - 'presets/*/eip8025.yaml'
-      - 'pysetup/spec_builders/eip8025.py'
+      - 'specs/_features/sip8025/**'
+      - 'presets/*/sip8025.yaml'
+      - 'pysetup/spec_builders/sip8025.py'
 
-eip8148:
+sip8148:
   - changed-files:
     - any-glob-to-any-file:
-      - 'specs/_features/eip8148/**'
-      - 'presets/*/eip8148.yaml'
-      - 'pysetup/spec_builders/eip8148.py'
+      - 'specs/_features/sip8148/**'
+      - 'presets/*/sip8148.yaml'
+      - 'pysetup/spec_builders/sip8148.py'
 
 testing:
   - changed-files:

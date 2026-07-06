@@ -48,7 +48,7 @@ def upgrade_to_heze(pre: gloas.BeaconState) -> BeaconState:
         execution_payment=pre.latest_execution_payload_bid.execution_payment,
         blob_kzg_commitments=pre.latest_execution_payload_bid.blob_kzg_commitments,
         execution_requests_root=pre.latest_execution_payload_bid.execution_requests_root,
-        # [New in Heze:EIP7805]
+        # [New in Heze:SIP7805]
         inclusion_list_bits=Bitvector[INCLUSION_LIST_COMMITTEE_SIZE](),
     )
 
@@ -66,9 +66,9 @@ def upgrade_to_heze(pre: gloas.BeaconState) -> BeaconState:
         block_roots=pre.block_roots,
         state_roots=pre.state_roots,
         historical_roots=pre.historical_roots,
-        eth1_data=pre.eth1_data,
-        eth1_data_votes=pre.eth1_data_votes,
-        eth1_deposit_index=pre.eth1_deposit_index,
+        sil1_data=pre.sil1_data,
+        sil1_data_votes=pre.sil1_data_votes,
+        sil1_deposit_index=pre.sil1_deposit_index,
         validators=pre.validators,
         balances=pre.balances,
         randao_mixes=pre.randao_mixes,
@@ -101,7 +101,7 @@ def upgrade_to_heze(pre: gloas.BeaconState) -> BeaconState:
         execution_payload_availability=pre.execution_payload_availability,
         builder_pending_payments=pre.builder_pending_payments,
         builder_pending_withdrawals=pre.builder_pending_withdrawals,
-        # [Modified in Heze:EIP7805]
+        # [Modified in Heze:SIP7805]
         latest_execution_payload_bid=latest_execution_payload_bid,
         payload_expected_withdrawals=pre.payload_expected_withdrawals,
         ptc_window=pre.ptc_window,

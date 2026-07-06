@@ -264,18 +264,18 @@ def get_execution_requests(execution_requests_list: Sequence[bytes]) -> Executio
     deposits = []
     withdrawals = []
     consolidations = []
-    # [New in Gloas:EIP8282]
+    # [New in Gloas:SIP8282]
     builder_deposits = []
-    # [New in Gloas:EIP8282]
+    # [New in Gloas:SIP8282]
     builder_exits = []
 
     request_types = [
         DEPOSIT_REQUEST_TYPE,
         WITHDRAWAL_REQUEST_TYPE,
         CONSOLIDATION_REQUEST_TYPE,
-        # [New in Gloas:EIP8282]
+        # [New in Gloas:SIP8282]
         BUILDER_DEPOSIT_REQUEST_TYPE,
-        # [New in Gloas:EIP8282]
+        # [New in Gloas:SIP8282]
         BUILDER_EXIT_REQUEST_TYPE,
     ]
 
@@ -304,13 +304,13 @@ def get_execution_requests(execution_requests_list: Sequence[bytes]) -> Executio
             consolidations = ssz_deserialize(
                 List[ConsolidationRequest, MAX_CONSOLIDATION_REQUESTS_PER_PAYLOAD], request_data
             )
-        # [New in Gloas:EIP8282]
+        # [New in Gloas:SIP8282]
         elif request_type == BUILDER_DEPOSIT_REQUEST_TYPE:
             builder_deposits = ssz_deserialize(
                 List[BuilderDepositRequest, MAX_BUILDER_DEPOSIT_REQUESTS_PER_PAYLOAD],
                 request_data,
             )
-        # [New in Gloas:EIP8282]
+        # [New in Gloas:SIP8282]
         elif request_type == BUILDER_EXIT_REQUEST_TYPE:
             builder_exits = ssz_deserialize(
                 List[BuilderExitRequest, MAX_BUILDER_EXIT_REQUESTS_PER_PAYLOAD], request_data
@@ -320,9 +320,9 @@ def get_execution_requests(execution_requests_list: Sequence[bytes]) -> Executio
         deposits=deposits,
         withdrawals=withdrawals,
         consolidations=consolidations,
-        # [New in Gloas:EIP8282]
+        # [New in Gloas:SIP8282]
         builder_deposits=builder_deposits,
-        # [New in Gloas:EIP8282]
+        # [New in Gloas:SIP8282]
         builder_exits=builder_exits,
     )
 ```
@@ -337,9 +337,9 @@ called so that withdrawals are computed against the post-processing state.
 
 ```python
 def prepare_execution_payload(
-    # [New in Gloas:EIP7732]
+    # [New in Gloas:SIP7732]
     store: Store,
-    # [New in Gloas:EIP7732]
+    # [New in Gloas:SIP7732]
     head: ForkChoiceNode,
     state: BeaconState,
     safe_block_hash: Hash32,
@@ -349,7 +349,7 @@ def prepare_execution_payload(
     target_gas_limit: uint64,
     execution_engine: ExecutionEngine,
 ) -> Optional[PayloadId]:
-    # [New in Gloas:EIP7732]
+    # [New in Gloas:SIP7732]
     parent_bid = state.latest_execution_payload_bid
     if should_build_on_full(store, head):
         envelope = store.payloads[head.root]
@@ -368,16 +368,16 @@ def prepare_execution_payload(
         timestamp=compute_time_at_slot(state, state.slot),
         prev_randao=get_randao_mix(state, get_current_epoch(state)),
         suggested_fee_recipient=suggested_fee_recipient,
-        # [Modified in Gloas:EIP7732]
+        # [Modified in Gloas:SIP7732]
         withdrawals=withdrawals,
         parent_beacon_block_root=hash_tree_root(state.latest_block_header),
-        # [New in Gloas:EIP7843]
+        # [New in Gloas:SIP7843]
         slot_number=state.slot,
         # [New in Gloas]
         target_gas_limit=target_gas_limit,
     )
     return execution_engine.notify_forkchoice_updated(
-        # [Modified in Gloas:EIP7732]
+        # [Modified in Gloas:SIP7732]
         head_block_hash=head_block_hash,
         safe_block_hash=safe_block_hash,
         finalized_block_hash=finalized_block_hash,
@@ -465,7 +465,7 @@ def get_data_column_sidecars_from_column_sidecar(
     in the corresponding payload, assemble the sidecars which can be
     distributed to peers.
     """
-    # [Modified in Gloas:EIP7732]
+    # [Modified in Gloas:SIP7732]
     return get_data_column_sidecars(
         sidecar.beacon_block_root,
         sidecar.slot,

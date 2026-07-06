@@ -35,16 +35,16 @@ on:
         description: Generate capella fork
         default: true
         type: boolean
-      deneb:
-        description: Generate deneb fork
+      sila_deneb:
+        description: Generate sila_deneb fork
         default: true
         type: boolean
       electra:
         description: Generate electra fork
         default: true
         type: boolean
-      fulu:
-        description: Generate fulu fork
+      sila_fulu:
+        description: Generate sila_fulu fork
         default: true
         type: boolean
       gloas:
@@ -116,15 +116,15 @@ jobs:
 
           # Forks
           if [[ "${{ github.event_name }}" == "schedule" ]]; then
-            forks='["fulu","gloas"]'
+            forks='["sila_fulu","gloas"]'
           else
             selected=()
             [[ "${{ inputs.altair }}" == "true" ]] && selected+=("altair")
             [[ "${{ inputs.bellatrix }}" == "true" ]] && selected+=("bellatrix")
             [[ "${{ inputs.capella }}" == "true" ]] && selected+=("capella")
-            [[ "${{ inputs.deneb }}" == "true" ]] && selected+=("deneb")
+            [[ "${{ inputs.sila_deneb }}" == "true" ]] && selected+=("sila_deneb")
             [[ "${{ inputs.electra }}" == "true" ]] && selected+=("electra")
-            [[ "${{ inputs.fulu }}" == "true" ]] && selected+=("fulu")
+            [[ "${{ inputs.sila_fulu }}" == "true" ]] && selected+=("sila_fulu")
             [[ "${{ inputs.gloas }}" == "true" ]] && selected+=("gloas")
 
             if [[ ${#selected[@]} -eq 0 ]]; then

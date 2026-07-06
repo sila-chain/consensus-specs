@@ -23,7 +23,7 @@ via gossipsub's Partial Message Extension.
 The specification of these changes continues in the same format as the network
 specifications of previous upgrades, and assumes them as pre-requisite. In
 particular, this document builds on the
-[Fulu partial columns networking specification](../../fulu/partial-columns/p2p-interface.md)
+[SilaFulu partial columns networking specification](../../sila_fulu/partial-columns/p2p-interface.md)
 and the [Gloas networking specification](../p2p-interface.md).
 
 ## Modification in Gloas
@@ -37,7 +37,7 @@ class PartialDataColumnSidecar(Container):
     cells_present_bitmap: Bitlist[MAX_BLOB_COMMITMENTS_PER_BLOCK]
     partial_column: List[Cell, MAX_BLOB_COMMITMENTS_PER_BLOCK]
     kzg_proofs: List[KZGProof, MAX_BLOB_COMMITMENTS_PER_BLOCK]
-    # [Modified in Gloas:EIP7732]
+    # [Modified in Gloas:SIP7732]
     # Removed `header`
 ```
 
@@ -46,7 +46,7 @@ class PartialDataColumnSidecar(Container):
 ```python
 class PartialDataColumnGroupID(Container):
     beacon_block_root: Root
-    # [New in Gloas:EIP7732]
+    # [New in Gloas:SIP7732]
     slot: Slot
 ```
 
@@ -56,7 +56,7 @@ class PartialDataColumnGroupID(Container):
 
 ##### Modified `data_column_sidecar_{subnet_id}` (partial messages)
 
-*[Modified in Gloas:EIP7732]*
+*[Modified in Gloas:SIP7732]*
 
 *Note*: The Partial Message Group ID is the SSZ encoded
 `PartialDataColumnGroupID` prefixed with the version byte `0x01`.
@@ -85,7 +85,7 @@ as the bid contains the KZG commitments.
 - _[REJECT]_ The sidecar's cell and proof data is valid as verified by
   `verify_partial_data_column_sidecar_kzg_proofs(sidecar, bid.blob_kzg_commitments, column_index)`.
 
-**Removed from Fulu:**
+**Removed from SilaFulu:**
 
 - _[REJECT]_ If a valid header was previously received, the received header MUST
   equal the previously valid header.

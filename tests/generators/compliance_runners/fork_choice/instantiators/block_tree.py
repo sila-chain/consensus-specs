@@ -1,20 +1,20 @@
 import random
 
-from eth_consensus_specs.test.helpers.attester_slashings import (
+from sil_consensus_specs.test.helpers.attester_slashings import (
     get_valid_attester_slashing_by_indices,
 )
-from eth_consensus_specs.test.helpers.execution_payload import (
+from sil_consensus_specs.test.helpers.execution_payload import (
     build_signed_execution_payload_envelope,
 )
-from eth_consensus_specs.test.helpers.fork_choice import (
+from sil_consensus_specs.test.helpers.fork_choice import (
     get_genesis_forkchoice_store_and_block,
 )
-from eth_consensus_specs.test.helpers.forks import is_post_gloas
-from eth_consensus_specs.test.helpers.state import (
+from sil_consensus_specs.test.helpers.forks import is_post_gloas
+from sil_consensus_specs.test.helpers.state import (
     next_slot,
     transition_to,
 )
-from eth_consensus_specs.utils import bls
+from sil_consensus_specs.utils import bls
 
 from .debug_helpers import (
     attesters_in_block,

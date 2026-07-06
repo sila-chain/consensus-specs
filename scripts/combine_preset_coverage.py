@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
-"""Combine pyspec coverage data from the minimal and mainnet presets.
+"""Combine pyspec coverage data from the minimal and sila_mainnet presets.
 
-The pyspec is generated once per preset (eth_consensus_specs/<fork>/minimal.py
-and eth_consensus_specs/<fork>/mainnet.py), so coverage.py treats them as
-unrelated files. This script folds the mainnet data onto the minimal modules.
+The pyspec is generated once per preset (sil_consensus_specs/<fork>/minimal.py
+and sil_consensus_specs/<fork>/sila_mainnet.py), so coverage.py treats them as
+unrelated files. This script folds the sila_mainnet data onto the minimal modules.
 Line numbers are translated with a diff-based mapping, so it works even when
 the two files do not align exactly. Coverage of preset-specific lines (those
 with no identical counterpart in the minimal module) is dropped and reported.
 
-Each fork's combined data is recorded under a short <fork>.py name (eg fulu.py)
+Each fork's combined data is recorded under a short <fork>.py name (eg sila_fulu.py)
 in the current directory. The script creates those files as copies of the
 minimal modules because report generation needs to read the source. Run this
 script and the report commands from the same directory, then delete the copies.
@@ -17,7 +17,7 @@ Usage:
     uv run python scripts/combine_preset_coverage.py [DATA_FILE ...]
 
 Reads .coverage by default and writes .coverage.combined. Pass multiple data
-files (e.g. from separate minimal and mainnet runs) to merge them all.
+files (e.g. from separate minimal and sila_mainnet runs) to merge them all.
 """
 
 import argparse
@@ -77,7 +77,7 @@ def main() -> None:
         for f in sorted(src.measured_files()):
             p = Path(f)
             minimal = p.with_name("minimal.py")
-            if p.name not in ("minimal.py", "mainnet.py") or not minimal.exists():
+            if p.name not in ("minimal.py", "sila_mainnet.py") or not minimal.exists():
                 # Not a per-preset spec module: copy as-is.
                 if src.has_arcs():
                     dst.add_arcs({f: src.arcs(f)})
@@ -85,7 +85,7 @@ def main() -> None:
                     dst.add_lines({f: src.lines(f)})
                 continue
 
-            # Record the data under a short per-fork name (eg fulu.py), backed
+            # Record the data under a short per-fork name (eg sila_fulu.py), backed
             # by a copy of the minimal module so reports can read the source.
             target = Path.cwd() / f"{p.parent.name}.py"
             if str(target) not in created:

@@ -51,7 +51,7 @@ Existing `GeneralizedIndex` constants are frozen at their
 | Name                                | Value                                                                                                            |
 | ----------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
 | `EXECUTION_BLOCK_HASH_GINDEX`       | `get_generalized_index(capella.BeaconBlockBody, 'execution_payload', 'block_hash')` (= 412)                      |
-| `EXECUTION_BLOCK_HASH_GINDEX_DENEB` | `get_generalized_index(deneb.BeaconBlockBody, 'execution_payload', 'block_hash')` (= 812)                        |
+| `EXECUTION_BLOCK_HASH_GINDEX_SILA_DENEB` | `get_generalized_index(sila_deneb.BeaconBlockBody, 'execution_payload', 'block_hash')` (= 812)                        |
 | `EXECUTION_BLOCK_HASH_GINDEX_GLOAS` | `get_generalized_index(BeaconBlockBody, 'signed_execution_payload_bid', 'message', 'parent_block_hash')` (= 832) |
 
 ## Containers
@@ -61,11 +61,11 @@ Existing `GeneralizedIndex` constants are frozen at their
 ```python
 class LightClientHeader(Container):
     beacon: BeaconBlockHeader
-    # [Modified in Gloas:EIP7732]
+    # [Modified in Gloas:SIP7732]
     # Removed `execution`
-    # [New in Gloas:EIP7732]
+    # [New in Gloas:SIP7732]
     execution_block_hash: Hash32
-    # [Modified in Gloas:EIP7732]
+    # [Modified in Gloas:SIP7732]
     execution_branch: ExecutionBranch
 ```
 
@@ -77,15 +77,15 @@ class LightClientHeader(Container):
 def get_lc_execution_root(header: LightClientHeader) -> Root:
     epoch = compute_epoch_at_slot(header.beacon.slot)
 
-    # [New in Gloas:EIP7732]
+    # [New in Gloas:SIP7732]
     if epoch >= GLOAS_FORK_EPOCH:
         return Root(header.execution_block_hash)
 
-    # [Modified in Gloas:EIP7732]
-    if epoch >= DENEB_FORK_EPOCH:
+    # [Modified in Gloas:SIP7732]
+    if epoch >= SILA_DENEB_FORK_EPOCH:
         if header.beacon.slot == GENESIS_SLOT:
-            return hash_tree_root(deneb.ExecutionPayloadHeader())
-        BLOCK_HASH_GINDEX = get_generalized_index(deneb.ExecutionPayloadHeader, "block_hash")
+            return hash_tree_root(sila_deneb.ExecutionPayloadHeader())
+        BLOCK_HASH_GINDEX = get_generalized_index(sila_deneb.ExecutionPayloadHeader, "block_hash")
     elif epoch >= CAPELLA_FORK_EPOCH:
         if header.beacon.slot == GENESIS_SLOT:
             return hash_tree_root(capella.ExecutionPayloadHeader())
@@ -93,7 +93,7 @@ def get_lc_execution_root(header: LightClientHeader) -> Root:
     else:
         return Root()
 
-    # [Modified in Gloas:EIP7732]
+    # [Modified in Gloas:SIP7732]
     inner = header.execution_branch[
         : len(header.execution_branch) - floorlog2(EXECUTION_PAYLOAD_GINDEX)
     ]
@@ -111,7 +111,7 @@ def get_lc_execution_root(header: LightClientHeader) -> Root:
 def is_valid_light_client_header(header: LightClientHeader) -> bool:
     epoch = compute_epoch_at_slot(header.beacon.slot)
 
-    # [New in Gloas:EIP7732]
+    # [New in Gloas:SIP7732]
     if epoch >= GLOAS_FORK_EPOCH:
         return is_valid_normalized_merkle_branch(
             leaf=Bytes32(header.execution_block_hash),
@@ -120,16 +120,16 @@ def is_valid_light_client_header(header: LightClientHeader) -> bool:
             root=header.beacon.body_root,
         )
 
-    # [Modified in Gloas:EIP7732]
-    if epoch >= DENEB_FORK_EPOCH:
+    # [Modified in Gloas:SIP7732]
+    if epoch >= SILA_DENEB_FORK_EPOCH:
         return is_valid_normalized_merkle_branch(
             leaf=Bytes32(header.execution_block_hash),
             branch=header.execution_branch,
-            gindex=EXECUTION_BLOCK_HASH_GINDEX_DENEB,
+            gindex=EXECUTION_BLOCK_HASH_GINDEX_SILA_DENEB,
             root=header.beacon.body_root,
         )
 
-    # [Modified in Gloas:EIP7732]
+    # [Modified in Gloas:SIP7732]
     if epoch >= CAPELLA_FORK_EPOCH:
         return is_valid_normalized_merkle_branch(
             leaf=Bytes32(header.execution_block_hash),
@@ -138,6 +138,6 @@ def is_valid_light_client_header(header: LightClientHeader) -> bool:
             root=header.beacon.body_root,
         )
 
-    # [Modified in Gloas:EIP7732]
+    # [Modified in Gloas:SIP7732]
     return header.execution_block_hash == Hash32() and header.execution_branch == ExecutionBranch()
 ```

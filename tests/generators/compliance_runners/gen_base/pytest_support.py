@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 
 import pytest
 
-from eth_consensus_specs.test import context
+from sil_consensus_specs.test import context
 
 if TYPE_CHECKING:
     from collections.abc import Callable, Sequence

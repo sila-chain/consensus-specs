@@ -10,8 +10,8 @@ class BellatrixSpecBuilder(BaseSpecBuilder):
     def imports(cls, preset_name: str):
         return f"""
 from typing import Protocol
-from eth_consensus_specs.altair import {preset_name} as altair
-from eth_consensus_specs.utils.ssz.ssz_typing import Bytes8, Bytes20, ByteList, ByteVector
+from sil_consensus_specs.altair import {preset_name} as altair
+from sil_consensus_specs.utils.ssz.ssz_typing import Bytes8, Bytes20, ByteList, ByteVector
 """
 
     @classmethod

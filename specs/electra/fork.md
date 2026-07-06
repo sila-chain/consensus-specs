@@ -39,8 +39,8 @@ If `state.slot % SLOTS_PER_EPOCH == 0` and
 change is made to upgrade to Electra.
 
 ```python
-def upgrade_to_electra(pre: deneb.BeaconState) -> BeaconState:
-    epoch = deneb.get_current_epoch(pre)
+def upgrade_to_electra(pre: sila_deneb.BeaconState) -> BeaconState:
+    epoch = sila_deneb.get_current_epoch(pre)
 
     earliest_exit_epoch = compute_activation_exit_epoch(get_current_epoch(pre))
     for validator in pre.validators:
@@ -62,9 +62,9 @@ def upgrade_to_electra(pre: deneb.BeaconState) -> BeaconState:
         block_roots=pre.block_roots,
         state_roots=pre.state_roots,
         historical_roots=pre.historical_roots,
-        eth1_data=pre.eth1_data,
-        eth1_data_votes=pre.eth1_data_votes,
-        eth1_deposit_index=pre.eth1_deposit_index,
+        sil1_data=pre.sil1_data,
+        sil1_data_votes=pre.sil1_data_votes,
+        sil1_deposit_index=pre.sil1_deposit_index,
         validators=pre.validators,
         balances=pre.balances,
         randao_mixes=pre.randao_mixes,
@@ -82,30 +82,30 @@ def upgrade_to_electra(pre: deneb.BeaconState) -> BeaconState:
         next_withdrawal_index=pre.next_withdrawal_index,
         next_withdrawal_validator_index=pre.next_withdrawal_validator_index,
         historical_summaries=pre.historical_summaries,
-        # [New in Electra:EIP6110]
+        # [New in Electra:SIP6110]
         deposit_requests_start_index=UNSET_DEPOSIT_REQUESTS_START_INDEX,
-        # [New in Electra:EIP7251]
+        # [New in Electra:SIP7251]
         deposit_balance_to_consume=0,
-        # [New in Electra:EIP7251]
+        # [New in Electra:SIP7251]
         exit_balance_to_consume=0,
-        # [New in Electra:EIP7251]
+        # [New in Electra:SIP7251]
         earliest_exit_epoch=earliest_exit_epoch,
-        # [New in Electra:EIP7251]
+        # [New in Electra:SIP7251]
         consolidation_balance_to_consume=0,
-        # [New in Electra:EIP7251]
+        # [New in Electra:SIP7251]
         earliest_consolidation_epoch=compute_activation_exit_epoch(get_current_epoch(pre)),
-        # [New in Electra:EIP7251]
+        # [New in Electra:SIP7251]
         pending_deposits=[],
-        # [New in Electra:EIP7251]
+        # [New in Electra:SIP7251]
         pending_partial_withdrawals=[],
-        # [New in Electra:EIP7251]
+        # [New in Electra:SIP7251]
         pending_consolidations=[],
     )
 
     post.exit_balance_to_consume = get_activation_exit_churn_limit(post)
     post.consolidation_balance_to_consume = get_consolidation_churn_limit(post)
 
-    # [New in Electra:EIP7251]
+    # [New in Electra:SIP7251]
     # add validators that are not yet active to pending balance deposits
     pre_activation = sorted(
         [

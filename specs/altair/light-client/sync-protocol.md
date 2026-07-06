@@ -42,7 +42,7 @@
 ## Introduction
 
 The beacon chain is designed to be light client friendly for constrained
-environments to access Ethereum with reasonable safety and liveness. Such
+environments to access Sila with reasonable safety and liveness. Such
 environments include resource-constrained devices (e.g. phones for
 trust-minimized wallets) and metered VMs (e.g. blockchain VMs for cross-chain
 bridges).

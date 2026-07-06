@@ -1,14 +1,14 @@
 # Genesis creation testing
 
-Tests the initialization of a genesis state based on Eth1 data.
+Tests the initialization of a genesis state based on Sil1 data.
 
 ## Test case format
 
-### `eth1.yaml`
+### `sil1.yaml`
 
 ```yaml
-eth1_block_hash: Bytes32  -- A `Bytes32` hex encoded, with prefix 0x. The root of the Eth1 block. E.g. "0x4242424242424242424242424242424242424242424242424242424242424242"
-eth1_timestamp: int       -- An integer. The timestamp of the block, in seconds.
+sil1_block_hash: Bytes32  -- A `Bytes32` hex encoded, with prefix 0x. The root of the Sil1 block. E.g. "0x4242424242424242424242424242424242424242424242424242424242424242"
+sil1_timestamp: int       -- An integer. The timestamp of the block, in seconds.
 ```
 
 ### `meta.yaml`
@@ -39,9 +39,9 @@ The expected genesis state. An SSZ-snappy encoded `BeaconState` object.
 
 ## Processing
 
-To process this test, build a genesis state with the provided `eth1_block_hash`,
-`eth1_timestamp` and `deposits`:
-`initialize_beacon_state_from_eth1(eth1_block_hash, eth1_timestamp, deposits)`,
+To process this test, build a genesis state with the provided `sil1_block_hash`,
+`sil1_timestamp` and `deposits`:
+`initialize_beacon_state_from_sil1(sil1_block_hash, sil1_timestamp, deposits)`,
 as described in the beacon-chain specification.
 
 ## Condition

@@ -1,11 +1,11 @@
 from .altair import AltairSpecBuilder
 from .bellatrix import BellatrixSpecBuilder
 from .capella import CapellaSpecBuilder
-from .deneb import DenebSpecBuilder
-from .eip8025 import EIP8025SpecBuilder
-from .eip8148 import EIP8148SpecBuilder
+from .sila_deneb import SilaDenebSpecBuilder
+from .sip8025 import SIP8025SpecBuilder
+from .sip8148 import SIP8148SpecBuilder
 from .electra import ElectraSpecBuilder
-from .fulu import FuluSpecBuilder
+from .sila_fulu import SilaFuluSpecBuilder
 from .gloas import GloasSpecBuilder
 from .heze import HezeSpecBuilder
 from .phase0 import Phase0SpecBuilder
@@ -17,12 +17,12 @@ spec_builders = {
         AltairSpecBuilder,
         BellatrixSpecBuilder,
         CapellaSpecBuilder,
-        DenebSpecBuilder,
+        SilaDenebSpecBuilder,
         ElectraSpecBuilder,
-        FuluSpecBuilder,
+        SilaFuluSpecBuilder,
         GloasSpecBuilder,
         HezeSpecBuilder,
-        EIP8025SpecBuilder,
-        EIP8148SpecBuilder,
+        SIP8025SpecBuilder,
+        SIP8148SpecBuilder,
     )
 }

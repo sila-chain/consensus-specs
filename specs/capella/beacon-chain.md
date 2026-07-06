@@ -26,7 +26,7 @@
     - [`ExpectedWithdrawals`](#expectedwithdrawals)
 - [Helpers](#helpers)
   - [Predicates](#predicates)
-    - [`has_eth1_withdrawal_credential`](#has_eth1_withdrawal_credential)
+    - [`has_sil1_withdrawal_credential`](#has_sil1_withdrawal_credential)
     - [`is_fully_withdrawable_validator`](#is_fully_withdrawable_validator)
     - [`is_partially_withdrawable_validator`](#is_partially_withdrawable_validator)
 - [Beacon chain state transition function](#beacon-chain-state-transition-function)
@@ -55,7 +55,7 @@ validator withdrawals. Including:
 - Partial withdrawals sweep for validators with 0x01 withdrawal credentials and
   balances in excess of `MAX_EFFECTIVE_BALANCE`.
 - Operation to change from `BLS_WITHDRAWAL_PREFIX` to
-  `ETH1_ADDRESS_WITHDRAWAL_PREFIX` versioned withdrawal credentials to enable
+  `SIL1_ADDRESS_WITHDRAWAL_PREFIX` versioned withdrawal credentials to enable
   withdrawals for a validator.
 
 Another new feature is the new independent state and block historical
@@ -151,7 +151,7 @@ class ExecutionPayload(Container):
     parent_hash: Hash32
     fee_recipient: ExecutionAddress
     state_root: Bytes32
-    receipts_root: Bytes32
+    recsipts_root: Bytes32
     logs_bloom: ByteVector[BYTES_PER_LOGS_BLOOM]
     prev_randao: Bytes32
     block_number: uint64
@@ -173,7 +173,7 @@ class ExecutionPayloadHeader(Container):
     parent_hash: Hash32
     fee_recipient: ExecutionAddress
     state_root: Bytes32
-    receipts_root: Bytes32
+    recsipts_root: Bytes32
     logs_bloom: ByteVector[BYTES_PER_LOGS_BLOOM]
     prev_randao: Bytes32
     block_number: uint64
@@ -193,7 +193,7 @@ class ExecutionPayloadHeader(Container):
 ```python
 class BeaconBlockBody(Container):
     randao_reveal: BLSSignature
-    eth1_data: Eth1Data
+    sil1_data: Sil1Data
     graffiti: Bytes32
     proposer_slashings: List[ProposerSlashing, MAX_PROPOSER_SLASHINGS]
     attester_slashings: List[AttesterSlashing, MAX_ATTESTER_SLASHINGS]
@@ -221,9 +221,9 @@ class BeaconState(Container):
     block_roots: Vector[Root, SLOTS_PER_HISTORICAL_ROOT]
     state_roots: Vector[Root, SLOTS_PER_HISTORICAL_ROOT]
     historical_roots: List[Root, HISTORICAL_ROOTS_LIMIT]
-    eth1_data: Eth1Data
-    eth1_data_votes: List[Eth1Data, EPOCHS_PER_ETH1_VOTING_PERIOD * SLOTS_PER_EPOCH]
-    eth1_deposit_index: uint64
+    sil1_data: Sil1Data
+    sil1_data_votes: List[Sil1Data, EPOCHS_PER_SIL1_VOTING_PERIOD * SLOTS_PER_EPOCH]
+    sil1_deposit_index: uint64
     validators: List[Validator, VALIDATOR_REGISTRY_LIMIT]
     balances: List[Gwei, VALIDATOR_REGISTRY_LIMIT]
     randao_mixes: Vector[Bytes32, EPOCHS_PER_HISTORICAL_VECTOR]
@@ -264,14 +264,14 @@ class ExpectedWithdrawals:
 
 ### Predicates
 
-#### `has_eth1_withdrawal_credential`
+#### `has_sil1_withdrawal_credential`
 
 ```python
-def has_eth1_withdrawal_credential(validator: Validator) -> bool:
+def has_sil1_withdrawal_credential(validator: Validator) -> bool:
     """
-    Check if ``validator`` has an 0x01 prefixed "eth1" withdrawal credential.
+    Check if ``validator`` has an 0x01 prefixed "sil1" withdrawal credential.
     """
-    return validator.withdrawal_credentials[:1] == ETH1_ADDRESS_WITHDRAWAL_PREFIX
+    return validator.withdrawal_credentials[:1] == SIL1_ADDRESS_WITHDRAWAL_PREFIX
 ```
 
 #### `is_fully_withdrawable_validator`
@@ -282,7 +282,7 @@ def is_fully_withdrawable_validator(validator: Validator, balance: Gwei, epoch: 
     Check if ``validator`` is fully withdrawable.
     """
     return (
-        has_eth1_withdrawal_credential(validator)
+        has_sil1_withdrawal_credential(validator)
         and validator.withdrawable_epoch <= epoch
         and balance > 0
     )
@@ -298,7 +298,7 @@ def is_partially_withdrawable_validator(validator: Validator, balance: Gwei) -> 
     has_max_effective_balance = validator.effective_balance == MAX_EFFECTIVE_BALANCE
     has_excess_balance = balance > MAX_EFFECTIVE_BALANCE
     return (
-        has_eth1_withdrawal_credential(validator)
+        has_sil1_withdrawal_credential(validator)
         and has_max_effective_balance
         and has_excess_balance
     )
@@ -318,7 +318,7 @@ def process_epoch(state: BeaconState) -> None:
     process_rewards_and_penalties(state)
     process_registry_updates(state)
     process_slashings(state)
-    process_eth1_data_reset(state)
+    process_sil1_data_reset(state)
     process_effective_balance_updates(state)
     process_slashings_reset(state)
     process_randao_mixes_reset(state)
@@ -356,7 +356,7 @@ def process_block(state: BeaconState, block: BeaconBlock) -> None:
     # [Modified in Capella]
     process_execution_payload(state, block.body, EXECUTION_ENGINE)
     process_randao(state, block.body)
-    process_eth1_data(state, block.body)
+    process_sil1_data(state, block.body)
     # [Modified in Capella]
     process_operations(state, block.body)
     process_sync_aggregate(state, block.body.sync_aggregate)
@@ -531,7 +531,7 @@ def process_execution_payload(
         parent_hash=payload.parent_hash,
         fee_recipient=payload.fee_recipient,
         state_root=payload.state_root,
-        receipts_root=payload.receipts_root,
+        recsipts_root=payload.recsipts_root,
         logs_bloom=payload.logs_bloom,
         prev_randao=payload.prev_randao,
         block_number=payload.block_number,
@@ -556,7 +556,7 @@ def process_execution_payload(
 def process_operations(state: BeaconState, body: BeaconBlockBody) -> None:
     # Verify that outstanding deposits are processed up to the maximum number of deposits
     assert len(body.deposits) == min(
-        MAX_DEPOSITS, state.eth1_data.deposit_count - state.eth1_deposit_index
+        MAX_DEPOSITS, state.sil1_data.deposit_count - state.sil1_deposit_index
     )
 
     def for_ops(operations: Sequence[Any], fn: Callable[[BeaconState, Any], None]) -> None:
@@ -595,6 +595,6 @@ def process_bls_to_execution_change(
     assert bls.Verify(address_change.from_bls_pubkey, signing_root, signed_address_change.signature)
 
     validator.withdrawal_credentials = (
-        ETH1_ADDRESS_WITHDRAWAL_PREFIX + b"\x00" * 11 + address_change.to_execution_address
+        SIL1_ADDRESS_WITHDRAWAL_PREFIX + b"\x00" * 11 + address_change.to_execution_address
     )
 ```

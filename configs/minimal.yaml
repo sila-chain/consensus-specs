@@ -42,15 +42,15 @@ BELLATRIX_FORK_EPOCH: 18446744073709551615
 # [customized] Capella
 CAPELLA_FORK_VERSION: 0x03000001
 CAPELLA_FORK_EPOCH: 18446744073709551615
-# [customized] Deneb
-DENEB_FORK_VERSION: 0x04000001
-DENEB_FORK_EPOCH: 18446744073709551615
+# [customized] SilaDeneb
+SILA_DENEB_FORK_VERSION: 0x04000001
+SILA_DENEB_FORK_EPOCH: 18446744073709551615
 # [customized] Electra
 ELECTRA_FORK_VERSION: 0x05000001
 ELECTRA_FORK_EPOCH: 18446744073709551615
-# [customized] Fulu
-FULU_FORK_VERSION: 0x06000001
-FULU_FORK_EPOCH: 18446744073709551615
+# [customized] SilaFulu
+SILA_FULU_FORK_VERSION: 0x06000001
+SILA_FULU_FORK_EPOCH: 18446744073709551615
 # [customized] Gloas
 GLOAS_FORK_VERSION: 0x07000001
 GLOAS_FORK_EPOCH: 18446744073709551615
@@ -62,14 +62,14 @@ HEZE_FORK_EPOCH: 18446744073709551615
 # ---------------------------------------------------------------
 # [customized] 6000 milliseconds
 SLOT_DURATION_MS: 6000
-# 14 (estimate from Eth1 mainnet)
-SECONDS_PER_ETH1_BLOCK: 14
+# 14 (estimate from Sil1 sila_mainnet)
+SECONDS_PER_SIL1_BLOCK: 14
 # 2**8 (= 256) epochs
 MIN_VALIDATOR_WITHDRAWABILITY_DELAY: 256
 # [customized] 2**6 (= 64) epochs
 SHARD_COMMITTEE_PERIOD: 64
-# [customized] 2**4 (= 16) Eth1 blocks
-ETH1_FOLLOW_DISTANCE: 16
+# [customized] 2**4 (= 16) Sil1 blocks
+SIL1_FOLLOW_DISTANCE: 16
 # 1667 basis points, ~17% of SLOT_DURATION_MS
 PROPOSER_REORG_CUTOFF_BPS: 1667
 # 3333 basis points, ~33% of SLOT_DURATION_MS
@@ -116,7 +116,7 @@ MIN_PER_EPOCH_CHURN_LIMIT: 2
 # [customized] 2**5 (= 32)
 CHURN_LIMIT_QUOTIENT: 32
 
-# Deneb
+# SilaDeneb
 # [customized] 2**2 (= 4) (*deprecated*)
 MAX_PER_EPOCH_ACTIVATION_CHURN_LIMIT: 4
 
@@ -147,7 +147,7 @@ REORG_MAX_EPOCHS_SINCE_FINALIZATION: 2
 
 # Deposit contract
 # ---------------------------------------------------------------
-# Ethereum Goerli testnet
+# Sila Goerli testnet
 DEPOSIT_CHAIN_ID: 5
 DEPOSIT_NETWORK_ID: 5
 # Configured on a per testnet basis
@@ -174,9 +174,9 @@ ATTESTATION_SUBNET_COUNT: 64
 # 0 bits
 ATTESTATION_SUBNET_EXTRA_BITS: 0
 
-# Deneb
+# SilaDeneb
 # 2**7 (= 128) blocks
-MAX_REQUEST_BLOCKS_DENEB: 128
+MAX_REQUEST_BLOCKS_SILA_DENEB: 128
 # 2**12 (= 4,096) epochs
 MIN_EPOCHS_FOR_BLOB_SIDECARS_REQUESTS: 4096
 # 6 subnets
@@ -190,7 +190,7 @@ BLOB_SIDECAR_SUBNET_COUNT_ELECTRA: 9
 # 9 blobs
 MAX_BLOBS_PER_BLOCK_ELECTRA: 9
 
-# Fulu
+# SilaFulu
 # 2**7 (= 128) groups
 NUMBER_OF_CUSTODY_GROUPS: 128
 # 2**7 (= 128) subnets

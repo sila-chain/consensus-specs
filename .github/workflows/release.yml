@@ -48,15 +48,15 @@ jobs:
         preset:
           - general
           - minimal
-          - mainnet
+          - sila_mainnet
         fork:
           - phase0
           - altair
           - bellatrix
           - capella
-          - deneb
+          - sila_deneb
           - electra
-          - fulu
+          - sila_fulu
           - gloas
           - heze
     steps:
@@ -94,7 +94,7 @@ jobs:
         preset:
           - general
           - minimal
-          - mainnet
+          - sila_mainnet
     steps:
       - name: Checkout repository
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0

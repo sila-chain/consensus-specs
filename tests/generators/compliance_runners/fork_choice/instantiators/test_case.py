@@ -7,12 +7,12 @@ from typing import Any
 
 from ruamel.yaml import YAML
 
-from eth_consensus_specs.test.context import (
+from sil_consensus_specs.test.context import (
     spec_state_test,
     spec_test,
     with_altair_and_later,
 )
-from eth_consensus_specs.test.helpers.fork_choice import (
+from sil_consensus_specs.test.helpers.fork_choice import (
     get_attestation_file_name,
     get_attester_slashing_file_name,
     get_block_file_name,

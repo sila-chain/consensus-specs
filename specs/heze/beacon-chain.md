@@ -29,12 +29,12 @@
 
 Heze is a consensus-layer upgrade containing a number of features. Including:
 
-- [EIP-7805](https://github.com/ethereum/EIPs/blob/9a345f96c2295a678b0ce33e94d41276ddb3fdef/EIPS/eip-7805.md):
+- [SIP-7805](https://github.com/sila-chain/SIPs/blob/9a345f96c2295a678b0ce33e94d41276ddb3fdef/SIPS/sip-7805.md):
   Fork-choice enforced Inclusion Lists (FOCIL)
 
-*Note*: These EIPs are in draft and may change or be removed. Each link above
+*Note*: These SIPs are in draft and may change or be removed. Each link above
 points to the specific version targeted by this specification, which may differ
-from the latest published version of the EIPs.
+from the latest published version of the SIPs.
 
 ## Constants
 
@@ -92,7 +92,7 @@ class ExecutionPayloadBid(Container):
     execution_payment: Gwei
     blob_kzg_commitments: List[KZGCommitment, MAX_BLOB_COMMITMENTS_PER_BLOCK]
     execution_requests_root: Root
-    # [New in Heze:EIP7805]
+    # [New in Heze:SIP7805]
     inclusion_list_bits: Bitvector[INCLUSION_LIST_COMMITTEE_SIZE]
 ```
 
@@ -100,7 +100,7 @@ class ExecutionPayloadBid(Container):
 
 ```python
 class SignedExecutionPayloadBid(Container):
-    # [Modified in Heze:EIP7805]
+    # [Modified in Heze:SIP7805]
     message: ExecutionPayloadBid
     signature: BLSSignature
 ```
@@ -117,9 +117,9 @@ class BeaconState(Container):
     block_roots: Vector[Root, SLOTS_PER_HISTORICAL_ROOT]
     state_roots: Vector[Root, SLOTS_PER_HISTORICAL_ROOT]
     historical_roots: List[Root, HISTORICAL_ROOTS_LIMIT]
-    eth1_data: Eth1Data
-    eth1_data_votes: List[Eth1Data, EPOCHS_PER_ETH1_VOTING_PERIOD * SLOTS_PER_EPOCH]
-    eth1_deposit_index: uint64
+    sil1_data: Sil1Data
+    sil1_data_votes: List[Sil1Data, EPOCHS_PER_SIL1_VOTING_PERIOD * SLOTS_PER_EPOCH]
+    sil1_deposit_index: uint64
     validators: List[Validator, VALIDATOR_REGISTRY_LIMIT]
     balances: List[Gwei, VALIDATOR_REGISTRY_LIMIT]
     randao_mixes: Vector[Bytes32, EPOCHS_PER_HISTORICAL_VECTOR]
@@ -152,7 +152,7 @@ class BeaconState(Container):
     execution_payload_availability: Bitvector[SLOTS_PER_HISTORICAL_ROOT]
     builder_pending_payments: Vector[BuilderPendingPayment, 2 * SLOTS_PER_EPOCH]
     builder_pending_withdrawals: List[BuilderPendingWithdrawal, BUILDER_PENDING_WITHDRAWALS_LIMIT]
-    # [Modified in Heze:EIP7805]
+    # [Modified in Heze:SIP7805]
     latest_execution_payload_bid: ExecutionPayloadBid
     payload_expected_withdrawals: List[Withdrawal, MAX_WITHDRAWALS_PER_PAYLOAD]
     ptc_window: Vector[Vector[ValidatorIndex, PTC_SIZE], (2 + MIN_SEED_LOOKAHEAD) * SLOTS_PER_EPOCH]

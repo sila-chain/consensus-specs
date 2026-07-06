@@ -40,7 +40,7 @@ specifications of previous upgrades, and assumes them as pre-requisite.
 
 ### Configuration
 
-*[New in Electra:EIP7691]*
+*[New in Electra:SIP7691]*
 
 | Name                                | Value | Description                                                   |
 | ----------------------------------- | ----- | ------------------------------------------------------------- |
@@ -55,7 +55,7 @@ specifications of previous upgrades, and assumes them as pre-requisite.
 class Seen:
     proposer_slots: Set[Tuple[ValidatorIndex, Slot]]
     aggregator_epochs: Set[Tuple[ValidatorIndex, Epoch]]
-    # [Modified in Electra:EIP7549]
+    # [Modified in Electra:SIP7549]
     aggregate_data_roots: Dict[Tuple[Root, CommitteeIndex], Set[Tuple[boolean, ...]]]
     voluntary_exit_indices: Set[ValidatorIndex]
     proposer_slashing_indices: Set[ValidatorIndex]
@@ -77,8 +77,8 @@ def compute_fork_version(epoch: Epoch) -> Version:
     """
     if epoch >= ELECTRA_FORK_EPOCH:
         return ELECTRA_FORK_VERSION
-    if epoch >= DENEB_FORK_EPOCH:
-        return DENEB_FORK_VERSION
+    if epoch >= SILA_DENEB_FORK_EPOCH:
+        return SILA_DENEB_FORK_VERSION
     if epoch >= CAPELLA_FORK_EPOCH:
         return CAPELLA_FORK_VERSION
     if epoch >= BELLATRIX_FORK_EPOCH:
@@ -95,8 +95,8 @@ def compute_max_request_blob_sidecars() -> uint64:
     """
     Return the maximum number of blob sidecars in a single request.
     """
-    # [Modified in Electra:EIP7691]
-    return uint64(MAX_REQUEST_BLOCKS_DENEB * MAX_BLOBS_PER_BLOCK_ELECTRA)
+    # [Modified in Electra:SIP7691]
+    return uint64(MAX_REQUEST_BLOCKS_SILA_DENEB * MAX_BLOBS_PER_BLOCK_ELECTRA)
 ```
 
 ### The gossip domain: gossipsub
@@ -116,7 +116,7 @@ The `attester_slashing` topic is modified to support the gossip of the new
 `AttesterSlashing` type.
 
 The specification around the creation, validation, and dissemination of messages
-has not changed from the Deneb document unless explicitly noted here.
+has not changed from the SilaDeneb document unless explicitly noted here.
 
 The derivation of the `message-id` remains stable.
 
@@ -124,7 +124,7 @@ The derivation of the `message-id` remains stable.
 
 ###### Modified `beacon_block`
 
-*Note*: This function is modified per EIP-7691. The block's KZG commitment count
+*Note*: This function is modified per SIP-7691. The block's KZG commitment count
 is bounded by `MAX_BLOBS_PER_BLOCK_ELECTRA`.
 
 ```python
@@ -206,7 +206,7 @@ def validate_beacon_block_gossip(
     if checkpoint_block != store.finalized_checkpoint.root:
         raise GossipReject("finalized checkpoint is not an ancestor of block")
 
-    # [Modified in Electra:EIP7691]
+    # [Modified in Electra:SIP7691]
     # [REJECT] The length of KZG commitments is less than or equal to the limit
     if len(block.body.blob_kzg_commitments) > MAX_BLOBS_PER_BLOCK_ELECTRA:
         raise GossipReject("too many blob kzg commitments")
@@ -225,7 +225,7 @@ def validate_beacon_block_gossip(
 
 ###### Modified `beacon_aggregate_and_proof`
 
-*Note*: This function is modified per EIP-7549. The committee index is now
+*Note*: This function is modified per SIP-7549. The committee index is now
 encoded in `aggregate.committee_bits`, `aggregate.data.index` MUST be zero, and
 the gossip seen-cache is keyed by
 `(hash_tree_root(aggregate.data), committee_index)`.
@@ -246,12 +246,12 @@ def validate_beacon_aggregate_and_proof_gossip(
     aggregate = aggregate_and_proof.aggregate
     aggregation_bits = aggregate.aggregation_bits
 
-    # [New in Electra:EIP7549]
+    # [New in Electra:SIP7549]
     # [REJECT] The aggregate attestation's data index is zero
     if aggregate.data.index != 0:
         raise GossipReject("aggregate data index is non-zero")
 
-    # [New in Electra:EIP7549]
+    # [New in Electra:SIP7549]
     # [REJECT] Exactly one committee is specified by the committee bits
     committee_indices = get_committee_indices(aggregate.committee_bits)
     if len(committee_indices) != 1:
@@ -299,7 +299,7 @@ def validate_beacon_aggregate_and_proof_gossip(
     if len(attesting_indices) < 1:
         raise GossipReject("aggregate has no participants")
 
-    # [Modified in Electra:EIP7549]
+    # [Modified in Electra:SIP7549]
     # [IGNORE] A valid aggregate with a superset of aggregation bits has not already been seen
     aggregate_data_root = hash_tree_root(aggregate.data)
     aggregate_cache_key = (aggregate_data_root, index)
@@ -371,7 +371,7 @@ def validate_beacon_aggregate_and_proof_gossip(
 
 ###### Modified `attester_slashing`
 
-*Note*: This function is modified per EIP-7549. The new `AttesterSlashing` type
+*Note*: This function is modified per SIP-7549. The new `AttesterSlashing` type
 wraps an `IndexedAttestation` payload sized for
 `MAX_VALIDATORS_PER_COMMITTEE * MAX_COMMITTEES_PER_SLOT` attesting indices; the
 validation logic is otherwise unchanged.
@@ -380,7 +380,7 @@ validation logic is otherwise unchanged.
 
 ###### Modified `beacon_attestation_{subnet_id}`
 
-*Note*: This function is modified per EIP-7549. The topic now propagates
+*Note*: This function is modified per SIP-7549. The topic now propagates
 `SingleAttestation` objects: the attesting validator's index is carried directly
 in the message, the committee index is read from `attestation.committee_index`,
 and `attestation.data.index` MUST be zero.
@@ -390,7 +390,7 @@ def validate_beacon_attestation_gossip(
     seen: Seen,
     store: Store,
     state: BeaconState,
-    # [Modified in Electra:EIP7549]
+    # [Modified in Electra:SIP7549]
     attestation: SingleAttestation,
     current_time_ms: uint64,
     subnet_id: SubnetID,
@@ -400,12 +400,12 @@ def validate_beacon_attestation_gossip(
     Raises GossipIgnore or GossipReject on validation failure.
     """
     data = attestation.data
-    # [Modified in Electra:EIP7549]
+    # [Modified in Electra:SIP7549]
     committee_index = attestation.committee_index
     attester_index = attestation.attester_index
     target_epoch = data.target.epoch
 
-    # [New in Electra:EIP7549]
+    # [New in Electra:SIP7549]
     # [REJECT] The attestation's data index is zero
     if data.index != 0:
         raise GossipReject("attestation data index is non-zero")
@@ -448,18 +448,18 @@ def validate_beacon_attestation_gossip(
     if target_epoch != compute_epoch_at_slot(data.slot):
         raise GossipReject("attestation epoch does not match target epoch")
 
-    # [New in Electra:EIP7549]
+    # [New in Electra:SIP7549]
     # [REJECT] The attester is a member of the committee
     committee = get_beacon_committee(state, data.slot, committee_index)
     if attester_index not in committee:
         raise GossipReject("attester is not a member of the committee")
 
-    # [Modified in Electra:EIP7549]
+    # [Modified in Electra:SIP7549]
     # [IGNORE] No other valid attestation seen for this validator and target epoch
     if (attester_index, target_epoch) in seen.attestation_validator_epochs:
         raise GossipIgnore("already seen attestation from this validator for this epoch")
 
-    # [Modified in Electra:EIP7549]
+    # [Modified in Electra:SIP7549]
     # [REJECT] The attestation signature is valid
     attester = state.validators[attester_index]
     domain = get_domain(state, DOMAIN_BEACON_ATTESTER, target_epoch)
@@ -497,7 +497,7 @@ def validate_beacon_attestation_gossip(
 
 ###### Modified `blob_sidecar_{subnet_id}`
 
-*Note*: This function is modified per EIP-7691. The sidecar's index is bounded
+*Note*: This function is modified per SIP-7691. The sidecar's index is bounded
 by `MAX_BLOBS_PER_BLOCK_ELECTRA`.
 
 ```python
@@ -515,7 +515,7 @@ def validate_blob_sidecar_gossip(
     """
     block_header = blob_sidecar.signed_block_header.message
 
-    # [Modified in Electra:EIP7691]
+    # [Modified in Electra:SIP7691]
     # [REJECT] The sidecar's index is consistent with MAX_BLOBS_PER_BLOCK_ELECTRA
     if blob_sidecar.index >= MAX_BLOBS_PER_BLOCK_ELECTRA:
         raise GossipReject("blob index out of range")
@@ -599,12 +599,12 @@ def validate_blob_sidecar_gossip(
 
 ##### BeaconBlocksByRange v2
 
-**Protocol ID:** `/eth2/beacon_chain/req/beacon_blocks_by_range/2/`
+**Protocol ID:** `/sil2/beacon_chain/req/beacon_blocks_by_range/2/`
 
 The Electra fork-digest is introduced to the `context` enum to specify Electra
 beacon block type.
 
-<!-- eth_consensus_specs: skip -->
+<!-- sil_consensus_specs: skip -->
 
 | `fork_version`           | Chunk SSZ type                |
 | ------------------------ | ----------------------------- |
@@ -612,17 +612,17 @@ beacon block type.
 | `ALTAIR_FORK_VERSION`    | `altair.SignedBeaconBlock`    |
 | `BELLATRIX_FORK_VERSION` | `bellatrix.SignedBeaconBlock` |
 | `CAPELLA_FORK_VERSION`   | `capella.SignedBeaconBlock`   |
-| `DENEB_FORK_VERSION`     | `deneb.SignedBeaconBlock`     |
+| `SILA_DENEB_FORK_VERSION`     | `sila_deneb.SignedBeaconBlock`     |
 | `ELECTRA_FORK_VERSION`   | `electra.SignedBeaconBlock`   |
 
 ##### BeaconBlocksByRoot v2
 
-**Protocol ID:** `/eth2/beacon_chain/req/beacon_blocks_by_root/2/`
+**Protocol ID:** `/sil2/beacon_chain/req/beacon_blocks_by_root/2/`
 
 The Electra fork-digest is introduced to the `context` enum to specify Electra
 beacon block type.
 
-<!-- eth_consensus_specs: skip -->
+<!-- sil_consensus_specs: skip -->
 
 | `fork_version`           | Chunk SSZ type                |
 | ------------------------ | ----------------------------- |
@@ -630,23 +630,23 @@ beacon block type.
 | `ALTAIR_FORK_VERSION`    | `altair.SignedBeaconBlock`    |
 | `BELLATRIX_FORK_VERSION` | `bellatrix.SignedBeaconBlock` |
 | `CAPELLA_FORK_VERSION`   | `capella.SignedBeaconBlock`   |
-| `DENEB_FORK_VERSION`     | `deneb.SignedBeaconBlock`     |
+| `SILA_DENEB_FORK_VERSION`     | `sila_deneb.SignedBeaconBlock`     |
 | `ELECTRA_FORK_VERSION`   | `electra.SignedBeaconBlock`   |
 
 ##### BlobSidecarsByRange v1
 
-**Protocol ID:** `/eth2/beacon_chain/req/blob_sidecars_by_range/1/`
+**Protocol ID:** `/sil2/beacon_chain/req/blob_sidecars_by_range/1/`
 
-*[Modified in Electra:EIP7691]*
+*[Modified in Electra:SIP7691]*
 
 *Note*: The `compute_max_request_blob_sidecars` function has been modified which
 affects the request, response, and validation logic.
 
 ##### BlobSidecarsByRoot v1
 
-**Protocol ID:** `/eth2/beacon_chain/req/blob_sidecars_by_root/1/`
+**Protocol ID:** `/sil2/beacon_chain/req/blob_sidecars_by_root/1/`
 
-*[Modified in Electra:EIP7691]*
+*[Modified in Electra:SIP7691]*
 
 *Note*: The `compute_max_request_blob_sidecars` function has been modified which
 affects the request, response, and validation logic.

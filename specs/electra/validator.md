@@ -36,7 +36,7 @@ validator" to implement Electra.
 ## Prerequisites
 
 This document is an extension of the
-[Deneb -- Honest Validator](../deneb/validator.md) guide. All behaviors and
+[SilaDeneb -- Honest Validator](../sila_deneb/validator.md) guide. All behaviors and
 definitions defined in this document, and documents it extends, carry over
 unless explicitly noted or overridden.
 
@@ -68,7 +68,7 @@ class GetPayloadResponse:
 ```python
 class AggregateAndProof(Container):
     aggregator_index: ValidatorIndex
-    # [Modified in Electra:EIP7549]
+    # [Modified in Electra:SIP7549]
     aggregate: Attestation
     selection_proof: BLSSignature
 ```
@@ -77,7 +77,7 @@ class AggregateAndProof(Container):
 
 ```python
 class SignedAggregateAndProof(Container):
-    # [Modified in Electra:EIP7549]
+    # [Modified in Electra:SIP7549]
     message: AggregateAndProof
     signature: BLSSignature
 ```
@@ -145,52 +145,52 @@ def compute_on_chain_aggregate(network_aggregates: Sequence[Attestation]) -> Att
 
 #### Deposits
 
-*[New in Electra:EIP6110]* The expected number of deposits MUST be changed from
-`min(MAX_DEPOSITS, eth1_data.deposit_count - state.eth1_deposit_index)` to the
+*[New in Electra:SIP6110]* The expected number of deposits MUST be changed from
+`min(MAX_DEPOSITS, sil1_data.deposit_count - state.sil1_deposit_index)` to the
 result of the following function:
 
 ```python
-def get_eth1_pending_deposit_count(state: BeaconState) -> uint64:
-    eth1_deposit_index_limit = min(
-        state.eth1_data.deposit_count, state.deposit_requests_start_index
+def get_sil1_pending_deposit_count(state: BeaconState) -> uint64:
+    sil1_deposit_index_limit = min(
+        state.sil1_data.deposit_count, state.deposit_requests_start_index
     )
-    if state.eth1_deposit_index < eth1_deposit_index_limit:
-        return min(MAX_DEPOSITS, eth1_deposit_index_limit - state.eth1_deposit_index)
+    if state.sil1_deposit_index < sil1_deposit_index_limit:
+        return min(MAX_DEPOSITS, sil1_deposit_index_limit - state.sil1_deposit_index)
     else:
         return uint64(0)
 ```
 
-*Note*: Clients will be able to remove the `Eth1Data` polling mechanism in an
+*Note*: Clients will be able to remove the `Sil1Data` polling mechanism in an
 uncoordinated fashion once the transition period is finished. The transition
 period is considered finished when a network reaches the point where
-`state.eth1_deposit_index == state.deposit_requests_start_index`.
+`state.sil1_deposit_index == state.deposit_requests_start_index`.
 
 ```python
-def get_eth1_vote(state: BeaconState, eth1_chain: Sequence[Eth1Block]) -> Eth1Data:
-    # [New in Electra:EIP6110]
-    if state.eth1_deposit_index == state.deposit_requests_start_index:
-        return state.eth1_data
+def get_sil1_vote(state: BeaconState, sil1_chain: Sequence[Sil1Block]) -> Sil1Data:
+    # [New in Electra:SIP6110]
+    if state.sil1_deposit_index == state.deposit_requests_start_index:
+        return state.sil1_data
 
     period_start = voting_period_start_time(state)
-    # `eth1_chain` abstractly represents all blocks in the eth1 chain sorted by ascending block height
+    # `sil1_chain` abstractly represents all blocks in the sil1 chain sorted by ascending block height
     votes_to_consider = [
-        get_eth1_data(block)
-        for block in eth1_chain
+        get_sil1_data(block)
+        for block in sil1_chain
         if (
             is_candidate_block(block, period_start)
             # Ensure cannot move back to earlier deposit contract states
-            and get_eth1_data(block).deposit_count >= state.eth1_data.deposit_count
+            and get_sil1_data(block).deposit_count >= state.sil1_data.deposit_count
         )
     ]
 
     # Valid votes already cast during this period
-    valid_votes = [vote for vote in state.eth1_data_votes if vote in votes_to_consider]
+    valid_votes = [vote for vote in state.sil1_data_votes if vote in votes_to_consider]
 
-    # Default vote on latest eth1 block data in the period range unless eth1 chain is not live
+    # Default vote on latest sil1 block data in the period range unless sil1 chain is not live
     # Non-substantive casting for linter
-    state_eth1_data: Eth1Data = state.eth1_data
+    state_sil1_data: Sil1Data = state.sil1_data
     default_vote = (
-        votes_to_consider[len(votes_to_consider) - 1] if any(votes_to_consider) else state_eth1_data
+        votes_to_consider[len(votes_to_consider) - 1] if any(votes_to_consider) else state_sil1_data
     )
 
     return max(
@@ -212,7 +212,7 @@ def get_eth1_vote(state: BeaconState, eth1_chain: Sequence[Eth1Block]) -> Eth1Da
    using `payload_id`. The response also includes a `execution_requests` entry
    containing a list of bytes. Each element on the list corresponds to one SSZ
    list of requests as defined in
-   [EIP-7685](https://eips.ethereum.org/EIPS/eip-7685). The first byte of each
+   [SIP-7685](https://sips.sila.org/SIPS/sip-7685). The first byte of each
    request is used to determine the request type. Requests must be ordered by
    request type in ascending order. As a result, there can only be at most one
    instance of each request type.
@@ -269,7 +269,7 @@ def get_execution_requests(execution_requests_list: Sequence[bytes]) -> Executio
 
 #### Sidecar
 
-*[Modified in Electra:EIP7691]*
+*[Modified in Electra:SIP7691]*
 
 ```python
 def compute_subnet_for_blob_sidecar(blob_index: BlobIndex) -> SubnetID:

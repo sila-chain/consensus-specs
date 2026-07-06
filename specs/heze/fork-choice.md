@@ -99,7 +99,7 @@ class PayloadAttributes:
     parent_beacon_block_root: Root
     slot_number: uint64
     target_gas_limit: uint64
-    # [New in Heze:EIP7805]
+    # [New in Heze:SIP7805]
     inclusion_list_transactions: Sequence[Transaction]
 ```
 
@@ -130,7 +130,7 @@ class Store:
     payload_data_availability_vote: Dict[Root, list[Optional[boolean]]] = field(
         default_factory=dict
     )
-    # [New in Heze:EIP7805]
+    # [New in Heze:SIP7805]
     payload_inclusion_list_satisfaction: Dict[Root, boolean] = field(default_factory=dict)
 ```
 
@@ -161,7 +161,7 @@ def get_forkchoice_store(anchor_state: BeaconState, anchor_block: BeaconBlock) -
         payloads={},
         payload_timeliness_vote={},
         payload_data_availability_vote={},
-        # [New in Heze:EIP7805]
+        # [New in Heze:SIP7805]
         payload_inclusion_list_satisfaction={},
     )
 ```
@@ -222,7 +222,7 @@ def should_extend_payload(store: Store, root: Root) -> bool:
     assert store.blocks[root].slot + 1 == get_current_slot(store)
     if not is_payload_verified(store, root):
         return False
-    # [New in Heze:EIP7805]
+    # [New in Heze:SIP7805]
     if not is_payload_inclusion_list_satisfied(store, root):
         return False
     proposer_root = store.proposer_boost_root
@@ -289,7 +289,7 @@ def on_execution_payload_envelope(
     # Verify the execution payload envelope
     verify_execution_payload_envelope(state, signed_envelope, EXECUTION_ENGINE)
 
-    # [New in Heze:EIP7805]
+    # [New in Heze:SIP7805]
     # Check if this payload satisfies the inclusion list constraints
     # If not, add this payload to the store as inclusion list constraints unsatisfied
     record_payload_inclusion_list_satisfaction(

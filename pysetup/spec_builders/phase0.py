@@ -29,13 +29,13 @@ from typing import (
     Any, Callable, Dict, DefaultDict, Set, Sequence, Tuple, Optional, TypeAlias, TypeVar, NamedTuple, Final
 )
 
-from eth_consensus_specs.utils.ssz.ssz_impl import hash_tree_root, copy, uint_to_bytes
-from eth_consensus_specs.utils.ssz.ssz_typing import (
+from sil_consensus_specs.utils.ssz.ssz_impl import hash_tree_root, copy, uint_to_bytes
+from sil_consensus_specs.utils.ssz.ssz_typing import (
     View, boolean, Container, List, Vector, uint8, uint32, uint64, uint256,
     Bytes1, Bytes4, Bytes32, Bytes48, Bytes96, Bitlist)
-from eth_consensus_specs.utils.ssz.ssz_typing import Bitvector  # noqa: F401
-from eth_consensus_specs.utils import bls
-from eth_consensus_specs.utils.hash_function import hash
+from sil_consensus_specs.utils.ssz.ssz_typing import Bitvector  # noqa: F401
+from sil_consensus_specs.utils import bls
+from sil_consensus_specs.utils.hash_function import hash
 """
 
     @classmethod
@@ -47,11 +47,11 @@ SSZObject = TypeVar('SSZObject', bound=View)
     @classmethod
     def sundry_functions(cls) -> str:
         return '''
-def get_eth1_data(block: Eth1Block) -> Eth1Data:
+def get_sil1_data(block: Sil1Block) -> Sil1Data:
     """
-    A stub function return mocking Eth1Data.
+    A stub function return mocking Sil1Data.
     """
-    return Eth1Data(
+    return Sil1Data(
         deposit_root=block.deposit_root,
         deposit_count=block.deposit_count,
         block_hash=hash_tree_root(block))

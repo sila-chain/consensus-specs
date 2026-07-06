@@ -17,8 +17,8 @@ on:
         description: Generate minimal preset
         default: true
         type: boolean
-      mainnet:
-        description: Generate mainnet preset
+      sila_mainnet:
+        description: Generate sila_mainnet preset
         default: false
         type: boolean
       phase0:
@@ -37,16 +37,16 @@ on:
         description: Generate capella tests
         default: true
         type: boolean
-      deneb:
-        description: Generate deneb tests
+      sila_deneb:
+        description: Generate sila_deneb tests
         default: true
         type: boolean
       electra:
         description: Generate electra tests
         default: true
         type: boolean
-      fulu:
-        description: Generate fulu tests
+      sila_fulu:
+        description: Generate sila_fulu tests
         default: true
         type: boolean
       gloas:
@@ -84,12 +84,12 @@ jobs:
 
           # Presets
           if [[ "${{ github.event_name }}" == "schedule" ]]; then
-            presets='["general","minimal","mainnet"]'
+            presets='["general","minimal","sila_mainnet"]'
           else
             selected=()
             [[ "${{ inputs.general }}" == "true" ]] && selected+=("general")
             [[ "${{ inputs.minimal }}" == "true" ]] && selected+=("minimal")
-            [[ "${{ inputs.mainnet }}" == "true" ]] && selected+=("mainnet")
+            [[ "${{ inputs.sila_mainnet }}" == "true" ]] && selected+=("sila_mainnet")
 
             if [[ ${#selected[@]} -eq 0 ]]; then
               echo "No presets selected." >&2
@@ -103,16 +103,16 @@ jobs:
 
           # Forks
           if [[ "${{ github.event_name }}" == "schedule" ]]; then
-            forks='["phase0","altair","bellatrix","capella","deneb","electra","fulu","gloas","heze"]'
+            forks='["phase0","altair","bellatrix","capella","sila_deneb","electra","sila_fulu","gloas","heze"]'
           else
             selected=()
             [[ "${{ inputs.phase0 }}" == "true" ]] && selected+=("phase0")
             [[ "${{ inputs.altair }}" == "true" ]] && selected+=("altair")
             [[ "${{ inputs.bellatrix }}" == "true" ]] && selected+=("bellatrix")
             [[ "${{ inputs.capella }}" == "true" ]] && selected+=("capella")
-            [[ "${{ inputs.deneb }}" == "true" ]] && selected+=("deneb")
+            [[ "${{ inputs.sila_deneb }}" == "true" ]] && selected+=("sila_deneb")
             [[ "${{ inputs.electra }}" == "true" ]] && selected+=("electra")
-            [[ "${{ inputs.fulu }}" == "true" ]] && selected+=("fulu")
+            [[ "${{ inputs.sila_fulu }}" == "true" ]] && selected+=("sila_fulu")
             [[ "${{ inputs.gloas }}" == "true" ]] && selected+=("gloas")
             [[ "${{ inputs.heze }}" == "true" ]] && selected+=("heze")
 
@@ -184,7 +184,7 @@ jobs:
     needs: [config, generate]
     if: >-
       contains(fromJson(needs.config.outputs.presets), 'minimal') ||
-      contains(fromJson(needs.config.outputs.presets), 'mainnet')
+      contains(fromJson(needs.config.outputs.presets), 'sila_mainnet')
     runs-on: ubuntu-latest
     permissions:
       actions: write

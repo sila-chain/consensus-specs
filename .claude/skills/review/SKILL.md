@@ -18,7 +18,7 @@ the change against them.
 ## Understand the intent
 
 Before judging a change, understand what it is meant to accomplish. Consult the
-pull request description, the linked issue, or the relevant EIP. Correctness is
+pull request description, the linked issue, or the relevant SIP. Correctness is
 relative to intent, so confirm that the change actually does what it sets out to
 do before looking for smaller issues.
 

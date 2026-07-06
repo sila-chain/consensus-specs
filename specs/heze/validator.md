@@ -166,7 +166,7 @@ def prepare_execution_payload(
         parent_beacon_block_root=hash_tree_root(state.latest_block_header),
         slot_number=state.slot,
         target_gas_limit=target_gas_limit,
-        # [New in Heze:EIP7805]
+        # [New in Heze:SIP7805]
         inclusion_list_transactions=get_inclusion_list_transactions(
             get_inclusion_list_store(), state, Slot(state.slot - 1), only_timely=False
         ),

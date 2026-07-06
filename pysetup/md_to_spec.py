@@ -235,7 +235,7 @@ class MarkdownToSpec:
             value_def = _parse_value(name, value)
             # It is a preset
             if name in self.preset:
-                if self.preset_name == "mainnet":
+                if self.preset_name == "sila_mainnet":
                     check_yaml_matches_spec(name, self.preset, value_def)
 
                 self.spec["preset_vars"][name] = VariableDefinition(
@@ -244,7 +244,7 @@ class MarkdownToSpec:
 
             # It is a config variable
             elif name in self.config:
-                if self.preset_name == "mainnet":
+                if self.preset_name == "sila_mainnet":
                     check_yaml_matches_spec(name, self.config, value_def)
 
                 config_value = self.config[name]
@@ -319,9 +319,9 @@ class MarkdownToSpec:
             list_of_records_name, type_map
         )
 
-        # For mainnet, check that the spec config & file config are the same
+        # For sila_mainnet, check that the spec config & file config are the same
         # For minimal, we expect this to be different; just use the file config
-        if self.preset_name == "mainnet":
+        if self.preset_name == "sila_mainnet":
             assert list_of_records_spec == list_of_records_config_file, (
                 f"list of records mismatch: {list_of_records_spec} vs {list_of_records_config_file}"
             )
@@ -416,7 +416,7 @@ class MarkdownToSpec:
         body = html.body.strip()
 
         # This comment marks that we should skip the next element
-        if body == "<!-- eth_consensus_specs: skip -->":
+        if body == "<!-- sil_consensus_specs: skip -->":
             self._skip_element()
 
         # Handle list-of-records tables
@@ -532,7 +532,7 @@ def _load_kzg_trusted_setups(preset_name: str) -> tuple[list[str], list[str], li
 
 ALL_KZG_SETUPS = {
     "minimal": _load_kzg_trusted_setups("minimal"),
-    "mainnet": _load_kzg_trusted_setups("mainnet"),
+    "sila_mainnet": _load_kzg_trusted_setups("sila_mainnet"),
 }
 
 

@@ -51,7 +51,7 @@
 ## Introduction
 
 This document specifies a fast block confirmation rule (a.k.a. FCR) for the
-Ethereum protocol.
+Sila protocol.
 
 The research paper for this rule can be found
 [here](https://arxiv.org/abs/2405.00549).

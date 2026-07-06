@@ -31,28 +31,28 @@ is extended to exchange [Gloas light client data](./sync-protocol.md).
 
 ###### Modified `light_client_finality_update`
 
-<!-- eth_consensus_specs: skip -->
+<!-- sil_consensus_specs: skip -->
 
 | `fork_version`                                         | Message SSZ type                    |
 | ------------------------------------------------------ | ----------------------------------- |
 | `GENESIS_FORK_VERSION`                                 | n/a                                 |
 | `ALTAIR_FORK_VERSION` through `BELLATRIX_FORK_VERSION` | `altair.LightClientFinalityUpdate`  |
 | `CAPELLA_FORK_VERSION`                                 | `capella.LightClientFinalityUpdate` |
-| `DENEB_FORK_VERSION`                                   | `deneb.LightClientFinalityUpdate`   |
-| `ELECTRA_FORK_VERSION` through `FULU_FORK_VERSION`     | `electra.LightClientFinalityUpdate` |
+| `SILA_DENEB_FORK_VERSION`                                   | `sila_deneb.LightClientFinalityUpdate`   |
+| `ELECTRA_FORK_VERSION` through `SILA_FULU_FORK_VERSION`     | `electra.LightClientFinalityUpdate` |
 | `GLOAS_FORK_VERSION` and later                         | `gloas.LightClientFinalityUpdate`   |
 
 ###### Modified `light_client_optimistic_update`
 
-<!-- eth_consensus_specs: skip -->
+<!-- sil_consensus_specs: skip -->
 
 | `fork_version`                                         | Message SSZ type                      |
 | ------------------------------------------------------ | ------------------------------------- |
 | `GENESIS_FORK_VERSION`                                 | n/a                                   |
 | `ALTAIR_FORK_VERSION` through `BELLATRIX_FORK_VERSION` | `altair.LightClientOptimisticUpdate`  |
 | `CAPELLA_FORK_VERSION`                                 | `capella.LightClientOptimisticUpdate` |
-| `DENEB_FORK_VERSION`                                   | `deneb.LightClientOptimisticUpdate`   |
-| `ELECTRA_FORK_VERSION` through `FULU_FORK_VERSION`     | `electra.LightClientOptimisticUpdate` |
+| `SILA_DENEB_FORK_VERSION`                                   | `sila_deneb.LightClientOptimisticUpdate`   |
+| `ELECTRA_FORK_VERSION` through `SILA_FULU_FORK_VERSION`     | `electra.LightClientOptimisticUpdate` |
 | `GLOAS_FORK_VERSION` and later                         | `gloas.LightClientOptimisticUpdate`   |
 
 ### The Req/Resp domain
@@ -61,52 +61,52 @@ is extended to exchange [Gloas light client data](./sync-protocol.md).
 
 ##### GetLightClientBootstrap
 
-<!-- eth_consensus_specs: skip -->
+<!-- sil_consensus_specs: skip -->
 
 | `fork_version`                                         | Response SSZ type              |
 | ------------------------------------------------------ | ------------------------------ |
 | `GENESIS_FORK_VERSION`                                 | n/a                            |
 | `ALTAIR_FORK_VERSION` through `BELLATRIX_FORK_VERSION` | `altair.LightClientBootstrap`  |
 | `CAPELLA_FORK_VERSION`                                 | `capella.LightClientBootstrap` |
-| `DENEB_FORK_VERSION`                                   | `deneb.LightClientBootstrap`   |
-| `ELECTRA_FORK_VERSION` through `FULU_FORK_VERSION`     | `electra.LightClientBootstrap` |
+| `SILA_DENEB_FORK_VERSION`                                   | `sila_deneb.LightClientBootstrap`   |
+| `ELECTRA_FORK_VERSION` through `SILA_FULU_FORK_VERSION`     | `electra.LightClientBootstrap` |
 | `GLOAS_FORK_VERSION` and later                         | `gloas.LightClientBootstrap`   |
 
 ##### LightClientUpdatesByRange
 
-<!-- eth_consensus_specs: skip -->
+<!-- sil_consensus_specs: skip -->
 
 | `fork_version`                                         | Response chunk SSZ type     |
 | ------------------------------------------------------ | --------------------------- |
 | `GENESIS_FORK_VERSION`                                 | n/a                         |
 | `ALTAIR_FORK_VERSION` through `BELLATRIX_FORK_VERSION` | `altair.LightClientUpdate`  |
 | `CAPELLA_FORK_VERSION`                                 | `capella.LightClientUpdate` |
-| `DENEB_FORK_VERSION`                                   | `deneb.LightClientUpdate`   |
-| `ELECTRA_FORK_VERSION` through `FULU_FORK_VERSION`     | `electra.LightClientUpdate` |
+| `SILA_DENEB_FORK_VERSION`                                   | `sila_deneb.LightClientUpdate`   |
+| `ELECTRA_FORK_VERSION` through `SILA_FULU_FORK_VERSION`     | `electra.LightClientUpdate` |
 | `GLOAS_FORK_VERSION` and later                         | `gloas.LightClientUpdate`   |
 
 ##### GetLightClientFinalityUpdate
 
-<!-- eth_consensus_specs: skip -->
+<!-- sil_consensus_specs: skip -->
 
 | `fork_version`                                         | Response SSZ type                   |
 | ------------------------------------------------------ | ----------------------------------- |
 | `GENESIS_FORK_VERSION`                                 | n/a                                 |
 | `ALTAIR_FORK_VERSION` through `BELLATRIX_FORK_VERSION` | `altair.LightClientFinalityUpdate`  |
 | `CAPELLA_FORK_VERSION`                                 | `capella.LightClientFinalityUpdate` |
-| `DENEB_FORK_VERSION`                                   | `deneb.LightClientFinalityUpdate`   |
-| `ELECTRA_FORK_VERSION` through `FULU_FORK_VERSION`     | `electra.LightClientFinalityUpdate` |
+| `SILA_DENEB_FORK_VERSION`                                   | `sila_deneb.LightClientFinalityUpdate`   |
+| `ELECTRA_FORK_VERSION` through `SILA_FULU_FORK_VERSION`     | `electra.LightClientFinalityUpdate` |
 | `GLOAS_FORK_VERSION` and later                         | `gloas.LightClientFinalityUpdate`   |
 
 ##### GetLightClientOptimisticUpdate
 
-<!-- eth_consensus_specs: skip -->
+<!-- sil_consensus_specs: skip -->
 
 | `fork_version`                                         | Response SSZ type                     |
 | ------------------------------------------------------ | ------------------------------------- |
 | `GENESIS_FORK_VERSION`                                 | n/a                                   |
 | `ALTAIR_FORK_VERSION` through `BELLATRIX_FORK_VERSION` | `altair.LightClientOptimisticUpdate`  |
 | `CAPELLA_FORK_VERSION`                                 | `capella.LightClientOptimisticUpdate` |
-| `DENEB_FORK_VERSION`                                   | `deneb.LightClientOptimisticUpdate`   |
-| `ELECTRA_FORK_VERSION` through `FULU_FORK_VERSION`     | `electra.LightClientOptimisticUpdate` |
+| `SILA_DENEB_FORK_VERSION`                                   | `sila_deneb.LightClientOptimisticUpdate`   |
+| `ELECTRA_FORK_VERSION` through `SILA_FULU_FORK_VERSION`     | `electra.LightClientOptimisticUpdate` |
 | `GLOAS_FORK_VERSION` and later                         | `gloas.LightClientOptimisticUpdate`   |

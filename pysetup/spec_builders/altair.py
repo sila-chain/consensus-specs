@@ -11,9 +11,9 @@ class AltairSpecBuilder(BaseSpecBuilder):
         return f"""
 from typing import NewType, Union as PyUnion
 
-from eth_consensus_specs.phase0 import {preset_name} as phase0
-from eth_consensus_specs.test.helpers.merkle import build_proof
-from eth_consensus_specs.utils.ssz.ssz_typing import Path
+from sil_consensus_specs.phase0 import {preset_name} as phase0
+from sil_consensus_specs.test.helpers.merkle import build_proof
+from sil_consensus_specs.utils.ssz.ssz_typing import Path
 """
 
     @classmethod
@@ -47,8 +47,8 @@ def compute_merkle_proof(object: SSZObject,
 
     @classmethod
     def implement_optimizations(cls, functions: dict[str, str]) -> dict[str, str]:
-        if "eth_aggregate_pubkeys" in functions:
-            functions["eth_aggregate_pubkeys"] = OPTIMIZED_BLS_AGGREGATE_PUBKEYS.strip()
+        if "sil_aggregate_pubkeys" in functions:
+            functions["sil_aggregate_pubkeys"] = OPTIMIZED_BLS_AGGREGATE_PUBKEYS.strip()
         return functions
 
     @classmethod
@@ -72,7 +72,7 @@ def compute_merkle_proof(object: SSZObject,
             "get_source_deltas",
             "get_target_deltas",
             "get_unslashed_attesting_indices",
-            "initialize_beacon_state_from_eth1",
+            "initialize_beacon_state_from_sil1",
             "is_valid_genesis_state",
             "process_participation_record_updates",
         }

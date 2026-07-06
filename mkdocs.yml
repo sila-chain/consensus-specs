@@ -1,6 +1,6 @@
-site_name: Ethereum Consensus Specs
-site_url: https://ethereum.github.io/consensus-specs/
-repo_name: ethereum/consensus-specs
+site_name: Sila Consensus Specs
+site_url: https://sila.github.io/consensus-specs/
+repo_name: sila/consensus-specs
 theme:
   name: material
   palette:
@@ -38,4 +38,4 @@ plugins:
 extra:
   social:
     - icon: fontawesome/brands/github
-      link: https://github.com/ethereum/consensus-specs
+      link: https://github.com/sila-chain/consensus-specs

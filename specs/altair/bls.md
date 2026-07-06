@@ -5,8 +5,8 @@
 - [Introduction](#introduction)
 - [Constants](#constants)
 - [Extensions](#extensions)
-  - [`eth_aggregate_pubkeys`](#eth_aggregate_pubkeys)
-  - [`eth_fast_aggregate_verify`](#eth_fast_aggregate_verify)
+  - [`sil_aggregate_pubkeys`](#sil_aggregate_pubkeys)
+  - [`sil_fast_aggregate_verify`](#sil_fast_aggregate_verify)
 
 <!-- mdformat-toc end -->
 
@@ -26,14 +26,14 @@ including type definitions.
 
 ## Extensions
 
-### `eth_aggregate_pubkeys`
+### `sil_aggregate_pubkeys`
 
 An additional function `AggregatePKs` is defined to extend the
 [IETF BLS signature draft standard v4](https://tools.ietf.org/html/draft-irtf-cfrg-bls-signature-04)
 specification referenced in the phase 0 document.
 
 ```python
-def eth_aggregate_pubkeys(pubkeys: Sequence[BLSPubkey]) -> BLSPubkey:
+def sil_aggregate_pubkeys(pubkeys: Sequence[BLSPubkey]) -> BLSPubkey:
     """
     Return the aggregate public key for the public keys in ``pubkeys``.
 
@@ -52,10 +52,10 @@ def eth_aggregate_pubkeys(pubkeys: Sequence[BLSPubkey]) -> BLSPubkey:
     return result
 ```
 
-### `eth_fast_aggregate_verify`
+### `sil_fast_aggregate_verify`
 
 ```python
-def eth_fast_aggregate_verify(
+def sil_fast_aggregate_verify(
     pubkeys: Sequence[BLSPubkey], message: Bytes32, signature: BLSSignature
 ) -> bool:
     """

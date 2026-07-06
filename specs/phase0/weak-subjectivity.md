@@ -26,8 +26,8 @@ Phase 0. This document is still a work-in-progress, and is subject to large
 changes. For more information about weak subjectivity and why it is required,
 please refer to:
 
-- [Weak Subjectivity in Ethereum Proof-of-Stake](https://notes.ethereum.org/@adiasg/weak-subjectvity-eth2)
-- [Proof of Stake: How I Learned to Love Weak Subjectivity](https://blog.ethereum.org/2014/11/25/proof-stake-learned-love-weak-subjectivity/)
+- [Weak Subjectivity in Sila Proof-of-Stake](https://notes.sila.org/@adiasg/weak-subjectvity-sil2)
+- [Proof of Stake: How I Learned to Love Weak Subjectivity](https://blog.sila.org/2014/11/25/proof-stake-learned-love-weak-subjectivity/)
 
 ## Prerequisites
 
@@ -45,7 +45,7 @@ This document uses data structures, constants, functions, and terminology from
 
 | Name          | Value           |
 | ------------- | --------------- |
-| `ETH_TO_GWEI` | `uint64(10**9)` |
+| `SIL_TO_GWEI` | `uint64(10**9)` |
 
 ## Configuration
 
@@ -85,7 +85,7 @@ computing fractions, and more details can be found
 *Note*: The calculations here use `Ether` instead of `Gwei`, because the large
 magnitude of balances in `Gwei` can cause an overflow while computing using
 `uint64` arithmetic operations. Using `Ether` reduces the magnitude of the
-multiplicative factors by an order of `ETH_TO_GWEI` (`= 10**9`) and avoid the
+multiplicative factors by an order of `SIL_TO_GWEI` (`= 10**9`) and avoid the
 scope for overflows in `uint64`.
 
 #### `compute_weak_subjectivity_period`
@@ -102,8 +102,8 @@ def compute_weak_subjectivity_period(state: BeaconState) -> uint64:
     """
     ws_period = MIN_VALIDATOR_WITHDRAWABILITY_DELAY
     N = len(get_active_validator_indices(state, get_current_epoch(state)))
-    t = get_total_active_balance(state) // N // ETH_TO_GWEI
-    T = MAX_EFFECTIVE_BALANCE // ETH_TO_GWEI
+    t = get_total_active_balance(state) // N // SIL_TO_GWEI
+    T = MAX_EFFECTIVE_BALANCE // SIL_TO_GWEI
     delta = get_validator_churn_limit(state)
     Delta = MAX_DEPOSITS * SLOTS_PER_EPOCH
     D = SAFETY_DECAY
@@ -123,7 +123,7 @@ def compute_weak_subjectivity_period(state: BeaconState) -> uint64:
 A brief reference for what these values look like in practice
 ([reference script](https://gist.github.com/adiasg/3aceab409b36aa9a9d9156c1baa3c248)):
 
-| Safety Decay | Avg. Val. Balance (ETH) | Val. Count | Weak Sub. Period (Epochs) |
+| Safety Decay | Avg. Val. Balance (SIL) | Val. Count | Weak Sub. Period (Epochs) |
 | ------------ | ----------------------- | ---------- | ------------------------- |
 | 10           | 28                      | 32768      | 504                       |
 | 10           | 28                      | 65536      | 752                       |

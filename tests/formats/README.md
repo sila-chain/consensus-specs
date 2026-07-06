@@ -219,12 +219,12 @@ bls_setting: int     -- optional, can have 3 different values:
 Included in every test case. Contains metadata that identifies the test vector:
 
 ```yaml
-preset: minimal      # Preset (mainnet, minimal, general)
+preset: minimal      # Preset (sila_mainnet, minimal, general)
 fork: phase0         # Fork/phase name
 runner: bls          # Test runner category
-handler: eth_aggregate_pubkeys  # Specific handler
+handler: sil_aggregate_pubkeys  # Specific handler
 suite: bls           # Test suite name
-case: eth_aggregate_pubkeys_valid_0  # Individual test case name
+case: sil_aggregate_pubkeys_valid_0  # Individual test case name
 ```
 
 This metadata duplicates what is already encoded in the directory path:
@@ -242,7 +242,7 @@ The runtime-configurables may be different for specific tests. When present,
 this replaces the default runtime-config that comes with the otherwise
 compile-time preset settings.
 
-The format matches that of the `mainnet_config.yaml` and `minimal_config.yaml`,
+The format matches that of the `sila_mainnet_config.yaml` and `minimal_config.yaml`,
 see the [`/configs`](../../configs/README.md#format) documentation. Config
 values that are introduced at a later fork may be omitted from tests of previous
 forks.

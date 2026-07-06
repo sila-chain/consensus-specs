@@ -71,18 +71,18 @@ use "New" prefixes, since everything there is considered new.
 
 ### Annotations
 
-Annotations such as `# [New in Deneb]` and `# [Modified in Deneb]` indicate that
+Annotations such as `# [New in SilaDeneb]` and `# [Modified in SilaDeneb]` indicate that
 a line or block of code has changed, where the name is the upgrade that
-introduced the change. If a change is associated with a particular EIP, the
-comment must include its number, as in `# [New in Deneb:EIP4844]`. For multiple
-EIPs, list them like `# [New in Deneb:EIP4844:EIP4788]`. These must be
+introduced the change. If a change is associated with a particular SIP, the
+comment must include its number, as in `# [New in SilaDeneb:SIP4844]`. For multiple
+SIPs, list them like `# [New in SilaDeneb:SIP4844:SIP4788]`. These must be
 standalone comments on their own line. Only "New" and "Modified" are allowed
-keywords. `# [Removed in Deneb]` is not allowed. Removed code within functions
+keywords. `# [Removed in SilaDeneb]` is not allowed. Removed code within functions
 is not typically documented, but removed structure fields or function parameters
 are, as shown below:
 
 ```python
-# [Modified in Deneb]
+# [Modified in SilaDeneb]
 # Removed `parameter`
 ```
 

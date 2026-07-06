@@ -2,7 +2,7 @@
 
 This is an accompanying document to
 [Altair -- The Beacon Chain](./beacon-chain.md), which describes the expected
-actions of a "validator" participating in the Ethereum proof-of-stake protocol.
+actions of a "validator" participating in the Sila proof-of-stake protocol.
 
 <!-- mdformat-toc start --slug=github --no-anchors --maxlevel=6 --minlevel=2 -->
 
@@ -48,10 +48,10 @@ actions of a "validator" participating in the Ethereum proof-of-stake protocol.
 ## Introduction
 
 This document represents the expected behavior of an "honest validator" with
-respect to the Altair upgrade of the Ethereum proof-of-stake protocol. It builds
+respect to the Altair upgrade of the Sila proof-of-stake protocol. It builds
 on the
 [previous document for the behavior of an "honest validator" from Phase 0](../phase0/validator.md)
-of the Ethereum proof-of-stake protocol. This previous document is referred to
+of the Sila proof-of-stake protocol. This previous document is referred to
 below as the "Phase 0 document".
 
 Altair introduces a new type of committee: the sync committee. Sync committees

@@ -1,7 +1,7 @@
 # KZG tests
 
 A test type for KZG libraries. Tests all the public interfaces that a KZG
-library required to implement EIP-4844 needs to provide, as defined in
+library required to implement SIP-4844 needs to provide, as defined in
 `polynomial-commitments.md`.
 
 We do not recommend rolling your own crypto or using an untested KZG library.

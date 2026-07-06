@@ -24,7 +24,7 @@ accompanying Gloas.
 
 ```python
 def get_node_for_root(block_root: Root) -> ForkChoiceNode:
-    # [Modified in Gloas:EIP7732]
+    # [Modified in Gloas:SIP7732]
     return ForkChoiceNode(root=block_root, payload_status=PAYLOAD_STATUS_PENDING)
 ```
 
@@ -37,6 +37,6 @@ def get_node_for_root(block_root: Root) -> ForkChoiceNode:
 ```python
 def get_safe_execution_block_hash(fcr_store: FastConfirmationStore) -> Hash32:
     safe_block = fcr_store.store.blocks[fcr_store.confirmed_root]
-    # [Modified in Gloas:EIP7732]
+    # [Modified in Gloas:SIP7732]
     return safe_block.body.signed_execution_payload_bid.message.parent_block_hash
 ```

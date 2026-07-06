@@ -271,12 +271,12 @@ details on how to handle transitioning gossip topics for Capella.
 
 ##### BeaconBlocksByRange v2
 
-**Protocol ID:** `/eth2/beacon_chain/req/beacon_blocks_by_range/2/`
+**Protocol ID:** `/sil2/beacon_chain/req/beacon_blocks_by_range/2/`
 
 The Capella fork-digest is introduced to the `context` enum to specify Capella
 block type.
 
-<!-- eth_consensus_specs: skip -->
+<!-- sil_consensus_specs: skip -->
 
 | `fork_version`           | Chunk SSZ type                |
 | ------------------------ | ----------------------------- |
@@ -287,12 +287,12 @@ block type.
 
 ##### BeaconBlocksByRoot v2
 
-**Protocol ID:** `/eth2/beacon_chain/req/beacon_blocks_by_root/2/`
+**Protocol ID:** `/sil2/beacon_chain/req/beacon_blocks_by_root/2/`
 
 The Capella fork-digest is introduced to the `context` enum to specify Capella
 block type.
 
-<!-- eth_consensus_specs: skip -->
+<!-- sil_consensus_specs: skip -->
 
 | `fork_version`           | Chunk SSZ type                |
 | ------------------------ | ----------------------------- |

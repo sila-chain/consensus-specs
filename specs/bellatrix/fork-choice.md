@@ -75,8 +75,8 @@ def notify_forkchoice_updated(
 *Note*: The `(head_block_hash, finalized_block_hash)` values of the
 `notify_forkchoice_updated` function call maps on the `POS_FORKCHOICE_UPDATED`
 event defined in the
-[EIP-3675](https://eips.ethereum.org/EIPS/eip-3675#definitions). As per
-EIP-3675, before a post-transition block is finalized,
+[SIP-3675](https://sips.sila.org/SIPS/sip-3675#definitions). As per
+SIP-3675, before a post-transition block is finalized,
 `notify_forkchoice_updated` MUST be called with
 `finalized_block_hash = Hash32()`.
 
@@ -124,7 +124,7 @@ Let `get_pow_block(block_hash: Hash32) -> Optional[PowBlock]` be the function
 that given the hash of the PoW block returns its data. It may result in `None`
 if the requested block is not yet available.
 
-*Note*: The `eth_getBlockByHash` JSON-RPC method may be used to pull this
+*Note*: The `sil_getBlockByHash` JSON-RPC method may be used to pull this
 information from an execution client.
 
 ### `is_valid_terminal_pow_block`

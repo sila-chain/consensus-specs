@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import shutil
 
-from eth_consensus_specs.test.utils.dumper import Dumper
+from sil_consensus_specs.test.utils.dumper import Dumper
 from tests.generators.compliance_runners.gen_base.output import dump_test_case_result
 
 

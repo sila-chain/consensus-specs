@@ -9,14 +9,14 @@ class GloasSpecBuilder(BaseSpecBuilder):
     @classmethod
     def imports(cls, preset_name: str):
         return f"""
-from eth_consensus_specs.fulu import {preset_name} as fulu
+from sil_consensus_specs.sila_fulu import {preset_name} as sila_fulu
 """
 
     @classmethod
     def hardcoded_ssz_dep_constants(cls) -> dict[str, str]:
         return {
             "EXECUTION_BLOCK_HASH_GINDEX": "GeneralizedIndex(412)",
-            "EXECUTION_BLOCK_HASH_GINDEX_DENEB": "GeneralizedIndex(812)",
+            "EXECUTION_BLOCK_HASH_GINDEX_SILA_DENEB": "GeneralizedIndex(812)",
             "EXECUTION_BLOCK_HASH_GINDEX_GLOAS": "GeneralizedIndex(832)",
         }
 
@@ -43,7 +43,7 @@ from eth_consensus_specs.fulu import {preset_name} as fulu
             "initialize_proposer_lookahead",
             "process_execution_payload",
             "retrieve_column_sidecars",
-            "upgrade_to_fulu",
+            "upgrade_to_sila_fulu",
             "verify_partial_data_column_header_inclusion_proof",
             # TODO(jtraglia): Temporarily deprecate these until we update them for Gloas.
             "validate_data_column_sidecar_gossip",

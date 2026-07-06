@@ -123,20 +123,20 @@
 
 Gloas is a consensus-layer upgrade containing a number of features. Including:
 
-- [EIP-7732](https://github.com/ethereum/EIPs/blob/c36a2e58a4496ed21bef6b1c97505b03fd159f0a/EIPS/eip-7732.md):
+- [SIP-7732](https://github.com/sila-chain/SIPs/blob/c36a2e58a4496ed21bef6b1c97505b03fd159f0a/SIPS/sip-7732.md):
   Enshrined Proposer-Builder Separation
-- [EIP-7843](https://github.com/ethereum/EIPs/blob/c3bfd4ba41cf0fcbfe8c404f33ba89f5174971e0/EIPS/eip-7843.md):
+- [SIP-7843](https://github.com/sila-chain/SIPs/blob/c3bfd4ba41cf0fcbfe8c404f33ba89f5174971e0/SIPS/sip-7843.md):
   SLOTNUM opcode
-- [EIP-8045](https://github.com/ethereum/EIPs/blob/414a8404198c5afaa3cfed10a385a9aae1dfaae3/EIPS/eip-8045.md):
+- [SIP-8045](https://github.com/sila-chain/SIPs/blob/414a8404198c5afaa3cfed10a385a9aae1dfaae3/SIPS/sip-8045.md):
   Exclude slashed validators from proposing
-- [EIP-8061](https://github.com/ethereum/EIPs/blob/01f15c37c64114c478cb1136e0a6966084e4db14/EIPS/eip-8061.md):
+- [SIP-8061](https://github.com/sila-chain/SIPs/blob/01f15c37c64114c478cb1136e0a6966084e4db14/SIPS/sip-8061.md):
   Increase exit and consolidation churn
-- [EIP-8282](https://github.com/ethereum/EIPs/blob/de4c6f02c7bec4686762c55f8ab6abcf97a77d7d/EIPS/eip-8282.md):
+- [SIP-8282](https://github.com/sila-chain/SIPs/blob/de4c6f02c7bec4686762c55f8ab6abcf97a77d7d/SIPS/sip-8282.md):
   Builder Execution Requests
 
-*Note*: These EIPs are in draft and may change or be removed. Each link above
+*Note*: These SIPs are in draft and may change or be removed. Each link above
 points to the specific version targeted by this specification, which may differ
-from the latest published version of the EIPs.
+from the latest published version of the SIPs.
 
 ## Types
 
@@ -391,7 +391,7 @@ class SignedExecutionPayloadEnvelope(Container):
 ```python
 class BeaconBlockBody(Container):
     randao_reveal: BLSSignature
-    eth1_data: Eth1Data
+    sil1_data: Sil1Data
     graffiti: Bytes32
     proposer_slashings: List[ProposerSlashing, MAX_PROPOSER_SLASHINGS]
     attester_slashings: List[AttesterSlashing, MAX_ATTESTER_SLASHINGS_ELECTRA]
@@ -399,18 +399,18 @@ class BeaconBlockBody(Container):
     deposits: List[Deposit, MAX_DEPOSITS]
     voluntary_exits: List[SignedVoluntaryExit, MAX_VOLUNTARY_EXITS]
     sync_aggregate: SyncAggregate
-    # [Modified in Gloas:EIP7732]
+    # [Modified in Gloas:SIP7732]
     # Removed `execution_payload`
     bls_to_execution_changes: List[SignedBLSToExecutionChange, MAX_BLS_TO_EXECUTION_CHANGES]
-    # [Modified in Gloas:EIP7732]
+    # [Modified in Gloas:SIP7732]
     # Removed `blob_kzg_commitments`
-    # [Modified in Gloas:EIP7732]
+    # [Modified in Gloas:SIP7732]
     # Removed `execution_requests`
-    # [New in Gloas:EIP7732]
+    # [New in Gloas:SIP7732]
     signed_execution_payload_bid: SignedExecutionPayloadBid
-    # [New in Gloas:EIP7732]
+    # [New in Gloas:SIP7732]
     payload_attestations: List[PayloadAttestation, MAX_PAYLOAD_ATTESTATIONS]
-    # [New in Gloas:EIP7732]
+    # [New in Gloas:SIP7732]
     parent_execution_requests: ExecutionRequests
 ```
 
@@ -426,9 +426,9 @@ class BeaconState(Container):
     block_roots: Vector[Root, SLOTS_PER_HISTORICAL_ROOT]
     state_roots: Vector[Root, SLOTS_PER_HISTORICAL_ROOT]
     historical_roots: List[Root, HISTORICAL_ROOTS_LIMIT]
-    eth1_data: Eth1Data
-    eth1_data_votes: List[Eth1Data, EPOCHS_PER_ETH1_VOTING_PERIOD * SLOTS_PER_EPOCH]
-    eth1_deposit_index: uint64
+    sil1_data: Sil1Data
+    sil1_data_votes: List[Sil1Data, EPOCHS_PER_SIL1_VOTING_PERIOD * SLOTS_PER_EPOCH]
+    sil1_deposit_index: uint64
     validators: List[Validator, VALIDATOR_REGISTRY_LIMIT]
     balances: List[Gwei, VALIDATOR_REGISTRY_LIMIT]
     randao_mixes: Vector[Bytes32, EPOCHS_PER_HISTORICAL_VECTOR]
@@ -442,9 +442,9 @@ class BeaconState(Container):
     inactivity_scores: List[uint64, VALIDATOR_REGISTRY_LIMIT]
     current_sync_committee: SyncCommittee
     next_sync_committee: SyncCommittee
-    # [Modified in Gloas:EIP7732]
+    # [Modified in Gloas:SIP7732]
     # Removed `latest_execution_payload_header`
-    # [New in Gloas:EIP7732]
+    # [New in Gloas:SIP7732]
     latest_block_hash: Hash32
     next_withdrawal_index: WithdrawalIndex
     next_withdrawal_validator_index: ValidatorIndex
@@ -459,21 +459,21 @@ class BeaconState(Container):
     pending_partial_withdrawals: List[PendingPartialWithdrawal, PENDING_PARTIAL_WITHDRAWALS_LIMIT]
     pending_consolidations: List[PendingConsolidation, PENDING_CONSOLIDATIONS_LIMIT]
     proposer_lookahead: Vector[ValidatorIndex, (MIN_SEED_LOOKAHEAD + 1) * SLOTS_PER_EPOCH]
-    # [New in Gloas:EIP7732]
+    # [New in Gloas:SIP7732]
     builders: List[Builder, BUILDER_REGISTRY_LIMIT]
-    # [New in Gloas:EIP7732]
+    # [New in Gloas:SIP7732]
     next_withdrawal_builder_index: BuilderIndex
-    # [New in Gloas:EIP7732]
+    # [New in Gloas:SIP7732]
     execution_payload_availability: Bitvector[SLOTS_PER_HISTORICAL_ROOT]
-    # [New in Gloas:EIP7732]
+    # [New in Gloas:SIP7732]
     builder_pending_payments: Vector[BuilderPendingPayment, 2 * SLOTS_PER_EPOCH]
-    # [New in Gloas:EIP7732]
+    # [New in Gloas:SIP7732]
     builder_pending_withdrawals: List[BuilderPendingWithdrawal, BUILDER_PENDING_WITHDRAWALS_LIMIT]
-    # [New in Gloas:EIP7732]
+    # [New in Gloas:SIP7732]
     latest_execution_payload_bid: ExecutionPayloadBid
-    # [New in Gloas:EIP7732]
+    # [New in Gloas:SIP7732]
     payload_expected_withdrawals: List[Withdrawal, MAX_WITHDRAWALS_PER_PAYLOAD]
-    # [New in Gloas:EIP7732]
+    # [New in Gloas:SIP7732]
     ptc_window: Vector[Vector[ValidatorIndex, PTC_SIZE], (2 + MIN_SEED_LOOKAHEAD) * SLOTS_PER_EPOCH]
 ```
 
@@ -484,7 +484,7 @@ class ExecutionPayload(Container):
     parent_hash: Hash32
     fee_recipient: ExecutionAddress
     state_root: Bytes32
-    receipts_root: Bytes32
+    recsipts_root: Bytes32
     logs_bloom: ByteVector[BYTES_PER_LOGS_BLOOM]
     prev_randao: Bytes32
     block_number: uint64
@@ -498,9 +498,9 @@ class ExecutionPayload(Container):
     withdrawals: List[Withdrawal, MAX_WITHDRAWALS_PER_PAYLOAD]
     blob_gas_used: uint64
     excess_blob_gas: uint64
-    # [New in Gloas:EIP7928]
+    # [New in Gloas:SIP7928]
     block_access_list: BlockAccessList
-    # [New in Gloas:EIP7843]
+    # [New in Gloas:SIP7843]
     slot_number: uint64
 ```
 
@@ -511,9 +511,9 @@ class ExecutionRequests(Container):
     deposits: List[DepositRequest, MAX_DEPOSIT_REQUESTS_PER_PAYLOAD]
     withdrawals: List[WithdrawalRequest, MAX_WITHDRAWAL_REQUESTS_PER_PAYLOAD]
     consolidations: List[ConsolidationRequest, MAX_CONSOLIDATION_REQUESTS_PER_PAYLOAD]
-    # [New in Gloas:EIP8282]
+    # [New in Gloas:SIP8282]
     builder_deposits: List[BuilderDepositRequest, MAX_BUILDER_DEPOSIT_REQUESTS_PER_PAYLOAD]
-    # [New in Gloas:EIP8282]
+    # [New in Gloas:SIP8282]
     builder_exits: List[BuilderExitRequest, MAX_BUILDER_EXIT_REQUESTS_PER_PAYLOAD]
 ```
 
@@ -527,10 +527,10 @@ class ExecutionRequests(Container):
 @dataclass
 class ExpectedWithdrawals:
     withdrawals: Sequence[Withdrawal]
-    # [New in Gloas:EIP7732]
+    # [New in Gloas:SIP7732]
     processed_builder_withdrawals_count: uint64
     processed_partial_withdrawals_count: uint64
-    # [New in Gloas:EIP7732]
+    # [New in Gloas:SIP7732]
     processed_builders_sweep_count: uint64
     processed_sweep_withdrawals_count: uint64
 ```
@@ -731,7 +731,7 @@ def compute_proposer_indices(
     """
     start_slot = compute_start_slot_at_epoch(epoch)
     seeds = [hash(seed + uint_to_bytes(Slot(start_slot + i))) for i in range(SLOTS_PER_EPOCH)]
-    # [Modified in Gloas:EIP7732]
+    # [Modified in Gloas:SIP7732]
     return [
         compute_balance_weighted_selection(state, indices, seed, size=1, shuffle_indices=True)[0]
         for seed in seeds
@@ -773,7 +773,7 @@ def get_beacon_proposer_indices(
     """
     Return the proposer indices for the given ``epoch``.
     """
-    # [Modified in Gloas:EIP8045]
+    # [Modified in Gloas:SIP8045]
     indices = [
         index
         for index in get_active_validator_indices(state, epoch)
@@ -826,7 +826,7 @@ def get_attestation_participation_flag_indices(
     target_root_matches = data.target.root == target_root
     is_matching_target = is_matching_source and target_root_matches
 
-    # [New in Gloas:EIP7732]
+    # [New in Gloas:SIP7732]
     if is_attestation_same_slot(state, data):
         assert data.index == 0
         payload_matches = True
@@ -838,7 +838,7 @@ def get_attestation_participation_flag_indices(
     # Matching head
     head_root = get_block_root_at_slot(state, data.slot)
     head_root_matches = data.beacon_block_root == head_root
-    # [Modified in Gloas:EIP7732]
+    # [Modified in Gloas:SIP7732]
     is_matching_head = is_matching_target and head_root_matches and payload_matches
 
     assert is_matching_source
@@ -943,7 +943,7 @@ balance using `CONSOLIDATION_CHURN_LIMIT_QUOTIENT`.
 ```python
 def get_consolidation_churn_limit(state: BeaconState) -> Gwei:
     """
-    Per-epoch churn limit reserved for consolidations (EIP-7521).
+    Per-epoch churn limit reserved for consolidations (SIP-7521).
     Derived from total active balance and rounded to
     ``EFFECTIVE_BALANCE_INCREMENT``.
     """
@@ -961,7 +961,7 @@ def compute_exit_epoch_and_update_churn(state: BeaconState, exit_balance: Gwei) 
     earliest_exit_epoch = max(
         state.earliest_exit_epoch, compute_activation_exit_epoch(get_current_epoch(state))
     )
-    # [Modified in Gloas:EIP8061]
+    # [Modified in Gloas:SIP8061]
     per_epoch_churn = get_exit_churn_limit(state)
     # New epoch for exits.
     if state.earliest_exit_epoch < earliest_exit_epoch:
@@ -1042,7 +1042,7 @@ def process_slot(state: BeaconState) -> None:
     # Cache block root
     previous_block_root = hash_tree_root(state.latest_block_header)
     state.block_roots[state.slot % SLOTS_PER_HISTORICAL_ROOT] = previous_block_root
-    # [New in Gloas:EIP7732]
+    # [New in Gloas:SIP7732]
     # Unset the next payload availability
     state.execution_payload_availability[(state.slot + 1) % SLOTS_PER_HISTORICAL_ROOT] = 0b0
 ```
@@ -1061,11 +1061,11 @@ def process_epoch(state: BeaconState) -> None:
     process_rewards_and_penalties(state)
     process_registry_updates(state)
     process_slashings(state)
-    process_eth1_data_reset(state)
-    # [Modified in Gloas:EIP8061]
+    process_sil1_data_reset(state)
+    # [Modified in Gloas:SIP8061]
     process_pending_deposits(state)
     process_pending_consolidations(state)
-    # [New in Gloas:EIP7732]
+    # [New in Gloas:SIP7732]
     process_builder_pending_payments(state)
     process_effective_balance_updates(state)
     process_slashings_reset(state)
@@ -1074,7 +1074,7 @@ def process_epoch(state: BeaconState) -> None:
     process_participation_flag_updates(state)
     process_sync_committee_updates(state)
     process_proposer_lookahead(state)
-    # [New in Gloas:EIP7732]
+    # [New in Gloas:SIP7732]
     process_ptc_window(state)
 ```
 
@@ -1083,7 +1083,7 @@ def process_epoch(state: BeaconState) -> None:
 ```python
 def process_pending_deposits(state: BeaconState) -> None:
     next_epoch = Epoch(get_current_epoch(state) + 1)
-    # [Modified in Gloas:EIP8061]
+    # [Modified in Gloas:SIP8061]
     # Deposits still consume the activation-only churn budget in Gloas.
     available_for_processing = state.deposit_balance_to_consume + get_activation_churn_limit(state)
     processed_amount = 0
@@ -1176,18 +1176,18 @@ def process_ptc_window(state: BeaconState) -> None:
 
 ```python
 def process_block(state: BeaconState, block: BeaconBlock) -> None:
-    # [New in Gloas:EIP7732]
+    # [New in Gloas:SIP7732]
     process_parent_execution_payload(state, block)
     process_block_header(state, block)
-    # [Modified in Gloas:EIP7732]
+    # [Modified in Gloas:SIP7732]
     process_withdrawals(state)
-    # [Modified in Gloas:EIP7732]
+    # [Modified in Gloas:SIP7732]
     # Removed `process_execution_payload`
-    # [New in Gloas:EIP7732]
+    # [New in Gloas:SIP7732]
     process_execution_payload_bid(state, block.body.signed_execution_payload_bid)
     process_randao(state, block.body)
-    process_eth1_data(state, block.body)
-    # [Modified in Gloas:EIP7732]
+    process_sil1_data(state, block.body)
+    # [Modified in Gloas:SIP7732]
     process_operations(state, block.body)
     process_sync_aggregate(state, block.body.sync_aggregate)
 ```
@@ -1219,9 +1219,9 @@ def apply_parent_execution_payload(
     for_ops(requests.deposits, process_deposit_request)
     for_ops(requests.withdrawals, process_withdrawal_request)
     for_ops(requests.consolidations, process_consolidation_request)
-    # [New in Gloas:EIP8282]
+    # [New in Gloas:SIP8282]
     for_ops(requests.builder_deposits, process_builder_deposit_request)
-    # [New in Gloas:EIP8282]
+    # [New in Gloas:SIP8282]
     for_ops(requests.builder_exits, process_builder_exit_request)
 
     # Settle the builder payment
@@ -1353,7 +1353,7 @@ def get_expected_withdrawals(state: BeaconState) -> ExpectedWithdrawals:
     withdrawal_index = state.next_withdrawal_index
     withdrawals: List[Withdrawal] = []
 
-    # [New in Gloas:EIP7732]
+    # [New in Gloas:SIP7732]
     # Get builder withdrawals
     builder_withdrawals, withdrawal_index, processed_builder_withdrawals_count = (
         get_builder_withdrawals(state, withdrawal_index, withdrawals)
@@ -1366,7 +1366,7 @@ def get_expected_withdrawals(state: BeaconState) -> ExpectedWithdrawals:
     )
     withdrawals.extend(partial_withdrawals)
 
-    # [New in Gloas:EIP7732]
+    # [New in Gloas:SIP7732]
     # Get builders sweep withdrawals
     builders_sweep_withdrawals, withdrawal_index, processed_builders_sweep_count = (
         get_builders_sweep_withdrawals(state, withdrawal_index, withdrawals)
@@ -1381,10 +1381,10 @@ def get_expected_withdrawals(state: BeaconState) -> ExpectedWithdrawals:
 
     return ExpectedWithdrawals(
         withdrawals,
-        # [New in Gloas:EIP7732]
+        # [New in Gloas:SIP7732]
         processed_builder_withdrawals_count,
         processed_partial_withdrawals_count,
-        # [New in Gloas:EIP7732]
+        # [New in Gloas:SIP7732]
         processed_builders_sweep_count,
         processed_validators_sweep_count,
     )
@@ -1395,7 +1395,7 @@ def get_expected_withdrawals(state: BeaconState) -> ExpectedWithdrawals:
 ```python
 def apply_withdrawals(state: BeaconState, withdrawals: Sequence[Withdrawal]) -> None:
     for withdrawal in withdrawals:
-        # [Modified in Gloas:EIP7732]
+        # [Modified in Gloas:SIP7732]
         if is_builder_index(withdrawal.validator_index):
             builder_index = convert_validator_index_to_builder_index(withdrawal.validator_index)
             builder_balance = state.builders[builder_index].balance
@@ -1464,10 +1464,10 @@ pre-deduction balances by adding back `state.payload_expected_withdrawals`.
 ```python
 def process_withdrawals(
     state: BeaconState,
-    # [Modified in Gloas:EIP7732]
+    # [Modified in Gloas:SIP7732]
     # Removed `payload`
 ) -> None:
-    # [New in Gloas:EIP7732]
+    # [New in Gloas:SIP7732]
     # Return early if the parent block is empty
     if state.latest_block_hash != state.latest_execution_payload_bid.block_hash:
         return
@@ -1480,12 +1480,12 @@ def process_withdrawals(
 
     # Update withdrawals fields in the state
     update_next_withdrawal_index(state, expected.withdrawals)
-    # [New in Gloas:EIP7732]
+    # [New in Gloas:SIP7732]
     update_payload_expected_withdrawals(state, expected.withdrawals)
-    # [New in Gloas:EIP7732]
+    # [New in Gloas:SIP7732]
     update_builder_pending_withdrawals(state, expected.processed_builder_withdrawals_count)
     update_pending_partial_withdrawals(state, expected.processed_partial_withdrawals_count)
-    # [New in Gloas:EIP7732]
+    # [New in Gloas:SIP7732]
     update_next_withdrawal_builder_index(state, expected.processed_builders_sweep_count)
     update_next_withdrawal_validator_index(state, expected.withdrawals)
 ```
@@ -1507,9 +1507,9 @@ def get_execution_requests_list(execution_requests: ExecutionRequests) -> Sequen
         (DEPOSIT_REQUEST_TYPE, execution_requests.deposits),
         (WITHDRAWAL_REQUEST_TYPE, execution_requests.withdrawals),
         (CONSOLIDATION_REQUEST_TYPE, execution_requests.consolidations),
-        # [New in Gloas:EIP8282]
+        # [New in Gloas:SIP8282]
         (BUILDER_DEPOSIT_REQUEST_TYPE, execution_requests.builder_deposits),
-        # [New in Gloas:EIP8282]
+        # [New in Gloas:SIP8282]
         (BUILDER_EXIT_REQUEST_TYPE, execution_requests.builder_exits),
     ]
 
@@ -1608,20 +1608,20 @@ def process_operations(state: BeaconState, body: BeaconBlockBody) -> None:
         for operation in operations:
             fn(state, operation)
 
-    # [Modified in Gloas:EIP7732]
+    # [Modified in Gloas:SIP7732]
     for_ops(body.proposer_slashings, process_proposer_slashing)
     for_ops(body.attester_slashings, process_attester_slashing)
-    # [Modified in Gloas:EIP7732]
+    # [Modified in Gloas:SIP7732]
     for_ops(body.attestations, process_attestation)
     for_ops(body.voluntary_exits, process_voluntary_exit)
     for_ops(body.bls_to_execution_changes, process_bls_to_execution_change)
-    # [Modified in Gloas:EIP7732]
+    # [Modified in Gloas:SIP7732]
     # Removed `process_deposit_request`
-    # [Modified in Gloas:EIP7732]
+    # [Modified in Gloas:SIP7732]
     # Removed `process_withdrawal_request`
-    # [Modified in Gloas:EIP7732]
+    # [Modified in Gloas:SIP7732]
     # Removed `process_consolidation_request`
-    # [New in Gloas:EIP7732]
+    # [New in Gloas:SIP7732]
     for_ops(body.payload_attestations, process_payload_attestation)
 ```
 
@@ -1754,7 +1754,7 @@ def process_attestation(state: BeaconState, attestation: Attestation) -> None:
     assert data.target.epoch == compute_epoch_at_slot(data.slot)
     assert data.slot + MIN_ATTESTATION_INCLUSION_DELAY <= state.slot
 
-    # [Modified in Gloas:EIP7732]
+    # [Modified in Gloas:SIP7732]
     assert data.index < 2
     committee_indices = get_committee_indices(attestation.committee_bits)
     committee_offset = 0
@@ -1780,7 +1780,7 @@ def process_attestation(state: BeaconState, attestation: Attestation) -> None:
     # Verify signature
     assert is_valid_indexed_attestation(state, get_indexed_attestation(state, attestation))
 
-    # [Modified in Gloas:EIP7732]
+    # [Modified in Gloas:SIP7732]
     if data.target.epoch == get_current_epoch(state):
         current_epoch_target = True
         epoch_participation = state.current_epoch_participation
@@ -1792,7 +1792,7 @@ def process_attestation(state: BeaconState, attestation: Attestation) -> None:
 
     proposer_reward_numerator = 0
     for index in get_attesting_indices(state, attestation):
-        # [New in Gloas:EIP7732]
+        # [New in Gloas:SIP7732]
         # For same-slot attestations, check if we are setting any new flags.
         # If we are, this validator has not contributed to this slot's quorum yet.
         will_set_new_flag = False
@@ -1803,10 +1803,10 @@ def process_attestation(state: BeaconState, attestation: Attestation) -> None:
             ):
                 epoch_participation[index] = add_flag(epoch_participation[index], flag_index)
                 proposer_reward_numerator += get_base_reward(state, index) * weight
-                # [New in Gloas:EIP7732]
+                # [New in Gloas:SIP7732]
                 will_set_new_flag = True
 
-        # [New in Gloas:EIP7732]
+        # [New in Gloas:SIP7732]
         # Add weight for same-slot attestations when any new flag is set.
         # This ensures each validator contributes exactly once per slot.
         if (
@@ -1823,7 +1823,7 @@ def process_attestation(state: BeaconState, attestation: Attestation) -> None:
     proposer_reward = Gwei(proposer_reward_numerator // proposer_reward_denominator)
     increase_balance(state, get_beacon_proposer_index(state), proposer_reward)
 
-    # [New in Gloas:EIP7732]
+    # [New in Gloas:SIP7732]
     # Update builder payment weight
     if current_epoch_target:
         state.builder_pending_payments[SLOTS_PER_EPOCH + data.slot % SLOTS_PER_EPOCH] = payment
@@ -1876,7 +1876,7 @@ def process_proposer_slashing(state: BeaconState, proposer_slashing: ProposerSla
         signing_root = compute_signing_root(signed_header.message, domain)
         assert bls.Verify(proposer.pubkey, signing_root, signed_header.signature)
 
-    # [New in Gloas:EIP7732]
+    # [New in Gloas:SIP7732]
     # Remove the BuilderPendingPayment corresponding to this proposal if it is
     # still in the 2-epoch window. Only clear it when the slashed validator is
     # the proposer associated with the payment; otherwise an unrelated same-slot

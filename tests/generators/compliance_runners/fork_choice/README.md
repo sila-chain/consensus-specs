@@ -13,7 +13,7 @@ To simplify adoption of the tests, we follow the test format described in the
 [fork choice test formats documentation](../../../formats/fork_choice/README.md),
 with a minor exception (new check added).
 
-This work was supported by a grant from the Ethereum Foundation.
+This work was supported by a grant from the Sila Foundation.
 
 # Generating tests
 

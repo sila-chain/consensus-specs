@@ -12,41 +12,41 @@ categories:
   - title: Capella
     when:
       label: capella
-  - title: Deneb
+  - title: SilaDeneb
     when:
-      label: deneb
+      label: sila_deneb
   - title: Electra
     when:
       label: electra
-  - title: Fulu
+  - title: SilaFulu
     when:
       labels:
-        - fulu
-        - eip7594
+        - sila_fulu
+        - sip7594
   - title: Gloas
     when:
       labels:
         - gloas
-        - eip7732
-        - eip7843
-        - eip7928
-        - eip8061
+        - sip7732
+        - sip7843
+        - sip7928
+        - sip8061
   - title: Heze
     when:
       labels:
         - heze
-        - eip7805
+        - sip7805
 
   # Features
-  - title: EIP-6914
+  - title: SIP-6914
     when:
-      label: eip6914
-  - title: EIP-8025
+      label: sip6914
+  - title: SIP-8025
     when:
-      label: eip8025
-  - title: EIP-8148
+      label: sip8025
+  - title: SIP-8148
     when:
-      label: eip8148
+      label: sip8148
 
   # Testing
   - title: Testing

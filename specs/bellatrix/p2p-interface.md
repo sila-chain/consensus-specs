@@ -228,12 +228,12 @@ down-scoring or disconnection.
 
 ##### BeaconBlocksByRange v2
 
-**Protocol ID:** `/eth2/beacon_chain/req/beacon_blocks_by_range/2/`
+**Protocol ID:** `/sil2/beacon_chain/req/beacon_blocks_by_range/2/`
 
 Request and Response remain unchanged. Bellatrix fork-digest is introduced to
 the `context` enum to specify Bellatrix block type.
 
-<!-- eth_consensus_specs: skip -->
+<!-- sil_consensus_specs: skip -->
 
 | `fork_version`           | Chunk SSZ type                |
 | ------------------------ | ----------------------------- |
@@ -243,12 +243,12 @@ the `context` enum to specify Bellatrix block type.
 
 ##### BeaconBlocksByRoot v2
 
-**Protocol ID:** `/eth2/beacon_chain/req/beacon_blocks_by_root/2/`
+**Protocol ID:** `/sil2/beacon_chain/req/beacon_blocks_by_root/2/`
 
 Request and Response remain unchanged. Bellatrix fork-digest is introduced to
 the `context` enum to specify Bellatrix block type.
 
-<!-- eth_consensus_specs: skip -->
+<!-- sil_consensus_specs: skip -->
 
 | `fork_version`           | Chunk SSZ type                |
 | ------------------------ | ----------------------------- |
@@ -265,10 +265,10 @@ the `context` enum to specify Bellatrix block type.
 With the addition of `ExecutionPayload` to `BeaconBlock`s, there is a dynamic
 field -- `transactions` -- which can validly exceed the `MAX_PAYLOAD_SIZE` limit
 (1 MiB) put in place at Phase 0, so MAX_PAYLOAD_SIZE has increased to 10 MiB on
-the network. At the `GAS_LIMIT` (~30M) currently seen on mainnet in 2021, a
+the network. At the `GAS_LIMIT` (~30M) currently seen on sila_mainnet in 2021, a
 single transaction filled entirely with data at a cost of 16 gas per byte can
 create a valid `ExecutionPayload` of ~2 MiB. Thus we need a size limit to at
-least account for current mainnet conditions.
+least account for current sila_mainnet conditions.
 
 Note, that due to additional size induced by the `BeaconBlock` contents (e.g.
 proposer signature, operations lists, etc) this does reduce the theoretical max

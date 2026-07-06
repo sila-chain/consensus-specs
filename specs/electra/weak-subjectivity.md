@@ -19,7 +19,7 @@ carry over unless explicitly noted or overridden.
 
 This document is a guide for implementing Weak Subjectivity protections in
 Electra. The Weak Subjectivity Period (WSP) calculations have changed in Electra
-due to EIP-7251, which increases the maximum effective balance for validators
+due to SIP-7251, which increases the maximum effective balance for validators
 and allows validators to consolidate.
 
 ## Weak Subjectivity Period
@@ -35,7 +35,7 @@ def compute_weak_subjectivity_period(state: BeaconState) -> uint64:
     This computation takes into account the effect of:
         - validator set churn (bounded by ``get_balance_churn_limit()`` per epoch)
     A detailed calculation can be found at:
-    https://notes.ethereum.org/@CarlBeek/electra_weak_subjectivity
+    https://notes.sila.org/@CarlBeek/electra_weak_subjectivity
     """
     t = get_total_active_balance(state)
     delta = get_balance_churn_limit(state)
@@ -46,7 +46,7 @@ def compute_weak_subjectivity_period(state: BeaconState) -> uint64:
 A brief reference for what these values look like in practice
 ([reference script](https://gist.github.com/jtraglia/457fd9ae7d2080fef1e4034a39b80c46)):
 
-| Safety Decay | Total Active Balance (ETH) | Weak Sub. Period (Epochs) |
+| Safety Decay | Total Active Balance (SIL) | Weak Sub. Period (Epochs) |
 | -----------: | -------------------------: | ------------------------: |
 |           10 |                  1,048,576 |                       665 |
 |           10 |                  2,097,152 |                     1,075 |

@@ -2,7 +2,7 @@
 
 This is an accompanying document to
 [Phase 0 -- The Beacon Chain](./beacon-chain.md), which describes the expected
-actions of a "validator" participating in the Ethereum proof-of-stake protocol.
+actions of a "validator" participating in the Sila proof-of-stake protocol.
 
 <!-- mdformat-toc start --slug=github --no-anchors --maxlevel=6 --minlevel=2 -->
 
@@ -13,7 +13,7 @@ actions of a "validator" participating in the Ethereum proof-of-stake protocol.
 - [Configuration](#configuration)
   - [Time parameters](#time-parameters)
 - [Containers](#containers)
-  - [`Eth1Block`](#eth1block)
+  - [`Sil1Block`](#sil1block)
   - [`AggregateAndProof`](#aggregateandproof)
   - [`SignedAggregateAndProof`](#signedaggregateandproof)
 - [Becoming a validator](#becoming-a-validator)
@@ -21,7 +21,7 @@ actions of a "validator" participating in the Ethereum proof-of-stake protocol.
     - [BLS public key](#bls-public-key)
     - [Withdrawal credentials](#withdrawal-credentials)
       - [`BLS_WITHDRAWAL_PREFIX`](#bls_withdrawal_prefix)
-      - [`ETH1_ADDRESS_WITHDRAWAL_PREFIX`](#eth1_address_withdrawal_prefix)
+      - [`SIL1_ADDRESS_WITHDRAWAL_PREFIX`](#sil1_address_withdrawal_prefix)
   - [Submit deposit](#submit-deposit)
   - [Process deposit](#process-deposit)
   - [Validator index](#validator-index)
@@ -36,8 +36,8 @@ actions of a "validator" participating in the Ethereum proof-of-stake protocol.
       - [Parent root](#parent-root)
     - [Constructing the `BeaconBlockBody`](#constructing-the-beaconblockbody)
       - [Randao reveal](#randao-reveal)
-      - [Eth1 Data](#eth1-data)
-        - [`get_eth1_data`](#get_eth1_data)
+      - [Sil1 Data](#sil1-data)
+        - [`get_sil1_data`](#get_sil1_data)
       - [Proposer slashings](#proposer-slashings)
       - [Attester slashings](#attester-slashings)
       - [Attestations](#attestations)
@@ -73,16 +73,16 @@ actions of a "validator" participating in the Ethereum proof-of-stake protocol.
 ## Introduction
 
 This document represents the expected behavior of an "honest validator" with
-respect to Phase 0 of the Ethereum proof-of-stake protocol. This document does
+respect to Phase 0 of the Sila proof-of-stake protocol. This document does
 not distinguish between a "node" (i.e. the functionality of following and
 reading the beacon chain) and a "validator client" (i.e. the functionality of
 actively participating in consensus). The separation of concerns between these
 (potentially) two pieces of software is left as a design decision that is out of
 scope.
 
-A validator is an entity that participates in the consensus of the Ethereum
+A validator is an entity that participates in the consensus of the Sila
 proof-of-stake protocol. This is an optional role for users in which they can
-post ETH as collateral and verify and attest to the validity of blocks to seek
+post SIL as collateral and verify and attest to the validity of blocks to seek
 financial returns in exchange for building and securing the protocol. This is
 similar to proof-of-work networks in which miners provide collateral in the form
 of hardware/hash-power to seek returns in exchange for building and securing the
@@ -115,14 +115,14 @@ specifications before continuing and use as a reference throughout.
 
 ## Containers
 
-### `Eth1Block`
+### `Sil1Block`
 
 ```python
-class Eth1Block(Container):
+class Sil1Block(Container):
     timestamp: uint64
     deposit_root: Root
     deposit_count: uint64
-    # All other eth1 block fields
+    # All other sil1 block fields
 ```
 
 ### `AggregateAndProof`
@@ -177,26 +177,26 @@ Withdrawal credentials with the BLS withdrawal prefix allow a BLS key pair
 *Note*: The `bls_withdrawal_privkey` is not required for validating and can be
 kept in cold storage.
 
-##### `ETH1_ADDRESS_WITHDRAWAL_PREFIX`
+##### `SIL1_ADDRESS_WITHDRAWAL_PREFIX`
 
-Withdrawal credentials with the Eth1 address withdrawal prefix specify a 20-byte
-Eth1 address `eth1_withdrawal_address` as the recipient for all withdrawals. The
-`eth1_withdrawal_address` can be the address of either an externally owned
+Withdrawal credentials with the Sil1 address withdrawal prefix specify a 20-byte
+Sil1 address `sil1_withdrawal_address` as the recipient for all withdrawals. The
+`sil1_withdrawal_address` can be the address of either an externally owned
 account or of a contract.
 
 The `withdrawal_credentials` field must be such that:
 
-- `withdrawal_credentials[:1] == ETH1_ADDRESS_WITHDRAWAL_PREFIX`
+- `withdrawal_credentials[:1] == SIL1_ADDRESS_WITHDRAWAL_PREFIX`
 - `withdrawal_credentials[1:12] == b'\x00' * 11`
-- `withdrawal_credentials[12:] == eth1_withdrawal_address`
+- `withdrawal_credentials[12:] == sil1_withdrawal_address`
 
-After the merge of the current Ethereum execution layer into the beacon chain,
-withdrawals to `eth1_withdrawal_address` will simply be increases to the
-account's ETH balance that do **NOT** trigger any EVM execution.
+After the merge of the current Sila execution layer into the beacon chain,
+withdrawals to `sil1_withdrawal_address` will simply be increases to the
+account's SIL balance that do **NOT** trigger any EVM execution.
 
 ### Submit deposit
 
-In Phase 0, all incoming validator deposits originate from the Ethereum
+In Phase 0, all incoming validator deposits originate from the Sila
 proof-of-work chain defined by `DEPOSIT_CHAIN_ID` and `DEPOSIT_NETWORK_ID`.
 Deposits are made to the [deposit contract](./deposit-contract.md) located at
 `DEPOSIT_CONTRACT_ADDRESS`.
@@ -218,7 +218,7 @@ To submit a deposit:
   with `GENESIS_FORK_VERSION`, calling `compute_domain` without a second
   argument defaults to the correct version).
 - Let `deposit_data_root` be `hash_tree_root(deposit_data)`.
-- Send a transaction on the Ethereum proof-of-work chain to
+- Send a transaction on the Sila proof-of-work chain to
   `DEPOSIT_CONTRACT_ADDRESS` executing
   `def deposit(pubkey: bytes[48], withdrawal_credentials: bytes[32], signature: bytes[96], deposit_data_root: bytes32)`
   along with a deposit of `amount` Gwei.
@@ -233,8 +233,8 @@ be activated when total deposits for the validator pubkey meet or exceed
 
 Deposits cannot be processed into the beacon chain until the proof-of-work block
 in which they were deposited or any of its descendants is added to the beacon
-chain `state.eth1_data`. This takes _a minimum_ of `ETH1_FOLLOW_DISTANCE` Eth1
-blocks plus `EPOCHS_PER_ETH1_VOTING_PERIOD` epochs. Once the requisite
+chain `state.sil1_data`. This takes _a minimum_ of `SIL1_FOLLOW_DISTANCE` Sil1
+blocks plus `EPOCHS_PER_SIL1_VOTING_PERIOD` epochs. Once the requisite
 proof-of-work block data is added, the deposit will normally be added to a
 beacon-chain block and processed into the `state.validators` within an epoch or
 two. The validator is then in a queue to be activated.
@@ -436,66 +436,66 @@ def get_epoch_signature(state: BeaconState, block: BeaconBlock, privkey: int) ->
     return bls.Sign(privkey, signing_root)
 ```
 
-##### Eth1 Data
+##### Sil1 Data
 
-The `block.body.eth1_data` field is for block proposers to vote on recent Eth1
-data. This recent data contains an Eth1 block hash as well as the associated
+The `block.body.sil1_data` field is for block proposers to vote on recent Sil1
+data. This recent data contains an Sil1 block hash as well as the associated
 deposit root (as calculated by the `get_deposit_root()` method of the deposit
-contract) and deposit count after execution of the corresponding Eth1 block. If
-over half of the block proposers in the current Eth1 voting period vote for the
-same `eth1_data` then `state.eth1_data` updates immediately allowing new
+contract) and deposit count after execution of the corresponding Sil1 block. If
+over half of the block proposers in the current Sil1 voting period vote for the
+same `sil1_data` then `state.sil1_data` updates immediately allowing new
 deposits to be processed. Each deposit in `block.body.deposits` must verify
-against `state.eth1_data.deposit_root`.
+against `state.sil1_data.deposit_root`.
 
-###### `get_eth1_data`
+###### `get_sil1_data`
 
-Let `Eth1Block` be an abstract object representing Eth1 blocks with the
+Let `Sil1Block` be an abstract object representing Sil1 blocks with the
 `timestamp` and deposit contract data available.
 
-Let `get_eth1_data(block: Eth1Block) -> Eth1Data` be the function that returns
-the Eth1 data for a given Eth1 block.
+Let `get_sil1_data(block: Sil1Block) -> Sil1Data` be the function that returns
+the Sil1 data for a given Sil1 block.
 
 An honest block proposer sets
-`block.body.eth1_data = get_eth1_vote(state, eth1_chain)` where:
+`block.body.sil1_data = get_sil1_vote(state, sil1_chain)` where:
 
 ```python
 def voting_period_start_time(state: BeaconState) -> uint64:
-    eth1_voting_period_start_slot = Slot(
-        state.slot - state.slot % (EPOCHS_PER_ETH1_VOTING_PERIOD * SLOTS_PER_EPOCH)
+    sil1_voting_period_start_slot = Slot(
+        state.slot - state.slot % (EPOCHS_PER_SIL1_VOTING_PERIOD * SLOTS_PER_EPOCH)
     )
-    return compute_time_at_slot(state, eth1_voting_period_start_slot)
+    return compute_time_at_slot(state, sil1_voting_period_start_slot)
 ```
 
 ```python
-def is_candidate_block(block: Eth1Block, period_start: uint64) -> bool:
+def is_candidate_block(block: Sil1Block, period_start: uint64) -> bool:
     return (
-        block.timestamp + SECONDS_PER_ETH1_BLOCK * ETH1_FOLLOW_DISTANCE <= period_start
-        and block.timestamp + SECONDS_PER_ETH1_BLOCK * ETH1_FOLLOW_DISTANCE * 2 >= period_start
+        block.timestamp + SECONDS_PER_SIL1_BLOCK * SIL1_FOLLOW_DISTANCE <= period_start
+        and block.timestamp + SECONDS_PER_SIL1_BLOCK * SIL1_FOLLOW_DISTANCE * 2 >= period_start
     )
 ```
 
 ```python
-def get_eth1_vote(state: BeaconState, eth1_chain: Sequence[Eth1Block]) -> Eth1Data:
+def get_sil1_vote(state: BeaconState, sil1_chain: Sequence[Sil1Block]) -> Sil1Data:
     period_start = voting_period_start_time(state)
-    # `eth1_chain` abstractly represents all blocks in the eth1 chain sorted by ascending block height
+    # `sil1_chain` abstractly represents all blocks in the sil1 chain sorted by ascending block height
     votes_to_consider = [
-        get_eth1_data(block)
-        for block in eth1_chain
+        get_sil1_data(block)
+        for block in sil1_chain
         if (
             is_candidate_block(block, period_start)
             # Ensure cannot move back to earlier deposit contract states
-            and get_eth1_data(block).deposit_count >= state.eth1_data.deposit_count
+            and get_sil1_data(block).deposit_count >= state.sil1_data.deposit_count
         )
     ]
 
     # Valid votes already cast during this period
-    valid_votes = [vote for vote in state.eth1_data_votes if vote in votes_to_consider]
+    valid_votes = [vote for vote in state.sil1_data_votes if vote in votes_to_consider]
 
-    # Default vote on latest eth1 block data in the period range unless eth1 chain is not live
+    # Default vote on latest sil1 block data in the period range unless sil1 chain is not live
     # Non-substantive casting for linter
-    state_eth1_data: Eth1Data = state.eth1_data
+    state_sil1_data: Sil1Data = state.sil1_data
     default_vote = (
-        votes_to_consider[len(votes_to_consider) - 1] if any(votes_to_consider) else state_eth1_data
+        votes_to_consider[len(votes_to_consider) - 1] if any(votes_to_consider) else state_sil1_data
     )
 
     return max(
@@ -538,10 +538,10 @@ from the same epoch have not previously been added on chain.
 
 ##### Deposits
 
-If there are any unprocessed deposits for the existing `state.eth1_data` (i.e.
-`state.eth1_data.deposit_count > state.eth1_deposit_index`), then pending
+If there are any unprocessed deposits for the existing `state.sil1_data` (i.e.
+`state.sil1_data.deposit_count > state.sil1_deposit_index`), then pending
 deposits _must_ be added to the block. The expected number of deposits is
-exactly `min(MAX_DEPOSITS, eth1_data.deposit_count - state.eth1_deposit_index)`.
+exactly `min(MAX_DEPOSITS, sil1_data.deposit_count - state.sil1_deposit_index)`.
 These [`deposits`](./beacon-chain.md#deposit) are constructed from the `Deposit`
 logs from the [deposit contract](./deposit-contract.md) and must be processed in
 sequential order. The deposits included in the `block` must satisfy the
@@ -549,11 +549,11 @@ verification conditions found in
 [deposits processing](./beacon-chain.md#deposits).
 
 The `proof` for each deposit must be constructed against the deposit root
-contained in `state.eth1_data` rather than the deposit root at the time the
+contained in `state.sil1_data` rather than the deposit root at the time the
 deposit was initially logged from the proof-of-work chain. This entails storing
 a full deposit merkle tree locally and computing updated proofs against the
-`eth1_data.deposit_root` as needed. See
-[`minimal_merkle.py`](https://github.com/ethereum/research/blob/master/spec_pythonizer/utils/merkle_minimal.py)
+`sil1_data.deposit_root` as needed. See
+[`minimal_merkle.py`](https://github.com/sila-chain/research/blob/master/spec_pythonizer/utils/merkle_minimal.py)
 for a sample implementation.
 
 ##### Voluntary exits
@@ -885,7 +885,7 @@ beacon node as untrusted. This means that the validator client should protect:
 3. Recovered validator -- Recovering a validator from a private key will result
    in an empty local slashing db. Best practice is to import (from a trusted
    source) that validator's attestation history. See
-   [EIP 3076](https://github.com/ethereum/EIPs/pull/3076/files) for a standard
+   [SIP 3076](https://github.com/sila-chain/SIPs/pull/3076/files) for a standard
    slashing interchange format.
 4. Far future signing requests -- A validator client can be requested to sign a
    far into the future attestation, resulting in a valid non-slashable request.

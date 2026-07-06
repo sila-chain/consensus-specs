@@ -9,7 +9,7 @@ class CapellaSpecBuilder(BaseSpecBuilder):
     @classmethod
     def imports(cls, preset_name: str):
         return f"""
-from eth_consensus_specs.bellatrix import {preset_name} as bellatrix
+from sil_consensus_specs.bellatrix import {preset_name} as bellatrix
 """
 
     @classmethod

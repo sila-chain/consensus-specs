@@ -5,7 +5,7 @@ venv
 .venv
 /.pytest_cache
 *.swp
-.eth_consensus_specs
+.sil_consensus_specs
 
 build/
 output/
@@ -16,16 +16,16 @@ dist/
 .ruff_cache
 
 # Dynamically built from Markdown spec
-tests/core/pyspec/eth_consensus_specs/phase0/
-tests/core/pyspec/eth_consensus_specs/altair/
-tests/core/pyspec/eth_consensus_specs/bellatrix/
-tests/core/pyspec/eth_consensus_specs/capella/
-tests/core/pyspec/eth_consensus_specs/deneb/
-tests/core/pyspec/eth_consensus_specs/electra/
-tests/core/pyspec/eth_consensus_specs/fulu/
-tests/core/pyspec/eth_consensus_specs/gloas/
-tests/core/pyspec/eth_consensus_specs/heze/
-tests/core/pyspec/eth_consensus_specs/eip*/
+tests/core/pyspec/sil_consensus_specs/phase0/
+tests/core/pyspec/sil_consensus_specs/altair/
+tests/core/pyspec/sil_consensus_specs/bellatrix/
+tests/core/pyspec/sil_consensus_specs/capella/
+tests/core/pyspec/sil_consensus_specs/sila_deneb/
+tests/core/pyspec/sil_consensus_specs/electra/
+tests/core/pyspec/sil_consensus_specs/sila_fulu/
+tests/core/pyspec/sil_consensus_specs/gloas/
+tests/core/pyspec/sil_consensus_specs/heze/
+tests/core/pyspec/sil_consensus_specs/sip*/
 
 # coverage reports
 .htmlcov
@@ -34,7 +34,7 @@ tests/core/pyspec/eth_consensus_specs/eip*/
 
 # local CI testing output
 tests/core/pyspec/test-reports
-tests/core/pyspec/eth_consensus_specs/test_results.xml
+tests/core/pyspec/sil_consensus_specs/test_results.xml
 
 *.egg-info
 

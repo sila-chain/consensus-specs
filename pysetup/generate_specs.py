@@ -74,7 +74,7 @@ def build_spec(
 
     Args:
         fork: The fork name (e.g., 'phase0', 'altair', 'bellatrix')
-        preset_name: The preset name (e.g., 'minimal', 'mainnet')
+        preset_name: The preset name (e.g., 'minimal', 'sila_mainnet')
         source_files: List of markdown spec files to parse
         preset_files: List of preset YAML files to load
         config_file: Path to config YAML file
@@ -111,7 +111,7 @@ def parse_build_targets(targets_str: str) -> list[BuildTarget]:
 
     Example:
         minimal:presets/minimal:configs/minimal.yaml
-        mainnet:presets/mainnet:configs/mainnet.yaml
+        sila_mainnet:presets/sila_mainnet:configs/sila_mainnet.yaml
     """
     build_targets = []
     for target in targets_str.strip().split():
@@ -192,7 +192,7 @@ def generate_fork_specs(
         print(f"  Build targets: {[t.name for t in build_targets]}")
         print(f"  Output directory: {out_dir}")
 
-    # Generate spec for each build target (minimal, mainnet, etc.)
+    # Generate spec for each build target (minimal, sila_mainnet, etc.)
     for target in build_targets:
         if verbose:
             print(f"  Building target: {target.name}")
@@ -211,9 +211,9 @@ def generate_fork_specs(
         if verbose:
             print(f"    Wrote: {output_file} ({len(spec_str):,} bytes)")
 
-    # Create __init__.py that imports mainnet as default
+    # Create __init__.py that imports sila_mainnet as default
     init_file = out_dir / "__init__.py"
-    init_file.write_text("from . import mainnet as spec  # noqa:F401\n")
+    init_file.write_text("from . import sila_mainnet as spec  # noqa:F401\n")
 
     if verbose:
         print(f"  Wrote: {init_file}")
@@ -222,18 +222,18 @@ def generate_fork_specs(
 def main() -> int:
     """Main entry point for the spec generation script."""
     parser = argparse.ArgumentParser(
-        description="Generate Ethereum consensus specs from markdown files",
+        description="Generate Sila consensus specs from markdown files",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  # Generate all forks to default location (tests/core/pyspec/eth_consensus_specs/)
+  # Generate all forks to default location (tests/core/pyspec/sil_consensus_specs/)
   python pysetup/generate_specs.py --all-forks
 
   # Generate specific fork
   python pysetup/generate_specs.py --fork phase0
 
   # Generate to custom directory
-  python pysetup/generate_specs.py --fork deneb --out-dir ./build/specs
+  python pysetup/generate_specs.py --fork sila_deneb --out-dir ./build/specs
 
   # Use custom build targets
   python pysetup/generate_specs.py --fork phase0 \\
@@ -258,13 +258,13 @@ Examples:
         "--out-dir",
         type=Path,
         default=None,
-        help="Output directory (default: tests/core/pyspec/eth_consensus_specs/<fork>)",
+        help="Output directory (default: tests/core/pyspec/sil_consensus_specs/<fork>)",
     )
 
     parser.add_argument(
         "--build-targets",
         type=str,
-        default="minimal:presets/minimal:configs/minimal.yaml mainnet:presets/mainnet:configs/mainnet.yaml",
+        default="minimal:presets/minimal:configs/minimal.yaml sila_mainnet:presets/sila_mainnet:configs/sila_mainnet.yaml",
         help="Space-separated build targets in format 'name:preset_dir:config_file'",
     )
 
@@ -306,7 +306,7 @@ Examples:
             if args.out_dir:
                 out_dir = args.out_dir
             else:
-                out_dir = Path("tests/core/pyspec/eth_consensus_specs") / fork
+                out_dir = Path("tests/core/pyspec/sil_consensus_specs") / fork
 
             generate_fork_specs(
                 fork=fork,

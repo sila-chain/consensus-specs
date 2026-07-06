@@ -2,15 +2,15 @@ import contextlib
 import random
 from dataclasses import dataclass, field
 
-from eth_consensus_specs.test.context import spec_test
-from eth_consensus_specs.test.helpers.attestations import (
+from sil_consensus_specs.test.context import spec_test
+from sil_consensus_specs.test.helpers.attestations import (
     get_valid_attestation,
 )
-from eth_consensus_specs.test.helpers.block import (
+from sil_consensus_specs.test.helpers.block import (
     build_empty_block,
     sign_block,
 )
-from eth_consensus_specs.test.helpers.fork_choice import (
+from sil_consensus_specs.test.helpers.fork_choice import (
     add_attestation,
     add_attester_slashing,
     add_block,
@@ -29,17 +29,17 @@ from eth_consensus_specs.test.helpers.fork_choice import (
     run_on_execution_payload_envelope,
     run_on_payload_attestation_message,
 )
-from eth_consensus_specs.test.helpers.forks import (
-    is_post_deneb,
+from sil_consensus_specs.test.helpers.forks import (
+    is_post_sila_deneb,
     is_post_gloas,
 )
-from eth_consensus_specs.test.helpers.keys import (
+from sil_consensus_specs.test.helpers.keys import (
     privkeys,
 )
-from eth_consensus_specs.test.helpers.state import (
+from sil_consensus_specs.test.helpers.state import (
     next_slot,
 )
-from eth_consensus_specs.utils.ssz.ssz_typing import View
+from sil_consensus_specs.utils.ssz.ssz_typing import View
 
 from .debug_helpers import print_epoch, print_head
 
@@ -220,7 +220,7 @@ def messages_to_payload_attestations(spec, state, messages):
 
 
 def is_attestation_eligible_for_block(spec, state, attestation) -> bool:
-    if is_post_deneb(spec):
+    if is_post_sila_deneb(spec):
         return spec.compute_epoch_at_slot(attestation.data.slot) + 1 >= spec.compute_epoch_at_slot(
             state.slot
         )

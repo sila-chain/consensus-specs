@@ -19,7 +19,7 @@
   - [Block Production](#block-production)
   - [Attesting](#attesting)
   - [Participating in Sync Committees](#participating-in-sync-committees)
-- [Ethereum Beacon APIs](#ethereum-beacon-apis)
+- [Sila Beacon APIs](#sila-beacon-apis)
 - [Design Decision Rationale](#design-decision-rationale)
   - [Why sync optimistically?](#why-sync-optimistically)
   - [Why `SAFE_SLOTS_TO_IMPORT_OPTIMISTICALLY`?](#why-safe_slots_to_import_optimistically)
@@ -40,7 +40,7 @@ Optimistic sync is designed to be opt-in and backwards compatible (i.e.,
 non-optimistic nodes can tolerate optimistic nodes on the network and vice
 versa). Optimistic sync is not a fundamental requirement for consensus nodes.
 Rather, it's a stop-gap measure to allow execution nodes to sync via established
-methods until future Ethereum roadmap items are implemented (e.g.,
+methods until future Sila roadmap items are implemented (e.g.,
 statelessness).
 
 ## Constants
@@ -329,10 +329,10 @@ An optimistic validator MUST NOT participate in sync committees (i.e., sign
 across the `DOMAIN_SYNC_COMMITTEE`, `DOMAIN_SYNC_COMMITTEE_SELECTION_PROOF` or
 `DOMAIN_CONTRIBUTION_AND_PROOF` domains).
 
-## Ethereum Beacon APIs
+## Sila Beacon APIs
 
 Consensus engines which provide an implementation of the
-[Ethereum Beacon APIs](https://github.com/ethereum/beacon-APIs) must take care
+[Sila Beacon APIs](https://github.com/sila-chain/beacon-APIs) must take care
 to ensure the `execution_optimistic` value is set to `True` whenever the request
 references optimistic blocks (and vice-versa).
 
@@ -340,8 +340,8 @@ references optimistic blocks (and vice-versa).
 
 ### Why sync optimistically?
 
-Most execution engines use state sync as a default sync mechanism on Ethereum
-Mainnet because executing blocks from genesis takes several weeks on commodity
+Most execution engines use state sync as a default sync mechanism on Sila
+SilaMainnet because executing blocks from genesis takes several weeks on commodity
 hardware.
 
 State sync requires the knowledge of the current head of the chain to converge

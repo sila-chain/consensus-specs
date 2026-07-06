@@ -4,15 +4,15 @@ from pathlib import Path
 from typing import NamedTuple
 
 import pytest
-from eth_utils import decode_hex
+from sil_utils import decode_hex
 from ruamel.yaml import YAML
 from snappy import uncompress
 
-from eth_consensus_specs.test.context import expect_assertion_error
-from eth_consensus_specs.test.helpers.fork_choice import get_viable_for_head_checks
-from eth_consensus_specs.test.helpers.forks import is_post_gloas
-from eth_consensus_specs.test.helpers.specs import spec_targets
-from eth_consensus_specs.utils import bls
+from sil_consensus_specs.test.context import expect_assertion_error
+from sil_consensus_specs.test.helpers.fork_choice import get_viable_for_head_checks
+from sil_consensus_specs.test.helpers.forks import is_post_gloas
+from sil_consensus_specs.test.helpers.specs import spec_targets
+from sil_consensus_specs.utils import bls
 from tests.generators.compliance_runners.fork_choice.instantiators.helpers import (
     payload_attestation_to_messages,
 )

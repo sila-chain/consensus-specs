@@ -56,7 +56,7 @@ Including:
 
 | Name               | SSZ equivalent                        | Description                                                                                                                                       |
 | ------------------ | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Transaction`      | `ByteList[MAX_BYTES_PER_TRANSACTION]` | Either a [typed transaction envelope](https://eips.ethereum.org/EIPS/eip-2718#opaque-byte-array-rather-than-an-rlp-array) or a legacy transaction |
+| `Transaction`      | `ByteList[MAX_BYTES_PER_TRANSACTION]` | Either a [typed transaction envelope](https://sips.sila.org/SIPS/sip-2718#opaque-byte-array-rather-than-an-rlp-array) or a legacy transaction |
 | `ExecutionAddress` | `Bytes20`                             | Address of account on the execution layer                                                                                                         |
 
 ## Constants
@@ -106,7 +106,7 @@ final, maximum security values.
 ```python
 class BeaconBlockBody(Container):
     randao_reveal: BLSSignature
-    eth1_data: Eth1Data
+    sil1_data: Sil1Data
     graffiti: Bytes32
     proposer_slashings: List[ProposerSlashing, MAX_PROPOSER_SLASHINGS]
     attester_slashings: List[AttesterSlashing, MAX_ATTESTER_SLASHINGS]
@@ -130,9 +130,9 @@ class BeaconState(Container):
     block_roots: Vector[Root, SLOTS_PER_HISTORICAL_ROOT]
     state_roots: Vector[Root, SLOTS_PER_HISTORICAL_ROOT]
     historical_roots: List[Root, HISTORICAL_ROOTS_LIMIT]
-    eth1_data: Eth1Data
-    eth1_data_votes: List[Eth1Data, EPOCHS_PER_ETH1_VOTING_PERIOD * SLOTS_PER_EPOCH]
-    eth1_deposit_index: uint64
+    sil1_data: Sil1Data
+    sil1_data_votes: List[Sil1Data, EPOCHS_PER_SIL1_VOTING_PERIOD * SLOTS_PER_EPOCH]
+    sil1_deposit_index: uint64
     validators: List[Validator, VALIDATOR_REGISTRY_LIMIT]
     balances: List[Gwei, VALIDATOR_REGISTRY_LIMIT]
     randao_mixes: Vector[Bytes32, EPOCHS_PER_HISTORICAL_VECTOR]
@@ -156,7 +156,7 @@ class BeaconState(Container):
 
 *Note*: `fee_recipient`, `prev_randao`, and `block_number` correspond to
 `beneficiary`, `difficulty`, and `number` in
-[the yellow paper](https://ethereum.github.io/yellowpaper/paper.pdf),
+[the yellow paper](https://sila.github.io/yellowpaper/paper.pdf),
 respectively.
 
 ```python
@@ -164,7 +164,7 @@ class ExecutionPayload(Container):
     parent_hash: Hash32
     fee_recipient: ExecutionAddress
     state_root: Bytes32
-    receipts_root: Bytes32
+    recsipts_root: Bytes32
     logs_bloom: ByteVector[BYTES_PER_LOGS_BLOOM]
     prev_randao: Bytes32
     block_number: uint64
@@ -186,7 +186,7 @@ class ExecutionPayloadHeader(Container):
     parent_hash: Hash32
     fee_recipient: ExecutionAddress
     state_root: Bytes32
-    receipts_root: Bytes32
+    recsipts_root: Bytes32
     logs_bloom: ByteVector[BYTES_PER_LOGS_BLOOM]
     prev_randao: Bytes32
     block_number: uint64
@@ -375,7 +375,7 @@ def process_block(state: BeaconState, block: BeaconBlock) -> None:
         # [New in Bellatrix]
         process_execution_payload(state, block.body, EXECUTION_ENGINE)
     process_randao(state, block.body)
-    process_eth1_data(state, block.body)
+    process_sil1_data(state, block.body)
     process_operations(state, block.body)
     process_sync_aggregate(state, block.body.sync_aggregate)
 ```
@@ -406,7 +406,7 @@ def process_execution_payload(
         parent_hash=payload.parent_hash,
         fee_recipient=payload.fee_recipient,
         state_root=payload.state_root,
-        receipts_root=payload.receipts_root,
+        recsipts_root=payload.recsipts_root,
         logs_bloom=payload.logs_bloom,
         prev_randao=payload.prev_randao,
         block_number=payload.block_number,

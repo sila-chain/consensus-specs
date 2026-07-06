@@ -21,7 +21,7 @@ the Gloas upgrade.
 def block_to_light_client_header(block: SignedBeaconBlock) -> LightClientHeader:
     epoch = compute_epoch_at_slot(block.message.slot)
 
-    # [Modified in Gloas:EIP7732]
+    # [Modified in Gloas:SIP7732]
     if epoch >= GLOAS_FORK_EPOCH:
         execution_block_hash = (
             block.message.body.signed_execution_payload_bid.message.parent_block_hash
@@ -29,11 +29,11 @@ def block_to_light_client_header(block: SignedBeaconBlock) -> LightClientHeader:
         execution_branch = ExecutionBranch(
             compute_merkle_proof(block.message.body, EXECUTION_BLOCK_HASH_GINDEX_GLOAS)
         )
-    elif epoch >= DENEB_FORK_EPOCH:
+    elif epoch >= SILA_DENEB_FORK_EPOCH:
         execution_block_hash = block.message.body.execution_payload.block_hash
         execution_branch = ExecutionBranch(
             normalize_merkle_branch(
-                compute_merkle_proof(block.message.body, EXECUTION_BLOCK_HASH_GINDEX_DENEB),
+                compute_merkle_proof(block.message.body, EXECUTION_BLOCK_HASH_GINDEX_SILA_DENEB),
                 EXECUTION_BLOCK_HASH_GINDEX_GLOAS,
             )
         )

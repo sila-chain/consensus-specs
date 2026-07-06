@@ -57,7 +57,7 @@
     - [Integration into libp2p stacks](#integration-into-libp2p-stacks)
     - [ENR structure](#enr-structure)
       - [Attestation subnet bitfield](#attestation-subnet-bitfield)
-      - [`eth2` field](#eth2-field)
+      - [`sil2` field](#sil2-field)
   - [Attestation subnet subscription](#attestation-subnet-subscription)
 - [Design decision rationale](#design-decision-rationale)
   - [Transport](#transport-1)
@@ -136,7 +136,7 @@ It consists of four main sections:
 
 ## Network fundamentals
 
-This section outlines the specification for the networking stack in Ethereum
+This section outlines the specification for the networking stack in Sila
 consensus-layer clients.
 
 ### Transport
@@ -452,13 +452,13 @@ will be used:
 *Note*: Gossipsub v1.1 introduces a number of
 [additional parameters](https://github.com/libp2p/specs/blob/master/pubsub/gossipsub/gossipsub-v1.1.md#overview-of-new-parameters)
 for peer scoring and other attack mitigations. These are currently under
-investigation and will be specified and released to mainnet when they are ready.
+investigation and will be specified and released to sila_mainnet when they are ready.
 
 #### Topics and messages
 
 Topics are plain UTF-8 strings and are encoded on the wire as determined by
 protobuf (gossipsub messages are enveloped in protobuf messages). Topic strings
-have form: `/eth2/ForkDigestValue/Name/Encoding`. This defines both the type of
+have form: `/sil2/ForkDigestValue/Name/Encoding`. This defines both the type of
 data being sent on the topic and how the data field of the message is encoded.
 
 - `ForkDigestValue` - the lowercase hex-encoded (no "0x" prefix) bytes of
@@ -1038,7 +1038,7 @@ gossipsub message is encoded.
 - `ssz_snappy` - All objects are SSZ-encoded and then compressed with
   [Snappy](https://github.com/google/snappy) block compression. Example: The
   beacon aggregate attestation topic string is
-  `/eth2/446a7232/beacon_aggregate_and_proof/ssz_snappy`, the fork digest is
+  `/sil2/446a7232/beacon_aggregate_and_proof/ssz_snappy`, the fork digest is
   `446a7232` and the data field of a gossipsub message is an `AggregateAndProof`
   that has been SSZ-encoded and then compressed with Snappy.
 
@@ -1081,7 +1081,7 @@ case-sensitive UTF-8 string of the form:
 With:
 
 - `ProtocolPrefix` - messages are grouped into families identified by a shared
-  libp2p protocol name prefix. In this case, we use `/eth2/beacon_chain/req`.
+  libp2p protocol name prefix. In this case, we use `/sil2/beacon_chain/req`.
 - `MessageName` - each request is identified by a name consisting of English
   alphabet, digits and underscores (`_`).
 - `SchemaVersion` - an ordinal version number (e.g. 1, 2, 3…). Each schema is
@@ -1318,7 +1318,7 @@ their constituents individually as `response_chunk`s. For example, the
 
 ##### Status v1
 
-**Protocol ID:** `/eth2/beacon_chain/req/status/1/`
+**Protocol ID:** `/sil2/beacon_chain/req/status/1/`
 
 Request, Response Content:
 
@@ -1377,7 +1377,7 @@ such behavior in their own way.
 
 ##### Goodbye v1
 
-**Protocol ID:** `/eth2/beacon_chain/req/goodbye/1/`
+**Protocol ID:** `/sil2/beacon_chain/req/goodbye/1/`
 
 Request, Response Content:
 
@@ -1405,7 +1405,7 @@ The response MUST consist of a single `response_chunk`.
 
 ##### BeaconBlocksByRange v1
 
-**Protocol ID:** `/eth2/beacon_chain/req/beacon_blocks_by_range/1/`
+**Protocol ID:** `/sil2/beacon_chain/req/beacon_blocks_by_range/1/`
 
 Request Content:
 
@@ -1435,7 +1435,7 @@ example, the returned array would contain `[2, 3, 5]`.
 `step` is deprecated and must be set to 1. Clients may respond with a single
 block if a larger step is returned during the deprecation transition period.
 
-`/eth2/beacon_chain/req/beacon_blocks_by_range/1/` is deprecated. Clients MAY
+`/sil2/beacon_chain/req/beacon_blocks_by_range/1/` is deprecated. Clients MAY
 respond with an empty list during the deprecation transition period.
 
 `BeaconBlocksByRange` is primarily used to sync historical blocks.
@@ -1491,7 +1491,7 @@ fork choice changes the view of the chain in the context of the request.
 
 ##### BeaconBlocksByRoot v1
 
-**Protocol ID:** `/eth2/beacon_chain/req/beacon_blocks_by_root/1/`
+**Protocol ID:** `/sil2/beacon_chain/req/beacon_blocks_by_root/1/`
 
 Request Content:
 
@@ -1537,12 +1537,12 @@ Clients MAY include a block in the response as soon as it passes the gossip
 validation rules. Clients SHOULD NOT respond with blocks that fail the beacon
 chain state transition.
 
-`/eth2/beacon_chain/req/beacon_blocks_by_root/1/` is deprecated. Clients MAY
+`/sil2/beacon_chain/req/beacon_blocks_by_root/1/` is deprecated. Clients MAY
 respond with an empty list during the deprecation transition period.
 
 ##### Ping v1
 
-**Protocol ID:** `/eth2/beacon_chain/req/ping/1/`
+**Protocol ID:** `/sil2/beacon_chain/req/ping/1/`
 
 Request Content:
 
@@ -1576,7 +1576,7 @@ The response MUST consist of a single `response_chunk`.
 
 ##### GetMetaData v1
 
-**Protocol ID:** `/eth2/beacon_chain/req/metadata/1/`
+**Protocol ID:** `/sil2/beacon_chain/req/metadata/1/`
 
 No Request Content.
 
@@ -1599,7 +1599,7 @@ The response MUST consist of a single `response_chunk`.
 ### The discovery domain: discv5
 
 Discovery Version 5
-([discv5](https://github.com/ethereum/devp2p/blob/master/discv5/discv5.md))
+([discv5](https://github.com/sila-chain/devp2p/blob/master/discv5/discv5.md))
 (Protocol version v5.1) is used for peer discovery.
 
 `discv5` is a standalone protocol, running on UDP on a dedicated port, meant for
@@ -1626,7 +1626,7 @@ streams with discovered peers.
 
 #### ENR structure
 
-The Ethereum Node Record (ENR) for an Ethereum consensus client MUST contain the
+The Sila Node Record (ENR) for an Sila consensus client MUST contain the
 following entries (exclusive of the sequence number and signature, which MUST be
 present in an ENR):
 
@@ -1643,7 +1643,7 @@ The ENR MAY contain the following entries:
   and/or the corresponding IPv6 port (`udp6` field).
 
 Specifications of these parameters can be found in the
-[ENR Specification](http://eips.ethereum.org/EIPS/eip-778).
+[ENR Specification](http://sips.sila.org/SIPS/sip-778).
 
 ##### Attestation subnet bitfield
 
@@ -1661,17 +1661,17 @@ If a node's `MetaData.attnets` has any non-zero bit, the ENR MUST include the
 If a node's `MetaData.attnets` is composed of all zeros, the ENR MAY optionally
 include the `attnets` entry or leave it out entirely.
 
-##### `eth2` field
+##### `sil2` field
 
-ENRs MUST carry a generic `eth2` key with an 16-byte value of the node's current
+ENRs MUST carry a generic `sil2` key with an 16-byte value of the node's current
 fork digest, next fork version, and next fork epoch to ensure connections are
-made with peers on the intended Ethereum network.
+made with peers on the intended Sila network.
 
 | Key    | Value           |
 | ------ | --------------- |
-| `eth2` | SSZ `ENRForkID` |
+| `sil2` | SSZ `ENRForkID` |
 
-Specifically, the value of the `eth2` key MUST be the following SSZ encoded
+Specifically, the value of the `sil2` key MUST be the following SSZ encoded
 object (`ENRForkID`)
 
 ```
@@ -1700,7 +1700,7 @@ The fields of `ENRForkID` are defined as
 block/state are available. Due to this, clients SHOULD NOT form ENRs and begin
 peer discovery until genesis values are known. One notable exception to this
 rule is the distribution of bootnode ENRs prior to genesis. In this case,
-bootnode ENRs SHOULD be initially distributed with `eth2` field set as
+bootnode ENRs SHOULD be initially distributed with `sil2` field set as
 `ENRForkID(fork_digest=compute_fork_digest(b'\x00'*32, GENESIS_EPOCH), next_fork_version=GENESIS_FORK_VERSION, next_fork_epoch=FAR_FUTURE_EPOCH)`.
 After genesis values are known, the bootnodes SHOULD update ENRs to participate
 in normal discovery operations.
@@ -1816,7 +1816,7 @@ counteract via other mechanisms.
 
 WebSockets and/or WebRTC transports are necessary for interaction with browsers,
 and will become increasingly important as we incorporate browser-based light
-clients to the Ethereum network.
+clients to the Sila network.
 
 #### Why do we not just support a single transport?
 
@@ -1924,7 +1924,7 @@ SecIO has been the default encryption layer for libp2p for years. It is used in
 IPFS and Filecoin. And although it will be superseded shortly, it is proven to
 work at scale.
 
-Although SecIO has wide language support, we won’t be using it for mainnet
+Although SecIO has wide language support, we won’t be using it for sila_mainnet
 because, amongst other things, it requires several round trips to be sound, and
 doesn’t support early data (0-RTT data), a mechanism that multiselect 2.0 will
 leverage to reduce round trips during connection bootstrapping.
@@ -2198,7 +2198,7 @@ Requests are segregated by protocol ID to:
 5. Enable clients to explicitly choose backwards compatibility at the request
    granularity. Without this, clients would be forced to support entire versions
    of the coarser request protocol.
-6. Parallelise RFCs (or EIPs). By decoupling requests from one another, each RFC
+6. Parallelise RFCs (or SIPs). By decoupling requests from one another, each RFC
    that affects the request protocol can be deployed/tested/debated
    independently without relying on a synchronization point to version the
    general top-level protocol.
@@ -2424,8 +2424,8 @@ On the other hand, libp2p Kademlia DHT is a fully-fledged DHT
 protocol/implementations with content routing and storage capabilities, both of
 which are irrelevant in this context.
 
-Ethereum execution-layer nodes will evolve to support discv5. By sharing the
-discovery network between Ethereum consensus-layer and execution-layer clients,
+Sila execution-layer nodes will evolve to support discv5. By sharing the
+discovery network between Sila consensus-layer and execution-layer clients,
 we benefit from the additive effect on network size that enhances resilience and
 resistance against certain attacks, to which smaller networks are more
 vulnerable. It should also help light clients of both networks find nodes with
@@ -2435,12 +2435,12 @@ discv5 is in the process of being audited.
 
 #### What is the difference between an ENR and a multiaddr, and why are we using ENRs?
 
-Ethereum Node Records are self-certified node records. Nodes craft and
+Sila Node Records are self-certified node records. Nodes craft and
 disseminate ENRs for themselves, proving authorship via a cryptographic
 signature. ENRs are sequentially indexed, enabling conflicts to be resolved.
 
 ENRs are key-value records with string-indexed ASCII keys. They can store
-arbitrary information, but EIP-778 specifies a pre-defined dictionary, including
+arbitrary information, but SIP-778 specifies a pre-defined dictionary, including
 IPv4 and IPv6 addresses, secp256k1 public keys, etc.
 
 Comparing ENRs and multiaddrs is like comparing apples and oranges. ENRs are
@@ -2456,7 +2456,7 @@ discv5 uses ENRs and we will presumably need to:
 2. Define a bi-directional conversion function between multiaddrs and the
    corresponding denormalized fields in an ENR (ip, ip6, tcp, tcp6, etc.), for
    compatibility with nodes that do not support multiaddr natively (e.g.
-   Ethereum execution-layer nodes).
+   Sila execution-layer nodes).
 
 #### Why do we not form ENRs and find peers until genesis block/state is known?
 
@@ -2469,7 +2469,7 @@ intended chain. Once genesis data is known, we can then form ENRs and safely
 find peers.
 
 When using a proof-of-work deposit contract for deposits, `fork_digest` will be
-known `GENESIS_DELAY` (7 days in mainnet configuration) before `genesis_time`,
+known `GENESIS_DELAY` (7 days in sila_mainnet configuration) before `genesis_time`,
 providing ample time to find peers and form initial connections and gossip
 subnets prior to genesis.
 
@@ -2527,7 +2527,7 @@ different depending on the interaction layer:
 
 #### Why are we using Snappy for compression?
 
-Snappy is used in Ethereum 1.0. It is well maintained by Google, has good
+Snappy is used in Sila 1.0. It is well maintained by Google, has good
 benchmarks, and can calculate the size of the uncompressed object without
 inflating it in memory. This prevents DOS vectors where large uncompressed data
 is sent.

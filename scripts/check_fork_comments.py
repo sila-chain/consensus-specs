@@ -47,16 +47,16 @@ def check_file(file_path):
                 )
                 continue
 
-            # Check for dashes in EIP references
-            if "EIP-" in fork_ref:
+            # Check for dashes in SIP references
+            if "SIP-" in fork_ref:
                 violations.append(
                     {
                         "file": file_path,
                         "line": line_num,
                         "content": line.strip(),
                         "comment": match.group(),
-                        "error_type": "dash_in_eip",
-                        "message": "EIPs should not contain dashes",
+                        "error_type": "dash_in_sip",
+                        "message": "SIPs should not contain dashes",
                     }
                 )
                 continue

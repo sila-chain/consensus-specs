@@ -29,7 +29,7 @@
     - [`AttestationData`](#attestationdata)
     - [`IndexedAttestation`](#indexedattestation)
     - [`PendingAttestation`](#pendingattestation)
-    - [`Eth1Data`](#eth1data)
+    - [`Sil1Data`](#sil1data)
     - [`HistoricalBatch`](#historicalbatch)
     - [`DepositMessage`](#depositmessage)
     - [`DepositData`](#depositdata)
@@ -117,7 +117,7 @@
       - [`process_rewards_and_penalties`](#process_rewards_and_penalties)
     - [Registry updates](#registry-updates)
     - [Slashings](#slashings)
-    - [Eth1 data votes updates](#eth1-data-votes-updates)
+    - [Sil1 data votes updates](#sil1-data-votes-updates)
     - [Effective balances updates](#effective-balances-updates)
     - [Slashings balances updates](#slashings-balances-updates)
     - [Randao mixes updates](#randao-mixes-updates)
@@ -126,7 +126,7 @@
   - [Block processing](#block-processing)
     - [Block header](#block-header)
     - [RANDAO](#randao)
-    - [Eth1 data](#eth1-data)
+    - [Sil1 data](#sil1-data)
     - [Operations](#operations)
       - [Proposer slashings](#proposer-slashings)
       - [Attester slashings](#attester-slashings)
@@ -140,12 +140,12 @@
 
 This document represents the specification for Phase 0 -- The Beacon Chain.
 
-At the core of Ethereum proof-of-stake is a system chain called the "beacon
+At the core of Sila proof-of-stake is a system chain called the "beacon
 chain". The beacon chain stores and manages the registry of validators. In the
 initial deployment phases of proof-of-stake, the only mechanism to become a
-validator is to make a one-way ETH transaction to a deposit contract on the
-Ethereum proof-of-work chain. Activation as a validator happens when deposit
-receipts are processed by the beacon chain, the activation balance is reached,
+validator is to make a one-way SIL transaction to a deposit contract on the
+Sila proof-of-work chain. Activation as a validator happens when deposit
+recsipts are processed by the beacon chain, the activation balance is reached,
 and a queuing process is completed. Exit is either voluntary or done forcibly as
 a penalty for misbehavior. The primary source of load on the beacon chain is
 "attestations". Attestations are simultaneously availability votes for a shard
@@ -200,7 +200,7 @@ specification.
 | Name                             | Value            |
 | -------------------------------- | ---------------- |
 | `BLS_WITHDRAWAL_PREFIX`          | `Bytes1('0x00')` |
-| `ETH1_ADDRESS_WITHDRAWAL_PREFIX` | `Bytes1('0x01')` |
+| `SIL1_ADDRESS_WITHDRAWAL_PREFIX` | `Bytes1('0x01')` |
 
 ### Domains
 
@@ -266,7 +266,7 @@ directory.
 | `MIN_SEED_LOOKAHEAD`               | `uint64(2**0)` (= 1)      | epochs |
 | `MAX_SEED_LOOKAHEAD`               | `uint64(2**2)` (= 4)      | epochs |
 | `MIN_EPOCHS_TO_INACTIVITY_PENALTY` | `uint64(2**2)` (= 4)      | epochs |
-| `EPOCHS_PER_ETH1_VOTING_PERIOD`    | `uint64(2**6)` (= 64)     | epochs |
+| `EPOCHS_PER_SIL1_VOTING_PERIOD`    | `uint64(2**6)` (= 64)     | epochs |
 | `SLOTS_PER_HISTORICAL_ROOT`        | `uint64(2**13)` (= 8,192) | slots  |
 
 ### State list lengths
@@ -296,12 +296,12 @@ directory.
   `n` epochs is about `(1 - 1/INACTIVITY_PENALTY_QUOTIENT)**(n**2/2)`; so after
   `INVERSE_SQRT_E_DROP_TIME` epochs, it is roughly
   `(1 - 1/INACTIVITY_PENALTY_QUOTIENT)**(INACTIVITY_PENALTY_QUOTIENT/2) ~= 1/sqrt(e)`.
-  Note this value will be upgraded to `2**24` after Phase 0 mainnet stabilizes
+  Note this value will be upgraded to `2**24` after Phase 0 sila_mainnet stabilizes
   to provide a faster recovery in the event of an inactivity leak.
 
-- The `PROPORTIONAL_SLASHING_MULTIPLIER` is set to `1` at initial mainnet
+- The `PROPORTIONAL_SLASHING_MULTIPLIER` is set to `1` at initial sila_mainnet
   launch, resulting in one-third of the minimum accountable safety margin in the
-  event of a finality attack. After Phase 0 mainnet stabilizes, this value will
+  event of a finality attack. After Phase 0 sila_mainnet stabilizes, this value will
   be upgraded to `3` to provide the maximal minimum accountable safety margin.
 
 ### Max operations per block
@@ -316,7 +316,7 @@ directory.
 
 ## Configuration
 
-*Note*: The default mainnet configuration values are included here for
+*Note*: The default sila_mainnet configuration values are included here for
 illustrative purposes. Defaults for this more dynamic type of configuration are
 available with the presets in the [`configs`](../../configs) directory. Testnets
 and other types of chain instances may use a different configuration.
@@ -335,10 +335,10 @@ and other types of chain instances may use a different configuration.
 | Name                                  | Value                     | Unit         |
 | ------------------------------------- | ------------------------- | ------------ |
 | `SLOT_DURATION_MS`                    | `uint64(12000)`           | milliseconds |
-| `SECONDS_PER_ETH1_BLOCK`              | `uint64(14)`              | seconds      |
+| `SECONDS_PER_SIL1_BLOCK`              | `uint64(14)`              | seconds      |
 | `MIN_VALIDATOR_WITHDRAWABILITY_DELAY` | `uint64(2**8)` (= 256)    | epochs       |
 | `SHARD_COMMITTEE_PERIOD`              | `uint64(2**8)` (= 256)    | epochs       |
-| `ETH1_FOLLOW_DISTANCE`                | `uint64(2**11)` (= 2,048) | Eth1 blocks  |
+| `SIL1_FOLLOW_DISTANCE`                | `uint64(2**11)` (= 2,048) | Sil1 blocks  |
 
 ### Validator cycle
 
@@ -429,10 +429,10 @@ class PendingAttestation(Container):
     proposer_index: ValidatorIndex
 ```
 
-#### `Eth1Data`
+#### `Sil1Data`
 
 ```python
-class Eth1Data(Container):
+class Sil1Data(Container):
     deposit_root: Root
     deposit_count: uint64
     block_hash: Hash32
@@ -538,7 +538,7 @@ class VoluntaryExit(Container):
 ```python
 class BeaconBlockBody(Container):
     randao_reveal: BLSSignature
-    eth1_data: Eth1Data
+    sil1_data: Sil1Data
     graffiti: Bytes32
     proposer_slashings: List[ProposerSlashing, MAX_PROPOSER_SLASHINGS]
     attester_slashings: List[AttesterSlashing, MAX_ATTESTER_SLASHINGS]
@@ -572,9 +572,9 @@ class BeaconState(Container):
     block_roots: Vector[Root, SLOTS_PER_HISTORICAL_ROOT]
     state_roots: Vector[Root, SLOTS_PER_HISTORICAL_ROOT]
     historical_roots: List[Root, HISTORICAL_ROOTS_LIMIT]
-    eth1_data: Eth1Data
-    eth1_data_votes: List[Eth1Data, EPOCHS_PER_ETH1_VOTING_PERIOD * SLOTS_PER_EPOCH]
-    eth1_deposit_index: uint64
+    sil1_data: Sil1Data
+    sil1_data_votes: List[Sil1Data, EPOCHS_PER_SIL1_VOTING_PERIOD * SLOTS_PER_EPOCH]
+    sil1_deposit_index: uint64
     validators: List[Validator, VALIDATOR_REGISTRY_LIMIT]
     balances: List[Gwei, VALIDATOR_REGISTRY_LIMIT]
     randao_mixes: Vector[Bytes32, EPOCHS_PER_HISTORICAL_VECTOR]
@@ -1131,7 +1131,7 @@ def get_total_balance(state: BeaconState, indices: Set[ValidatorIndex]) -> Gwei:
     """
     Return the combined effective balance of the ``indices``.
     ``EFFECTIVE_BALANCE_INCREMENT`` Gwei minimum to avoid divisions by zero.
-    Math safe up to ~10B ETH, after which this overflows uint64.
+    Math safe up to ~10B SIL, after which this overflows uint64.
     """
     return Gwei(
         max(
@@ -1278,27 +1278,27 @@ def slash_validator(
 
 ## Genesis
 
-Before the Ethereum beacon-chain genesis has been triggered, and for every
-Ethereum proof-of-work block, let
-`candidate_state = initialize_beacon_state_from_eth1(eth1_block_hash, eth1_timestamp, deposits)`
+Before the Sila beacon-chain genesis has been triggered, and for every
+Sila proof-of-work block, let
+`candidate_state = initialize_beacon_state_from_sil1(sil1_block_hash, sil1_timestamp, deposits)`
 where:
 
-- `eth1_block_hash` is the hash of the Ethereum proof-of-work block
-- `eth1_timestamp` is the Unix timestamp corresponding to `eth1_block_hash`
+- `sil1_block_hash` is the hash of the Sila proof-of-work block
+- `sil1_timestamp` is the Unix timestamp corresponding to `sil1_block_hash`
 - `deposits` is the sequence of all deposits, ordered chronologically, up to
-  (and including) the block with hash `eth1_block_hash`
+  (and including) the block with hash `sil1_block_hash`
 
 Proof-of-work blocks must only be considered once they are at least
-`SECONDS_PER_ETH1_BLOCK * ETH1_FOLLOW_DISTANCE` seconds old (i.e.
-`eth1_timestamp + SECONDS_PER_ETH1_BLOCK * ETH1_FOLLOW_DISTANCE <= current_unix_time`).
+`SECONDS_PER_SIL1_BLOCK * SIL1_FOLLOW_DISTANCE` seconds old (i.e.
+`sil1_timestamp + SECONDS_PER_SIL1_BLOCK * SIL1_FOLLOW_DISTANCE <= current_unix_time`).
 Due to this constraint, if
-`GENESIS_DELAY < SECONDS_PER_ETH1_BLOCK * ETH1_FOLLOW_DISTANCE`, then the
+`GENESIS_DELAY < SECONDS_PER_SIL1_BLOCK * SIL1_FOLLOW_DISTANCE`, then the
 `genesis_time` can happen before the time/state is first known. Values should be
 configured to avoid this case.
 
 ```python
-def initialize_beacon_state_from_eth1(
-    eth1_block_hash: Hash32, eth1_timestamp: uint64, deposits: Sequence[Deposit]
+def initialize_beacon_state_from_sil1(
+    sil1_block_hash: Hash32, sil1_timestamp: uint64, deposits: Sequence[Deposit]
 ) -> BeaconState:
     fork = Fork(
         previous_version=GENESIS_FORK_VERSION,
@@ -1306,19 +1306,19 @@ def initialize_beacon_state_from_eth1(
         epoch=GENESIS_EPOCH,
     )
     state = BeaconState(
-        genesis_time=eth1_timestamp + GENESIS_DELAY,
+        genesis_time=sil1_timestamp + GENESIS_DELAY,
         fork=fork,
-        eth1_data=Eth1Data(deposit_count=uint64(len(deposits)), block_hash=eth1_block_hash),
+        sil1_data=Sil1Data(deposit_count=uint64(len(deposits)), block_hash=sil1_block_hash),
         latest_block_header=BeaconBlockHeader(body_root=hash_tree_root(BeaconBlockBody())),
-        randao_mixes=[eth1_block_hash]
-        * EPOCHS_PER_HISTORICAL_VECTOR,  # Seed RANDAO with Eth1 entropy
+        randao_mixes=[sil1_block_hash]
+        * EPOCHS_PER_HISTORICAL_VECTOR,  # Seed RANDAO with Sil1 entropy
     )
 
     # Process deposits
     leaves = [deposit.data for deposit in deposits]
     for index, deposit in enumerate(deposits):
         deposit_data_list = List[DepositData, 2**DEPOSIT_CONTRACT_TREE_DEPTH](*leaves[: index + 1])
-        state.eth1_data.deposit_root = hash_tree_root(deposit_data_list)
+        state.sil1_data.deposit_root = hash_tree_root(deposit_data_list)
         process_deposit(state, deposit)
 
     # Process activations
@@ -1337,7 +1337,7 @@ def initialize_beacon_state_from_eth1(
     return state
 ```
 
-*Note*: The ETH1 block with `eth1_timestamp` meeting the minimum genesis active
+*Note*: The SIL1 block with `sil1_timestamp` meeting the minimum genesis active
 validator count criteria can also occur before `MIN_GENESIS_TIME`.
 
 ### Genesis state
@@ -1424,7 +1424,7 @@ def process_epoch(state: BeaconState) -> None:
     process_rewards_and_penalties(state)
     process_registry_updates(state)
     process_slashings(state)
-    process_eth1_data_reset(state)
+    process_sil1_data_reset(state)
     process_effective_balance_updates(state)
     process_slashings_reset(state)
     process_randao_mixes_reset(state)
@@ -1798,14 +1798,14 @@ def process_slashings(state: BeaconState) -> None:
             decrease_balance(state, ValidatorIndex(index), penalty)
 ```
 
-#### Eth1 data votes updates
+#### Sil1 data votes updates
 
 ```python
-def process_eth1_data_reset(state: BeaconState) -> None:
+def process_sil1_data_reset(state: BeaconState) -> None:
     next_epoch = Epoch(get_current_epoch(state) + 1)
-    # Reset eth1 data votes
-    if next_epoch % EPOCHS_PER_ETH1_VOTING_PERIOD == 0:
-        state.eth1_data_votes = []
+    # Reset sil1 data votes
+    if next_epoch % EPOCHS_PER_SIL1_VOTING_PERIOD == 0:
+        state.sil1_data_votes = []
 ```
 
 #### Effective balances updates
@@ -1876,7 +1876,7 @@ def process_participation_record_updates(state: BeaconState) -> None:
 def process_block(state: BeaconState, block: BeaconBlock) -> None:
     process_block_header(state, block)
     process_randao(state, block.body)
-    process_eth1_data(state, block.body)
+    process_sil1_data(state, block.body)
     process_operations(state, block.body)
 ```
 
@@ -1920,16 +1920,16 @@ def process_randao(state: BeaconState, body: BeaconBlockBody) -> None:
     state.randao_mixes[epoch % EPOCHS_PER_HISTORICAL_VECTOR] = mix
 ```
 
-#### Eth1 data
+#### Sil1 data
 
 ```python
-def process_eth1_data(state: BeaconState, body: BeaconBlockBody) -> None:
-    state.eth1_data_votes.append(body.eth1_data)
+def process_sil1_data(state: BeaconState, body: BeaconBlockBody) -> None:
+    state.sil1_data_votes.append(body.sil1_data)
     if (
-        state.eth1_data_votes.count(body.eth1_data) * 2
-        > EPOCHS_PER_ETH1_VOTING_PERIOD * SLOTS_PER_EPOCH
+        state.sil1_data_votes.count(body.sil1_data) * 2
+        > EPOCHS_PER_SIL1_VOTING_PERIOD * SLOTS_PER_EPOCH
     ):
-        state.eth1_data = body.eth1_data
+        state.sil1_data = body.sil1_data
 ```
 
 #### Operations
@@ -1938,7 +1938,7 @@ def process_eth1_data(state: BeaconState, body: BeaconBlockBody) -> None:
 def process_operations(state: BeaconState, body: BeaconBlockBody) -> None:
     # Verify that outstanding deposits are processed up to the maximum number of deposits
     assert len(body.deposits) == min(
-        MAX_DEPOSITS, state.eth1_data.deposit_count - state.eth1_deposit_index
+        MAX_DEPOSITS, state.sil1_data.deposit_count - state.sil1_deposit_index
     )
 
     def for_ops(operations: Sequence[Any], fn: Callable[[BeaconState, Any], None]) -> None:
@@ -2092,12 +2092,12 @@ def process_deposit(state: BeaconState, deposit: Deposit) -> None:
         branch=deposit.proof,
         # Add 1 for the List length mix-in
         depth=DEPOSIT_CONTRACT_TREE_DEPTH + 1,
-        index=state.eth1_deposit_index,
-        root=state.eth1_data.deposit_root,
+        index=state.sil1_deposit_index,
+        root=state.sil1_data.deposit_root,
     )
 
     # Deposits must be processed in order
-    state.eth1_deposit_index += 1
+    state.sil1_deposit_index += 1
 
     apply_deposit(
         state=state,

@@ -18,7 +18,7 @@ possible. Each commit should adhere to the preparation steps below.
 
 ## Preparation
 
-Check that the branch is up to date with `ethereum/consensus-specs@master`;
+Check that the branch is up to date with `sila/consensus-specs@master`;
 rebase if it is not. Run the linter (`make lint`) and ensure it passes. If the
 linter makes modifications, stage these fixes. Ensure relevant tests pass if the
 specifications or testing framework changed.

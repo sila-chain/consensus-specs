@@ -18,7 +18,7 @@ carry over unless explicitly noted or overridden.
 
 This document is a guide for implementing Weak Subjectivity protections in
 Gloas. The Weak Subjectivity Period (WSP) calculations have changed in Gloas due
-to EIP-8061, which separates activation, exit, and consolidation churn into
+to SIP-8061, which separates activation, exit, and consolidation churn into
 independently tunable parameters.
 
 ## Weak Subjectivity Period
@@ -37,7 +37,7 @@ def compute_weak_subjectivity_period(state: BeaconState) -> uint64:
         - consolidation churn (weighted 1)
     """
     t = get_total_active_balance(state)
-    # [Modified in Gloas:EIP8061]
+    # [Modified in Gloas:SIP8061]
     delta = (
         2 * get_exit_churn_limit(state) // 3
         + get_activation_churn_limit(state) // 3

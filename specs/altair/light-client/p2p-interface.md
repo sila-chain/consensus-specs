@@ -92,7 +92,7 @@ The `ForkDigest` context epoch is determined by
 
 Per `fork_version = compute_fork_version(epoch)`:
 
-<!-- eth_consensus_specs: skip -->
+<!-- sil_consensus_specs: skip -->
 
 | `fork_version`                  | Message SSZ type                   |
 | ------------------------------- | ---------------------------------- |
@@ -140,7 +140,7 @@ The `ForkDigest` context epoch is determined by
 
 Per `fork_version = compute_fork_version(epoch)`:
 
-<!-- eth_consensus_specs: skip -->
+<!-- sil_consensus_specs: skip -->
 
 | `fork_version`                  | Message SSZ type                     |
 | ------------------------------- | ------------------------------------ |
@@ -153,7 +153,7 @@ Per `fork_version = compute_fork_version(epoch)`:
 
 ##### GetLightClientBootstrap
 
-**Protocol ID:** `/eth2/beacon_chain/req/light_client_bootstrap/1/`
+**Protocol ID:** `/sil2/beacon_chain/req/light_client_bootstrap/1/`
 
 Request Content:
 
@@ -188,7 +188,7 @@ determined by `compute_epoch_at_slot(bootstrap.header.beacon.slot)`.
 
 Per `fork_version = compute_fork_version(epoch)`:
 
-<!-- eth_consensus_specs: skip -->
+<!-- sil_consensus_specs: skip -->
 
 | `fork_version`                  | Response SSZ type             |
 | ------------------------------- | ----------------------------- |
@@ -197,7 +197,7 @@ Per `fork_version = compute_fork_version(epoch)`:
 
 ##### LightClientUpdatesByRange
 
-**Protocol ID:** `/eth2/beacon_chain/req/light_client_updates_by_range/1/`
+**Protocol ID:** `/sil2/beacon_chain/req/light_client_updates_by_range/1/`
 
 Request Content:
 
@@ -238,7 +238,7 @@ that the context epoch may differ from the one used to verify the
 
 Per `fork_version = compute_fork_version(epoch)`:
 
-<!-- eth_consensus_specs: skip -->
+<!-- sil_consensus_specs: skip -->
 
 | `fork_version`                  | Response chunk SSZ type    |
 | ------------------------------- | -------------------------- |
@@ -247,7 +247,7 @@ Per `fork_version = compute_fork_version(epoch)`:
 
 ##### GetLightClientFinalityUpdate
 
-**Protocol ID:** `/eth2/beacon_chain/req/light_client_finality_update/1/`
+**Protocol ID:** `/sil2/beacon_chain/req/light_client_finality_update/1/`
 
 No Request Content.
 
@@ -276,7 +276,7 @@ the context epoch may differ from the one used to verify the
 
 Per `fork_version = compute_fork_version(epoch)`:
 
-<!-- eth_consensus_specs: skip -->
+<!-- sil_consensus_specs: skip -->
 
 | `fork_version`                  | Response SSZ type                  |
 | ------------------------------- | ---------------------------------- |
@@ -285,7 +285,7 @@ Per `fork_version = compute_fork_version(epoch)`:
 
 ##### GetLightClientOptimisticUpdate
 
-**Protocol ID:** `/eth2/beacon_chain/req/light_client_optimistic_update/1/`
+**Protocol ID:** `/sil2/beacon_chain/req/light_client_optimistic_update/1/`
 
 No Request Content.
 
@@ -314,7 +314,7 @@ that the context epoch may differ from the one used to verify the
 
 Per `fork_version = compute_fork_version(epoch)`:
 
-<!-- eth_consensus_specs: skip -->
+<!-- sil_consensus_specs: skip -->
 
 | `fork_version`                  | Response SSZ type                    |
 | ------------------------------- | ------------------------------------ |

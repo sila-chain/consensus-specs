@@ -9,7 +9,7 @@ class HezeSpecBuilder(BaseSpecBuilder):
     @classmethod
     def imports(cls, preset_name: str):
         return f"""
-from eth_consensus_specs.gloas import {preset_name} as gloas
+from sil_consensus_specs.gloas import {preset_name} as gloas
 """
 
     @classmethod

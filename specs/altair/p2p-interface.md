@@ -309,7 +309,7 @@ def validate_sync_committee_contribution_and_proof_gossip(
     ]
     domain = get_domain(state, DOMAIN_SYNC_COMMITTEE, compute_epoch_at_slot(contribution.slot))
     signing_root = compute_signing_root(contribution.beacon_block_root, domain)
-    if not eth_fast_aggregate_verify(participant_pubkeys, signing_root, contribution.signature):
+    if not sil_fast_aggregate_verify(participant_pubkeys, signing_root, contribution.signature):
         raise GossipReject("invalid aggregate signature")
 
     # Mark this contribution as seen
@@ -464,7 +464,7 @@ chunk: `compute_fork_digest(genesis_validators_root, epoch)`.
 
 ##### BeaconBlocksByRange v2
 
-**Protocol ID:** `/eth2/beacon_chain/req/beacon_blocks_by_range/2/`
+**Protocol ID:** `/sil2/beacon_chain/req/beacon_blocks_by_range/2/`
 
 Request and Response remain unchanged. A `ForkDigest`-context is used to select
 the fork namespace of the Response type.
@@ -474,7 +474,7 @@ determined by `compute_epoch_at_slot(signed_beacon_block.message.slot)`.
 
 Per `fork_version = compute_fork_version(epoch)`:
 
-<!-- eth_consensus_specs: skip -->
+<!-- sil_consensus_specs: skip -->
 
 | `fork_version`         | Chunk SSZ type             |
 | ---------------------- | -------------------------- |
@@ -483,7 +483,7 @@ Per `fork_version = compute_fork_version(epoch)`:
 
 ##### BeaconBlocksByRoot v2
 
-**Protocol ID:** `/eth2/beacon_chain/req/beacon_blocks_by_root/2/`
+**Protocol ID:** `/sil2/beacon_chain/req/beacon_blocks_by_root/2/`
 
 Request and Response remain unchanged. A `ForkDigest`-context is used to select
 the fork namespace of the Response type.
@@ -493,7 +493,7 @@ determined by `compute_epoch_at_slot(signed_beacon_block.message.slot)`.
 
 Per `fork_version = compute_fork_version(epoch)`:
 
-<!-- eth_consensus_specs: skip -->
+<!-- sil_consensus_specs: skip -->
 
 | `fork_version`         | Chunk SSZ type             |
 | ---------------------- | -------------------------- |
@@ -502,7 +502,7 @@ Per `fork_version = compute_fork_version(epoch)`:
 
 ##### GetMetaData v2
 
-**Protocol ID:** `/eth2/beacon_chain/req/metadata/2/`
+**Protocol ID:** `/sil2/beacon_chain/req/metadata/2/`
 
 No Request Content.
 

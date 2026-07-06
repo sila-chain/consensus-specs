@@ -28,7 +28,7 @@
 
 ## Project overview
 
-This repository contains the **Ethereum Proof-of-Stake Consensus
+This repository contains the **Sila Proof-of-Stake Consensus
 Specifications**. It serves as:
 
 - **Formal specifications** in human-readable markdown with embedded Python
@@ -36,7 +36,7 @@ Specifications**. It serves as:
 - **Reference test generator** for client implementations
 - **Protocol development platform** organized by network upgrades (forks)
 
-The specifications define how Ethereum's consensus layer (beacon chain)
+The specifications define how Sila's consensus layer (beacon chain)
 operates.
 
 ## Directory structure
@@ -57,7 +57,7 @@ operates.
 
 ```
 /tests/
-  core/pyspec/eth_consensus_specs/
+  core/pyspec/sil_consensus_specs/
     <fork>/              # Assembled pyspec (do not edit)
     test/<fork>/         # Test cases organized by fork
       block_processing/
@@ -125,8 +125,8 @@ implementations use these specifications to parse and run the reference tests.
 When writing tests, use these decorators:
 
 - `@with_all_phases` - Run on all forks
-- `@with_phases([DENEB, FULU])` - Run on specific forks
-- `@with_deneb_and_later` - Run on Deneb and all subsequent forks
+- `@with_phases([SILA_DENEB, SILA_FULU])` - Run on specific forks
+- `@with_sila_deneb_and_later` - Run on SilaDeneb and all subsequent forks
 - `@with_electra_and_later` - Run on Electra and all subsequent forks
 - `@spec_state_test` - State transition test
 - `@spec_test` - General spec test
@@ -156,7 +156,7 @@ def test_example(spec, state):
 ### Adding a new helper function
 
 1. Add the Python function to the appropriate spec markdown file
-2. Add tests in `tests/core/pyspec/eth_consensus_specs/test/`
+2. Add tests in `tests/core/pyspec/sil_consensus_specs/test/`
 3. Run `make lint` to run checks
 
 ### Modifying an existing function
@@ -192,7 +192,7 @@ Adding a new fork (e.g., "foobar") requires updates to many files:
 - `pysetup/spec_builders/foobar.py` - Create SpecBuilder class
 - `pysetup/spec_builders/__init__.py` - Import and register the SpecBuilder
 
-**4. Test infrastructure (`tests/core/pyspec/eth_consensus_specs/test/`):**
+**4. Test infrastructure (`tests/core/pyspec/sil_consensus_specs/test/`):**
 
 - `helpers/constants.py` - Add constant, update `ALL_PHASES`,
   `PREVIOUS_FORK_OF`, `POST_FORK_OF`
@@ -202,11 +202,11 @@ Adding a new fork (e.g., "foobar") requires updates to many files:
 **5. Spec files:**
 
 - `specs/foobar/` - For scheduled forks
-- `specs/_features/eipNNNN/` - For experimental features (must start with "eip")
+- `specs/_features/sipNNNN/` - For experimental features (must start with "sip")
 
 **6. Presets (if the fork has preset values):**
 
-- `presets/mainnet/foobar.yaml`
+- `presets/sila_mainnet/foobar.yaml`
 - `presets/minimal/foobar.yaml`
 
 ## Important notes

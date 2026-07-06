@@ -24,7 +24,7 @@
 ## Introduction
 
 This is an accompanying document which describes the expected actions of a
-"builder" participating in the Ethereum proof-of-stake protocol.
+"builder" participating in the Sila proof-of-stake protocol.
 
 With the Gloas upgrade, the protocol introduces a new type of staked actor (not
 a validator) called a *builder*. Since builders are not validators, they do not
@@ -38,7 +38,7 @@ builders.
 ### Submit deposit
 
 Builders are created by submitting a builder deposit request to the builder
-deposit contract on the execution layer, as defined in EIP-8282. The request
+deposit contract on the execution layer, as defined in SIP-8282. The request
 must include:
 
 - `pubkey`: The builder's BLS public key.
@@ -86,7 +86,7 @@ finalized at the fork, the builder will be immediately active. See
 ### Exiting
 
 A builder exits by submitting a builder exit request to the builder exit
-contract on the execution layer, as defined in EIP-8282. The request contains
+contract on the execution layer, as defined in SIP-8282. The request contains
 the builder's `pubkey` and is authorized by the builder's `execution_address`
 (the transaction sender), not the BLS key.
 
@@ -176,15 +176,15 @@ and broadcasts it on the `execution_payload_bid` global gossip topic.
 
 ```python
 def get_data_column_sidecars(
-    # [Modified in Gloas:EIP7732]
+    # [Modified in Gloas:SIP7732]
     # Removed `signed_block_header`
-    # [New in Gloas:EIP7732]
+    # [New in Gloas:SIP7732]
     beacon_block_root: Root,
-    # [New in Gloas:EIP7732]
+    # [New in Gloas:SIP7732]
     slot: Slot,
-    # [Modified in Gloas:EIP7732]
+    # [Modified in Gloas:SIP7732]
     # Removed `kzg_commitments`
-    # [Modified in Gloas:EIP7732]
+    # [Modified in Gloas:SIP7732]
     # Removed `kzg_commitments_inclusion_proof`
     cells_and_kzg_proofs: Sequence[
         Tuple[Vector[Cell, CELLS_PER_EXT_BLOB], Vector[KZGProof, CELLS_PER_EXT_BLOB]]
@@ -202,7 +202,7 @@ def get_data_column_sidecars(
             column_cells.append(cells[column_index])
             column_proofs.append(proofs[column_index])
         sidecars.append(
-            # [Modified in Gloas:EIP7732]
+            # [Modified in Gloas:SIP7732]
             DataColumnSidecar(
                 index=column_index,
                 column=column_cells,
