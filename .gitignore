@@ -5,27 +5,25 @@ venv
 .venv
 /.pytest_cache
 *.swp
-.sil_consensus_specs
+.sil2spec
 
 build/
 output/
 dist/
 
-.mypy_cache
 .pytest_cache
-.ruff_cache
+.mypy_cache
 
 # Dynamically built from Markdown spec
-tests/core/pyspec/sil_consensus_specs/phase0/
-tests/core/pyspec/sil_consensus_specs/altair/
-tests/core/pyspec/sil_consensus_specs/bellatrix/
-tests/core/pyspec/sil_consensus_specs/capella/
-tests/core/pyspec/sil_consensus_specs/sila_deneb/
-tests/core/pyspec/sil_consensus_specs/electra/
-tests/core/pyspec/sil_consensus_specs/sila_fulu/
-tests/core/pyspec/sil_consensus_specs/gloas/
-tests/core/pyspec/sil_consensus_specs/heze/
-tests/core/pyspec/sil_consensus_specs/sip*/
+tests/core/pyspec/sil2spec/phase0/
+tests/core/pyspec/sil2spec/altair/
+tests/core/pyspec/sil2spec/bellatrix/
+tests/core/pyspec/sil2spec/capella/
+tests/core/pyspec/sil2spec/deneb/
+tests/core/pyspec/sil2spec/electra/
+tests/core/pyspec/sil2spec/fulu/
+tests/core/pyspec/sil2spec/gloas/
+tests/core/pyspec/sil2spec/sip*/
 
 # coverage reports
 .htmlcov
@@ -34,22 +32,20 @@ tests/core/pyspec/sil_consensus_specs/sip*/
 
 # local CI testing output
 tests/core/pyspec/test-reports
-tests/core/pyspec/sil_consensus_specs/test_results.xml
+tests/core/pyspec/sil2spec/test_results.xml
 
 *.egg-info
 
 # TOC tool outputs temporary files
 *.tmp
 
-# website
-docs/
-site/
+# docs reader build
+docs/specs
+docs/sync
+docs/ssz
+docs/fork_choice
+docs/README.md
+site
 
 # docker test results
 testResults
-
-# lint temporary files
-.lint_diff_*
-
-# reference tests
-reftests/

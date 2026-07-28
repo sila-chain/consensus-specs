@@ -389,10 +389,10 @@ We first define helper functions:
     recursively:
     - If `len(chunks) == 0`: the root is a zero value, `Bytes32()`.
     - Otherwise: compute the root using `hash(a, b)`
-      - `a`: Merkleize the first up to `num_leaves` chunks as a binary tree
-        using `merkleize(chunks[:num_leaves], num_leaves)`.
-      - `b`: Recursively merkleize chunks beyond `num_leaves` using
+      - `a`: Recursively merkleize chunks beyond `num_leaves` using
         `merkleize_progressive(chunks[num_leaves:], num_leaves * 4)`.
+      - `b`: Merkleize the first up to `num_leaves` chunks as a binary tree
+        using `merkleize(chunks[:num_leaves], num_leaves)`.
 - `mix_in_active_fields`: Given a Merkle root `root` and an `active_fields`
   configuration return `hash(root, pack_bits(active_fields))`. Note that
   `active_fields` is restricted to ≤ 256 bits.
@@ -447,7 +447,7 @@ example, `BeaconBlockHeader` objects uniquely expand to `BeaconBlock` objects.
 
 ## Implementations
 
-See https://github.com/sila-chain/consensus-specs/issues/2138 for a list of
+See https://github.com/sila/consensus-specs/issues/2138 for a list of
 current known implementations.
 
 ## JSON mapping

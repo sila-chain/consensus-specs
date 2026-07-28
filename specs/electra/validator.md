@@ -13,12 +13,13 @@
 - [Protocols](#protocols)
   - [`ExecutionEngine`](#executionengine)
     - [Modified `get_payload`](#modified-get_payload)
-- [Block and sidecar proposal](#block-and-sidecar-proposal)
+- [Block proposal](#block-proposal)
   - [Constructing the `BeaconBlockBody`](#constructing-the-beaconblockbody)
     - [Attester slashings](#attester-slashings)
     - [Attestations](#attestations)
     - [Deposits](#deposits)
-    - [Execution requests](#execution-requests)
+    - [Execution payload](#execution-payload)
+    - [Execution Requests](#execution-requests)
   - [Constructing the `BlobSidecar`s](#constructing-the-blobsidecars)
     - [Sidecar](#sidecar)
 - [Attesting](#attesting)
@@ -36,14 +37,14 @@ validator" to implement Electra.
 ## Prerequisites
 
 This document is an extension of the
-[SilaDeneb -- Honest Validator](../sila_deneb/validator.md) guide. All behaviors and
+[SilaDeneb -- Honest Validator](../deneb/validator.md) guide. All behaviors and
 definitions defined in this document, and documents it extends, carry over
 unless explicitly noted or overridden.
 
 All terminology, constants, functions, and protocol mechanics defined in the
-updated beacon-chain specifications of [Electra](./beacon-chain.md) are
-requisite for this document and used throughout. Please see related beacon-chain
-specifications before continuing and use them as a reference throughout.
+updated Beacon Chain doc of [Electra](./beacon-chain.md) are requisite for this
+document and used throughout. Please see related Beacon Chain doc before
+continuing and use them as a reference throughout.
 
 ## Helpers
 
@@ -51,7 +52,7 @@ specifications before continuing and use them as a reference throughout.
 
 ```python
 @dataclass
-class GetPayloadResponse:
+class GetPayloadResponse(object):
     execution_payload: ExecutionPayload
     block_value: uint256
     blobs_bundle: BlobsBundle
@@ -88,17 +89,20 @@ class SignedAggregateAndProof(Container):
 
 #### Modified `get_payload`
 
-*Note*: The `get_payload` function returns the updated `GetPayloadResponse`
-object.
+Given the `payload_id`, `get_payload` returns the most recent version of the
+execution payload that has been built since the corresponding call to
+`notify_forkchoice_updated` method.
 
 ```python
 def get_payload(self: ExecutionEngine, payload_id: PayloadId) -> GetPayloadResponse:
     """
-    Return ExecutionPayload, uint256, BlobsBundle, and execution requests (as Sequence[bytes]) objects.
+    Return ExecutionPayload, uint256, BlobsBundle and execution requests (as Sequence[bytes]) objects.
     """
+    # pylint: disable=unused-argument
+    ...
 ```
 
-## Block and sidecar proposal
+## Block proposal
 
 ### Constructing the `BeaconBlockBody`
 
@@ -132,14 +136,14 @@ def compute_on_chain_aggregate(network_aggregates: Sequence[Attestation]) -> Att
     signature = bls.Aggregate([a.signature for a in aggregates])
 
     committee_indices = [get_committee_indices(a.committee_bits)[0] for a in aggregates]
-    committee_flags = [(index in committee_indices) for index in range(MAX_COMMITTEES_PER_SLOT)]
+    committee_flags = [(index in committee_indices) for index in range(0, MAX_COMMITTEES_PER_SLOT)]
     committee_bits = Bitvector[MAX_COMMITTEES_PER_SLOT](committee_flags)
 
     return Attestation(
         aggregation_bits=aggregation_bits,
         data=data,
-        signature=signature,
         committee_bits=committee_bits,
+        signature=signature,
     )
 ```
 
@@ -150,7 +154,7 @@ def compute_on_chain_aggregate(network_aggregates: Sequence[Attestation]) -> Att
 result of the following function:
 
 ```python
-def get_sil1_pending_deposit_count(state: BeaconState) -> uint64:
+def get_eth1_pending_deposit_count(state: BeaconState) -> uint64:
     sil1_deposit_index_limit = min(
         state.sil1_data.deposit_count, state.deposit_requests_start_index
     )
@@ -160,13 +164,13 @@ def get_sil1_pending_deposit_count(state: BeaconState) -> uint64:
         return uint64(0)
 ```
 
-*Note*: Clients will be able to remove the `Sil1Data` polling mechanism in an
+*Note*: Clients will be able to remove the `Eth1Data` polling mechanism in an
 uncoordinated fashion once the transition period is finished. The transition
 period is considered finished when a network reaches the point where
 `state.sil1_deposit_index == state.deposit_requests_start_index`.
 
 ```python
-def get_sil1_vote(state: BeaconState, sil1_chain: Sequence[Sil1Block]) -> Sil1Data:
+def get_eth1_vote(state: BeaconState, sil1_chain: Sequence[Eth1Block]) -> Eth1Data:
     # [New in Electra:SIP6110]
     if state.sil1_deposit_index == state.deposit_requests_start_index:
         return state.sil1_data
@@ -174,12 +178,12 @@ def get_sil1_vote(state: BeaconState, sil1_chain: Sequence[Sil1Block]) -> Sil1Da
     period_start = voting_period_start_time(state)
     # `sil1_chain` abstractly represents all blocks in the sil1 chain sorted by ascending block height
     votes_to_consider = [
-        get_sil1_data(block)
+        get_eth1_data(block)
         for block in sil1_chain
         if (
             is_candidate_block(block, period_start)
             # Ensure cannot move back to earlier deposit contract states
-            and get_sil1_data(block).deposit_count >= state.sil1_data.deposit_count
+            and get_eth1_data(block).deposit_count >= state.sil1_data.deposit_count
         )
     ]
 
@@ -188,9 +192,9 @@ def get_sil1_vote(state: BeaconState, sil1_chain: Sequence[Sil1Block]) -> Sil1Da
 
     # Default vote on latest sil1 block data in the period range unless sil1 chain is not live
     # Non-substantive casting for linter
-    state_sil1_data: Sil1Data = state.sil1_data
+    state_eth1_data: Eth1Data = state.sil1_data
     default_vote = (
-        votes_to_consider[len(votes_to_consider) - 1] if any(votes_to_consider) else state_sil1_data
+        votes_to_consider[len(votes_to_consider) - 1] if any(votes_to_consider) else state_eth1_data
     )
 
     return max(
@@ -204,7 +208,49 @@ def get_sil1_vote(state: BeaconState, sil1_chain: Sequence[Sil1Block]) -> Sil1Da
     )
 ```
 
-#### Execution requests
+#### Execution payload
+
+`prepare_execution_payload` is updated from the SilaDeneb specs.
+
+*Note*: In this section, `state` is the state of the slot for the block proposal
+_without_ the block yet applied. That is, `state` is the `previous_state`
+processed through any empty slots up to the assigned slot using
+`process_slots(previous_state, slot)`.
+
+*Note*: The only change to `prepare_execution_payload` is the new definition of
+`get_expected_withdrawals`.
+
+```python
+def prepare_execution_payload(
+    state: BeaconState,
+    safe_block_hash: Hash32,
+    finalized_block_hash: Hash32,
+    suggested_fee_recipient: ExecutionAddress,
+    execution_engine: ExecutionEngine,
+) -> Optional[PayloadId]:
+    # Verify consistency of the parent hash with respect to the previous execution payload header
+    parent_hash = state.latest_execution_payload_header.block_hash
+
+    # [Modified in SIP7251]
+    # Set the forkchoice head and initiate the payload build process
+    withdrawals, _ = get_expected_withdrawals(state)
+
+    payload_attributes = PayloadAttributes(
+        timestamp=compute_time_at_slot(state, state.slot),
+        prev_randao=get_randao_mix(state, get_current_epoch(state)),
+        suggested_fee_recipient=suggested_fee_recipient,
+        withdrawals=withdrawals,
+        parent_beacon_block_root=hash_tree_root(state.latest_block_header),
+    )
+    return execution_engine.notify_forkchoice_updated(
+        head_block_hash=parent_hash,
+        safe_block_hash=safe_block_hash,
+        finalized_block_hash=finalized_block_hash,
+        payload_attributes=payload_attributes,
+    )
+```
+
+#### Execution Requests
 
 *[New in Electra]*
 

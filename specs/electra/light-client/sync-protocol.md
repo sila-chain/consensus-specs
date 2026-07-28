@@ -3,30 +3,32 @@
 <!-- mdformat-toc start --slug=github --no-anchors --maxlevel=6 --minlevel=2 -->
 
 - [Introduction](#introduction)
-- [Types](#types)
+- [Custom types](#custom-types)
 - [Constants](#constants)
   - [Frozen constants](#frozen-constants)
   - [New constants](#new-constants)
-- [Helpers](#helpers)
+- [Helper functions](#helper-functions)
   - [Modified `finalized_root_gindex_at_slot`](#modified-finalized_root_gindex_at_slot)
   - [Modified `current_sync_committee_gindex_at_slot`](#modified-current_sync_committee_gindex_at_slot)
   - [Modified `next_sync_committee_gindex_at_slot`](#modified-next_sync_committee_gindex_at_slot)
+  - [Modified `get_lc_execution_root`](#modified-get_lc_execution_root)
 
 <!-- mdformat-toc end -->
 
 ## Introduction
 
 This upgrade updates light client data to include the Electra changes to the
-generalized indices of [`BeaconState`](../beacon-chain.md). It extends the
-[SilaDeneb Light Client specifications](../../sila_deneb/light-client/sync-protocol.md).
+[`ExecutionPayload`](../beacon-chain.md) structure and to the generalized
+indices of surrounding containers. It extends the
+[SilaDeneb Light Client specifications](../../deneb/light-client/sync-protocol.md).
 The [fork document](./fork.md) explains how to upgrade existing SilaDeneb based
 deployments to Electra.
 
-Additional documents describe the impact of the upgrade on certain roles:
+Additional documents describes the impact of the upgrade on certain roles:
 
 - [Networking](./p2p-interface.md)
 
-## Types
+## Custom types
 
 | Name                         | SSZ equivalent                                                      | Description                                                       |
 | ---------------------------- | ------------------------------------------------------------------- | ----------------------------------------------------------------- |
@@ -55,7 +57,7 @@ Existing `GeneralizedIndex` constants are frozen at their
 | `CURRENT_SYNC_COMMITTEE_GINDEX_ELECTRA` | `get_generalized_index(BeaconState, 'current_sync_committee')` (= 86)        |
 | `NEXT_SYNC_COMMITTEE_GINDEX_ELECTRA`    | `get_generalized_index(BeaconState, 'next_sync_committee')` (= 87)           |
 
-## Helpers
+## Helper functions
 
 ### Modified `finalized_root_gindex_at_slot`
 
@@ -91,4 +93,60 @@ def next_sync_committee_gindex_at_slot(slot: Slot) -> GeneralizedIndex:
     if epoch >= ELECTRA_FORK_EPOCH:
         return NEXT_SYNC_COMMITTEE_GINDEX_ELECTRA
     return NEXT_SYNC_COMMITTEE_GINDEX
+```
+
+### Modified `get_lc_execution_root`
+
+```python
+def get_lc_execution_root(header: LightClientHeader) -> Root:
+    epoch = compute_epoch_at_slot(header.beacon.slot)
+
+    # [New in Electra]
+    if epoch >= ELECTRA_FORK_EPOCH:
+        return hash_tree_root(header.execution)
+
+    # [Modified in Electra]
+    if epoch >= DENEB_FORK_EPOCH:
+        execution_header = deneb.ExecutionPayloadHeader(
+            parent_hash=header.execution.parent_hash,
+            fee_recipient=header.execution.fee_recipient,
+            state_root=header.execution.state_root,
+            recsipts_root=header.execution.recsipts_root,
+            logs_bloom=header.execution.logs_bloom,
+            prev_randao=header.execution.prev_randao,
+            block_number=header.execution.block_number,
+            gas_limit=header.execution.gas_limit,
+            gas_used=header.execution.gas_used,
+            timestamp=header.execution.timestamp,
+            extra_data=header.execution.extra_data,
+            base_fee_per_gas=header.execution.base_fee_per_gas,
+            block_hash=header.execution.block_hash,
+            transactions_root=header.execution.transactions_root,
+            withdrawals_root=header.execution.withdrawals_root,
+            blob_gas_used=header.execution.blob_gas_used,
+            excess_blob_gas=header.execution.excess_blob_gas,
+        )
+        return hash_tree_root(execution_header)
+
+    if epoch >= CAPELLA_FORK_EPOCH:
+        execution_header = capella.ExecutionPayloadHeader(
+            parent_hash=header.execution.parent_hash,
+            fee_recipient=header.execution.fee_recipient,
+            state_root=header.execution.state_root,
+            recsipts_root=header.execution.recsipts_root,
+            logs_bloom=header.execution.logs_bloom,
+            prev_randao=header.execution.prev_randao,
+            block_number=header.execution.block_number,
+            gas_limit=header.execution.gas_limit,
+            gas_used=header.execution.gas_used,
+            timestamp=header.execution.timestamp,
+            extra_data=header.execution.extra_data,
+            base_fee_per_gas=header.execution.base_fee_per_gas,
+            block_hash=header.execution.block_hash,
+            transactions_root=header.execution.transactions_root,
+            withdrawals_root=header.execution.withdrawals_root,
+        )
+        return hash_tree_root(execution_header)
+
+    return Root()
 ```

@@ -10,7 +10,7 @@ validate the `PRESET_BASE` variable in the config matches the running build.
 
 Standard presets:
 
-- [`sila_mainnet/`](./sila_mainnet): Used in sila_mainnet, sila_mainnet-like testnets (e.g. Hoodi),
+- [`sila-mainnet/`](./sila-mainnet): Used in sila-mainnet, sila-mainnet-like testnets (e.g. Hoodi),
   and spec-testing
 - [`minimal/`](./minimal): Used in low-resource local dev testnets, and
   spec-testing

@@ -1,4 +1,4 @@
-from sil_consensus_specs.test.helpers.state import (
+from sil2spec.test.helpers.state import (
     transition_to,
 )
 
@@ -8,7 +8,7 @@ def attesters_in_block(spec, epoch_state, signed_block, target_epoch):
     attesters = set()
     for a in block.body.attestations:
         if a.data.target.epoch == target_epoch:
-            attesters.update(spec.get_attesting_indices(epoch_state, a))
+            attesters.update(spec.get_attesting_indices(epoch_state, a.data, a.aggregation_bits))
     return attesters
 
 
@@ -85,9 +85,9 @@ def print_head(spec, store):
 
     return (
         "(slot="
-        + str(store.blocks[head.root].slot)
+        + str(store.blocks[head].slot)
         + ", root="
-        + str(head.root)[:6]
+        + str(head)[:6]
         + ", weight="
         + str(weight * 100 // total_active_balance)
         + "%)"

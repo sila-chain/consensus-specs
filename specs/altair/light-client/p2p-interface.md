@@ -7,8 +7,8 @@
   - [The gossip domain: gossipsub](#the-gossip-domain-gossipsub)
     - [Topics and messages](#topics-and-messages)
       - [Global topics](#global-topics)
-        - [New `light_client_finality_update`](#new-light_client_finality_update)
-        - [New `light_client_optimistic_update`](#new-light_client_optimistic_update)
+        - [`light_client_finality_update`](#light_client_finality_update)
+        - [`light_client_optimistic_update`](#light_client_optimistic_update)
   - [The Req/Resp domain](#the-reqresp-domain)
     - [Messages](#messages)
       - [GetLightClientBootstrap](#getlightclientbootstrap)
@@ -49,7 +49,7 @@ New global topics are added to provide light clients with the latest updates.
 
 ##### Global topics
 
-###### New `light_client_finality_update`
+###### `light_client_finality_update`
 
 This topic is used to propagate the latest `LightClientFinalityUpdate` to light
 clients, allowing them to keep track of the latest `finalized_header`.
@@ -64,7 +64,7 @@ the network.
   `finality_update` for that slot did not indicate supermajority
 - _[IGNORE]_ The `finality_update` is received after the block at
   `signature_slot` was given enough time to propagate through the network --
-  i.e. validatate that `get_sync_message_due_ms()` milliseconds (with a
+  i.e. validatate that `get_sync_message_due_ms(epoch)` milliseconds (with a
   `MAXIMUM_GOSSIP_CLOCK_DISPARITY` allowance) has transpired since the start of
   `signature_slot`.
 
@@ -92,14 +92,14 @@ The `ForkDigest` context epoch is determined by
 
 Per `fork_version = compute_fork_version(epoch)`:
 
-<!-- sil_consensus_specs: skip -->
+<!-- sil2spec: skip -->
 
 | `fork_version`                  | Message SSZ type                   |
 | ------------------------------- | ---------------------------------- |
 | `GENESIS_FORK_VERSION`          | n/a                                |
 | `ALTAIR_FORK_VERSION` and later | `altair.LightClientFinalityUpdate` |
 
-###### New `light_client_optimistic_update`
+###### `light_client_optimistic_update`
 
 This topic is used to propagate the latest `LightClientOptimisticUpdate` to
 light clients, allowing them to keep track of the latest `optimistic_header`.
@@ -111,7 +111,7 @@ the network.
   previously forwarded `optimistic_update`s
 - _[IGNORE]_ The `optimistic_update` is received after the block at
   `signature_slot` was given enough time to propagate through the network --
-  i.e. validatate that `get_sync_message_due_ms()` milliseconds (with a
+  i.e. validatate that `get_sync_message_due_ms(epoch)` milliseconds (with a
   `MAXIMUM_GOSSIP_CLOCK_DISPARITY` allowance) has transpired since the start of
   `optimistic_update.signature_slot`.
 
@@ -140,7 +140,7 @@ The `ForkDigest` context epoch is determined by
 
 Per `fork_version = compute_fork_version(epoch)`:
 
-<!-- sil_consensus_specs: skip -->
+<!-- sil2spec: skip -->
 
 | `fork_version`                  | Message SSZ type                     |
 | ------------------------------- | ------------------------------------ |
@@ -153,7 +153,7 @@ Per `fork_version = compute_fork_version(epoch)`:
 
 ##### GetLightClientBootstrap
 
-**Protocol ID:** `/sil2/beacon_chain/req/light_client_bootstrap/1/`
+**Protocol ID:** `/sila/beacon_chain/req/light_client_bootstrap/1/`
 
 Request Content:
 
@@ -188,7 +188,7 @@ determined by `compute_epoch_at_slot(bootstrap.header.beacon.slot)`.
 
 Per `fork_version = compute_fork_version(epoch)`:
 
-<!-- sil_consensus_specs: skip -->
+<!-- sil2spec: skip -->
 
 | `fork_version`                  | Response SSZ type             |
 | ------------------------------- | ----------------------------- |
@@ -197,7 +197,7 @@ Per `fork_version = compute_fork_version(epoch)`:
 
 ##### LightClientUpdatesByRange
 
-**Protocol ID:** `/sil2/beacon_chain/req/light_client_updates_by_range/1/`
+**Protocol ID:** `/sila/beacon_chain/req/light_client_updates_by_range/1/`
 
 Request Content:
 
@@ -238,7 +238,7 @@ that the context epoch may differ from the one used to verify the
 
 Per `fork_version = compute_fork_version(epoch)`:
 
-<!-- sil_consensus_specs: skip -->
+<!-- sil2spec: skip -->
 
 | `fork_version`                  | Response chunk SSZ type    |
 | ------------------------------- | -------------------------- |
@@ -247,7 +247,7 @@ Per `fork_version = compute_fork_version(epoch)`:
 
 ##### GetLightClientFinalityUpdate
 
-**Protocol ID:** `/sil2/beacon_chain/req/light_client_finality_update/1/`
+**Protocol ID:** `/sila/beacon_chain/req/light_client_finality_update/1/`
 
 No Request Content.
 
@@ -276,7 +276,7 @@ the context epoch may differ from the one used to verify the
 
 Per `fork_version = compute_fork_version(epoch)`:
 
-<!-- sil_consensus_specs: skip -->
+<!-- sil2spec: skip -->
 
 | `fork_version`                  | Response SSZ type                  |
 | ------------------------------- | ---------------------------------- |
@@ -285,7 +285,7 @@ Per `fork_version = compute_fork_version(epoch)`:
 
 ##### GetLightClientOptimisticUpdate
 
-**Protocol ID:** `/sil2/beacon_chain/req/light_client_optimistic_update/1/`
+**Protocol ID:** `/sila/beacon_chain/req/light_client_optimistic_update/1/`
 
 No Request Content.
 
@@ -314,7 +314,7 @@ that the context epoch may differ from the one used to verify the
 
 Per `fork_version = compute_fork_version(epoch)`:
 
-<!-- sil_consensus_specs: skip -->
+<!-- sil2spec: skip -->
 
 | `fork_version`                  | Response SSZ type                    |
 | ------------------------------- | ------------------------------------ |
@@ -324,8 +324,8 @@ Per `fork_version = compute_fork_version(epoch)`:
 ## Light clients
 
 Light clients using libp2p to stay in sync with the network SHOULD subscribe to
-the [`light_client_finality_update`](#new-light_client_finality_update) and
-[`light_client_optimistic_update`](#new-light_client_optimistic_update) pubsub
+the [`light_client_finality_update`](#light_client_finality_update) and
+[`light_client_optimistic_update`](#light_client_optimistic_update) pubsub
 topics and validate all received messages while the
 [light client sync process](./light-client.md#light-client-sync-process)
 supports processing `LightClientFinalityUpdate` and
@@ -350,8 +350,8 @@ additional responsibilities to enable light clients to sync with the network.
 ### Beacon chain responsibilities
 
 All full nodes SHOULD subscribe to and provide stability on the
-[`light_client_finality_update`](#new-light_client_finality_update) and
-[`light_client_optimistic_update`](#new-light_client_optimistic_update) pubsub
+[`light_client_finality_update`](#light_client_finality_update) and
+[`light_client_optimistic_update`](#light_client_optimistic_update) pubsub
 topics by validating all received messages.
 
 ### Sync committee
@@ -369,8 +369,8 @@ follows:
   SHOULD be broadcasted to the pubsub topic `light_client_optimistic_update` if
   no matching message has not yet been forwarded as part of gossip validation.
 
-These messages SHOULD be broadcasted `get_sync_message_due_ms()` milliseconds
-after the start of the slot. To ensure that the corresponding block was given
-enough time to propagate through the network, they SHOULD NOT be sent earlier.
-Note that this is different from how other messages are handled, e.g.,
+These messages SHOULD be broadcasted `get_sync_message_due_ms(epoch)`
+milliseconds after the start of the slot. To ensure that the corresponding block
+was given enough time to propagate through the network, they SHOULD NOT be sent
+earlier. Note that this is different from how other messages are handled, e.g.,
 attestations, which may be sent early.

@@ -4,21 +4,19 @@
 
 - [Introduction](#introduction)
 - [Modifications in Bellatrix](#modifications-in-bellatrix)
-  - [Types](#types)
-  - [Constants](#constants)
-  - [Helpers](#helpers)
+  - [Helper functions](#helper-functions)
     - [Modified `compute_fork_version`](#modified-compute_fork_version)
   - [The gossip domain: gossipsub](#the-gossip-domain-gossipsub)
     - [Topics and messages](#topics-and-messages)
       - [Global topics](#global-topics)
-        - [Modified `beacon_block`](#modified-beacon_block)
+        - [`beacon_block`](#beacon_block)
     - [Transitioning the gossip](#transitioning-the-gossip)
   - [The Req/Resp domain](#the-reqresp-domain)
     - [Messages](#messages)
       - [BeaconBlocksByRange v2](#beaconblocksbyrange-v2)
       - [BeaconBlocksByRoot v2](#beaconblocksbyroot-v2)
-- [Gossipsub](#gossipsub)
-  - [Why was the max gossip message size increased at Bellatrix?](#why-was-the-max-gossip-message-size-increased-at-bellatrix)
+  - [Gossipsub](#gossipsub)
+    - [Why was the max gossip message size increased at Bellatrix?](#why-was-the-max-gossip-message-size-increased-at-bellatrix)
   - [Req/Resp](#reqresp)
     - [Why was the max chunk response size increased at Bellatrix?](#why-was-the-max-chunk-response-size-increased-at-bellatrix)
     - [Why allow invalid payloads on the P2P network?](#why-allow-invalid-payloads-on-the-p2p-network)
@@ -27,8 +25,7 @@
 
 ## Introduction
 
-This document contains the consensus-layer networking specifications for
-Bellatrix.
+This document contains the networking specification for Bellatrix.
 
 The specification of these changes continues in the same format as the network
 specifications of previous upgrades, and assumes them as pre-requisite. This
@@ -41,21 +38,7 @@ understand the changes outlined in this document.
 
 ## Modifications in Bellatrix
 
-### Types
-
-| Name                      | SSZ equivalent | Description                                     |
-| ------------------------- | -------------- | ----------------------------------------------- |
-| `PayloadValidationStatus` | `uint8`        | Execution payload validation status for a block |
-
-### Constants
-
-| Name                           | Value                        |
-| ------------------------------ | ---------------------------- |
-| `PAYLOAD_STATUS_VALID`         | `PayloadValidationStatus(0)` |
-| `PAYLOAD_STATUS_INVALIDATED`   | `PayloadValidationStatus(1)` |
-| `PAYLOAD_STATUS_NOT_VALIDATED` | `PayloadValidationStatus(2)` |
-
-### Helpers
+### Helper functions
 
 #### Modified `compute_fork_version`
 
@@ -81,7 +64,8 @@ Topics follow the same specification as in prior upgrades. All topics remain
 stable except the beacon block topic which is updated with the modified type.
 
 The specification around the creation, validation, and dissemination of messages
-has not changed from the Altair document unless explicitly noted here.
+has not changed from the Phase 0 and Altair documents unless explicitly noted
+here.
 
 The derivation of the `message-id` remains stable.
 
@@ -99,114 +83,45 @@ the new `beacon_block` topics.
 
 Bellatrix changes the type of the global beacon block topic.
 
-###### Modified `beacon_block`
+###### `beacon_block`
 
-The `beacon_block` topic is used solely for propagating new signed beacon blocks
-to all nodes on the networks. Signed blocks are sent in their entirety. The
-`state` parameter is the head state.
+The *type* of the payload of this topic changes to the (modified)
+`SignedBeaconBlock` found in Bellatrix. Specifically, this type changes with the
+addition of `execution_payload` to the inner `BeaconBlockBody`. See Bellatrix
+[state transition document](./beacon-chain.md#beaconblockbody) for further
+details.
 
-*Note*: Blocks with execution enabled will be permitted to propagate regardless
-of the validity of the execution payload. This prevents network segregation
-between [optimistic](../../sync/optimistic.md) and non-optimistic nodes.
+Blocks with execution enabled will be permitted to propagate regardless of the
+validity of the execution payload. This prevents network segregation between
+[optimistic](../../sync/optimistic.md) and non-optimistic nodes.
 
-```python
-def validate_beacon_block_gossip(
-    seen: Seen,
-    store: Store,
-    state: BeaconState,
-    signed_beacon_block: SignedBeaconBlock,
-    current_time_ms: uint64,
-    # [New in Bellatrix]
-    block_payload_statuses: Dict[Root, PayloadValidationStatus],
-) -> None:
-    """
-    Validate a SignedBeaconBlock for gossip propagation.
-    Raises GossipIgnore or GossipReject on validation failure.
-    """
-    block = signed_beacon_block.message
-    execution_payload = block.body.execution_payload
+In addition to the gossip validations for this topic from prior specifications,
+the following validations MUST pass before forwarding the `signed_beacon_block`
+on the network. Alias `block = signed_beacon_block.message`,
+`execution_payload = block.body.execution_payload`.
 
-    # [IGNORE] The block is not from a future slot
-    # (MAY be queued for processing at the appropriate slot)
-    if not is_not_from_future_slot(state, block.slot, current_time_ms):
-        raise GossipIgnore("block is from a future slot")
+If the execution is enabled for the block -- i.e.
+`is_execution_enabled(state, block.body)` then validate the following:
 
-    # [IGNORE] The block is from a slot greater than the latest finalized slot
-    # (MAY choose to validate and store such blocks for additional purposes
-    # -- e.g. slashing detection, archive nodes, etc)
-    finalized_slot = compute_start_slot_at_epoch(store.finalized_checkpoint.epoch)
-    if block.slot <= finalized_slot:
-        raise GossipIgnore("block is not from a slot greater than the latest finalized slot")
+- _[REJECT]_ The block's execution payload timestamp is correct with respect to
+  the slot -- i.e.
+  `execution_payload.timestamp == compute_time_at_slot(state, block.slot)`.
+- If `execution_payload` verification of block's parent by an execution node is
+  *not* complete:
+  - _[REJECT]_ The block's parent (defined by `block.parent_root`) passes all
+    validation (excluding execution node verification of the
+    `block.body.execution_payload`).
+- Otherwise:
+  - _[IGNORE]_ The block's parent (defined by `block.parent_root`) passes all
+    validation (including execution node verification of the
+    `block.body.execution_payload`).
 
-    # [IGNORE] The block is the first block with valid signature received for the proposer for the slot
-    if (block.proposer_index, block.slot) in seen.proposer_slots:
-        raise GossipIgnore("block is not the first valid block for this proposer and slot")
+The following gossip validation from prior specifications MUST NOT be applied if
+the execution is enabled for the block -- i.e.
+`is_execution_enabled(state, block.body)`:
 
-    # [REJECT] The proposer index is a valid validator index
-    if block.proposer_index >= len(state.validators):
-        raise GossipReject("proposer index out of range")
-
-    # [REJECT] The proposer signature is valid
-    proposer = state.validators[block.proposer_index]
-    domain = get_domain(state, DOMAIN_BEACON_PROPOSER, compute_epoch_at_slot(block.slot))
-    signing_root = compute_signing_root(block, domain)
-    if not bls.Verify(proposer.pubkey, signing_root, signed_beacon_block.signature):
-        raise GossipReject("invalid proposer signature")
-
-    # [IGNORE] The block's parent has been seen (via gossip or non-gossip sources)
-    # (MAY be queued until parent is retrieved)
-    if block.parent_root not in store.blocks:
-        raise GossipIgnore("block's parent has not been seen")
-
-    # [New in Bellatrix]
-    if is_execution_enabled(state, block.body):
-        # [REJECT] The block's execution payload timestamp is correct with respect to the slot
-        if execution_payload.timestamp != compute_time_at_slot(state, block.slot):
-            raise GossipReject("incorrect execution payload timestamp")
-
-        parent_payload_status = PAYLOAD_STATUS_NOT_VALIDATED
-        if block.parent_root in block_payload_statuses:
-            parent_payload_status = block_payload_statuses[block.parent_root]
-
-        if block.parent_root not in store.block_states:
-            if parent_payload_status == PAYLOAD_STATUS_NOT_VALIDATED:
-                # [REJECT] The block's parent passes validation
-                raise GossipReject("block's parent is invalid and EL result is unknown")
-
-            # [IGNORE] The block's parent passes validation
-            raise GossipIgnore("block's parent is invalid and EL result is known")
-
-        # [IGNORE] The block's parent's execution payload passes validation
-        if parent_payload_status == PAYLOAD_STATUS_INVALIDATED:
-            raise GossipIgnore("block's parent is valid and EL result is invalid")
-
-    # [REJECT] The block's parent passes validation
-    elif block.parent_root not in store.block_states:
-        # [Modified in Bellatrix]
-        raise GossipReject("block's parent is invalid and execution is not enabled")
-
-    # [REJECT] The block is from a higher slot than its parent
-    if block.slot <= store.blocks[block.parent_root].slot:
-        raise GossipReject("block is not from a higher slot than its parent")
-
-    # [REJECT] The current finalized checkpoint is an ancestor of the block
-    checkpoint_block = get_checkpoint_block(
-        store, block.parent_root, store.finalized_checkpoint.epoch
-    )
-    if checkpoint_block != store.finalized_checkpoint.root:
-        raise GossipReject("finalized checkpoint is not an ancestor of block")
-
-    # [REJECT] The block is proposed by the expected proposer for the slot
-    # (if shuffling is not available, IGNORE instead and MAY be queued for later)
-    parent_state = store.block_states[block.parent_root].copy()
-    process_slots(parent_state, block.slot)
-    expected_proposer = get_beacon_proposer_index(parent_state)
-    if block.proposer_index != expected_proposer:
-        raise GossipReject("block proposer_index does not match expected proposer")
-
-    # Mark this block as seen
-    seen.proposer_slots.add((block.proposer_index, block.slot))
-```
+- _[REJECT]_ The block's parent (defined by `block.parent_root`) passes
+  validation.
 
 #### Transitioning the gossip
 
@@ -221,19 +136,19 @@ result in an INVALID response from an execution engine. To prevent network
 segregation between optimistic and non-optimistic nodes, transmission of an
 INVALID execution payload via the Req/Resp domain SHOULD NOT cause a node to be
 down-scored or disconnected. Transmission of a block which is invalid due to any
-consensus-layer rules (i.e., *not* execution-layer rules) MAY result in
+consensus layer rules (i.e., *not* execution layer rules) MAY result in
 down-scoring or disconnection.
 
 #### Messages
 
 ##### BeaconBlocksByRange v2
 
-**Protocol ID:** `/sil2/beacon_chain/req/beacon_blocks_by_range/2/`
+**Protocol ID:** `/sila/beacon_chain/req/beacon_blocks_by_range/2/`
 
 Request and Response remain unchanged. Bellatrix fork-digest is introduced to
 the `context` enum to specify Bellatrix block type.
 
-<!-- sil_consensus_specs: skip -->
+<!-- sil2spec: skip -->
 
 | `fork_version`           | Chunk SSZ type                |
 | ------------------------ | ----------------------------- |
@@ -243,12 +158,12 @@ the `context` enum to specify Bellatrix block type.
 
 ##### BeaconBlocksByRoot v2
 
-**Protocol ID:** `/sil2/beacon_chain/req/beacon_blocks_by_root/2/`
+**Protocol ID:** `/sila/beacon_chain/req/beacon_blocks_by_root/2/`
 
 Request and Response remain unchanged. Bellatrix fork-digest is introduced to
 the `context` enum to specify Bellatrix block type.
 
-<!-- sil_consensus_specs: skip -->
+<!-- sil2spec: skip -->
 
 | `fork_version`           | Chunk SSZ type                |
 | ------------------------ | ----------------------------- |
@@ -258,17 +173,17 @@ the `context` enum to specify Bellatrix block type.
 
 # Design decision rationale
 
-## Gossipsub
+### Gossipsub
 
-### Why was the max gossip message size increased at Bellatrix?
+#### Why was the max gossip message size increased at Bellatrix?
 
 With the addition of `ExecutionPayload` to `BeaconBlock`s, there is a dynamic
 field -- `transactions` -- which can validly exceed the `MAX_PAYLOAD_SIZE` limit
 (1 MiB) put in place at Phase 0, so MAX_PAYLOAD_SIZE has increased to 10 MiB on
-the network. At the `GAS_LIMIT` (~30M) currently seen on sila_mainnet in 2021, a
+the network. At the `GAS_LIMIT` (~30M) currently seen on sila-mainnet in 2021, a
 single transaction filled entirely with data at a cost of 16 gas per byte can
 create a valid `ExecutionPayload` of ~2 MiB. Thus we need a size limit to at
-least account for current sila_mainnet conditions.
+least account for current sila-mainnet conditions.
 
 Note, that due to additional size induced by the `BeaconBlock` contents (e.g.
 proposer signature, operations lists, etc) this does reduce the theoretical max

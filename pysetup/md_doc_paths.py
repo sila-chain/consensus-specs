@@ -1,17 +1,17 @@
 import os
-from pathlib import Path
 
 from .constants import (
     ALTAIR,
     BELLATRIX,
     CAPELLA,
-    SILA_DENEB,
-    SIP8025,
-    SIP8148,
+    DENEB,
+    SIP6800,
+    SIP7441,
+    SIP7805,
+    SIP7928,
     ELECTRA,
-    SILA_FULU,
+    FULU,
     GLOAS,
-    HEZE,
     PHASE0,
 )
 
@@ -20,13 +20,14 @@ PREVIOUS_FORK_OF = {
     ALTAIR: PHASE0,
     BELLATRIX: ALTAIR,
     CAPELLA: BELLATRIX,
-    SILA_DENEB: CAPELLA,
-    ELECTRA: SILA_DENEB,
-    SILA_FULU: ELECTRA,
-    GLOAS: SILA_FULU,
-    HEZE: GLOAS,
-    SIP8025: GLOAS,
-    SIP8148: HEZE,
+    DENEB: CAPELLA,
+    ELECTRA: DENEB,
+    FULU: ELECTRA,
+    GLOAS: FULU,
+    SIP6800: DENEB,
+    SIP7441: CAPELLA,
+    SIP7805: FULU,
+    SIP7928: FULU,
 }
 
 ALL_FORKS = list(PREVIOUS_FORK_OF.keys())
@@ -59,10 +60,10 @@ def is_post_fork(a, b) -> bool:
 
 def get_fork_directory(fork):
     dir1 = f"specs/{fork}"
-    if Path(dir1).exists():
+    if os.path.exists(dir1):
         return dir1
     dir2 = f"specs/_features/{fork}"
-    if Path(dir2).exists():
+    if os.path.exists(dir2):
         return dir2
     raise FileNotFoundError(f"No directory found for fork: {fork}")
 
@@ -83,7 +84,7 @@ def get_md_doc_paths(spec_fork: str) -> str:
             for root, _, files in os.walk(get_fork_directory(fork)):
                 filepaths = []
                 for filename in files:
-                    filepath = str(Path(root) / filename)
+                    filepath = os.path.join(root, filename)
                     filepaths.append(filepath)
                 for filepath in sorted(filepaths, key=sort_key):
                     if filepath.endswith(".md") and filepath not in IGNORE_SPEC_FILES:

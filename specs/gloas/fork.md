@@ -6,9 +6,6 @@
 
 - [Introduction](#introduction)
 - [Configuration](#configuration)
-- [Helpers](#helpers)
-  - [New `initialize_ptc_window`](#new-initialize_ptc_window)
-  - [New `onboard_builders_from_pending_deposits`](#new-onboard_builders_from_pending_deposits)
 - [Fork to Gloas](#fork-to-gloas)
   - [Fork trigger](#fork-trigger)
   - [Upgrading the state](#upgrading-the-state)
@@ -28,96 +25,6 @@ Warning: this configuration is not definitive.
 | `GLOAS_FORK_VERSION` | `Version('0x07000000')`               |
 | `GLOAS_FORK_EPOCH`   | `Epoch(18446744073709551615)` **TBD** |
 
-## Helpers
-
-### New `initialize_ptc_window`
-
-```python
-def initialize_ptc_window(
-    state: BeaconState,
-) -> Vector[Vector[ValidatorIndex, PTC_SIZE], (2 + MIN_SEED_LOOKAHEAD) * SLOTS_PER_EPOCH]:
-    """
-    Return the cached PTC window starting from the current epoch.
-    Used to initialize the ``ptc_window`` field in the beacon state at genesis and after forks.
-    """
-    empty_previous_epoch = [
-        Vector[ValidatorIndex, PTC_SIZE]([ValidatorIndex(0) for _ in range(PTC_SIZE)])
-        for _ in range(SLOTS_PER_EPOCH)
-    ]
-
-    ptcs = []
-    current_epoch = get_current_epoch(state)
-    for e in range(1 + MIN_SEED_LOOKAHEAD):
-        epoch = Epoch(current_epoch + e)
-        start_slot = compute_start_slot_at_epoch(epoch)
-        ptcs += [compute_ptc(state, Slot(start_slot + i)) for i in range(SLOTS_PER_EPOCH)]
-
-    return empty_previous_epoch + ptcs
-```
-
-### New `onboard_builders_from_pending_deposits`
-
-*Note*: This one-time onboarding is the only path through the validator deposit
-contract that creates builders. From the fork onward, builders are created and
-topped up only via `BuilderDepositRequest`.
-
-*Note*: In the slots leading up to the fork, implementations SHOULD validate
-pending deposit signatures and cache the results. The pending deposit queue
-might be large and verifying many signatures at the fork could be slow.
-
-```python
-def onboard_builders_from_pending_deposits(state: BeaconState) -> None:
-    """
-    Applies any pending deposit for builders, effectively
-    onboarding builders at the fork.
-    """
-    validator_pubkeys = [v.pubkey for v in state.validators]
-
-    pending_deposits = []
-    for deposit in state.pending_deposits:
-        # Deposits for existing validators stay in the pending queue
-        if deposit.pubkey in validator_pubkeys:
-            pending_deposits.append(deposit)
-            continue
-
-        # Note that applying a deposit below can mutate the state and
-        # may add a builder to the registry. For this reason, the list
-        # of builder pubkeys must be recomputed each iteration.
-        builder_pubkeys = [b.pubkey for b in state.builders]
-
-        # Deposits for non-builders stay in the pending queue. If there is a
-        # valid pending deposit for a new validator with this pubkey, keep this
-        # deposit in the pending queue to be applied to that validator later.
-        if deposit.pubkey not in builder_pubkeys:
-            if not is_builder_withdrawal_credential(deposit.withdrawal_credentials):
-                pending_deposits.append(deposit)
-                continue
-            if is_pending_validator(pending_deposits, deposit.pubkey):
-                pending_deposits.append(deposit)
-                continue
-            if not is_valid_deposit_signature(
-                deposit.pubkey,
-                deposit.withdrawal_credentials,
-                deposit.amount,
-                deposit.signature,
-            ):
-                continue
-
-            add_builder_to_registry(
-                state,
-                deposit.pubkey,
-                PAYLOAD_BUILDER_VERSION,
-                ExecutionAddress(deposit.withdrawal_credentials[12:]),
-                deposit.amount,
-                deposit.slot,
-            )
-        else:
-            builder_index = BuilderIndex(builder_pubkeys.index(deposit.pubkey))
-            state.builders[builder_index].balance += deposit.amount
-
-    state.pending_deposits = pending_deposits
-```
-
 ## Fork to Gloas
 
 ### Fork trigger
@@ -131,8 +38,8 @@ If `state.slot % SLOTS_PER_EPOCH == 0` and
 change is made to upgrade to Gloas.
 
 ```python
-def upgrade_to_gloas(pre: sila_fulu.BeaconState) -> BeaconState:
-    epoch = sila_fulu.get_current_epoch(pre)
+def upgrade_to_gloas(pre: fulu.BeaconState) -> BeaconState:
+    epoch = fulu.get_current_epoch(pre)
 
     post = BeaconState(
         genesis_time=pre.genesis_time,
@@ -140,7 +47,7 @@ def upgrade_to_gloas(pre: sila_fulu.BeaconState) -> BeaconState:
         slot=pre.slot,
         fork=Fork(
             previous_version=pre.fork.current_version,
-            # [Modified in Gloas]
+            # [Modified in Gloas:SIP7732]
             current_version=GLOAS_FORK_VERSION,
             epoch=epoch,
         ),
@@ -167,7 +74,9 @@ def upgrade_to_gloas(pre: sila_fulu.BeaconState) -> BeaconState:
         # [Modified in Gloas:SIP7732]
         # Removed `latest_execution_payload_header`
         # [New in Gloas:SIP7732]
-        latest_block_hash=pre.latest_execution_payload_header.block_hash,
+        latest_execution_payload_bid=ExecutionPayloadBid(
+            block_hash=pre.latest_execution_payload_header.block_hash,
+        ),
         next_withdrawal_index=pre.next_withdrawal_index,
         next_withdrawal_validator_index=pre.next_withdrawal_validator_index,
         historical_summaries=pre.historical_summaries,
@@ -182,29 +91,16 @@ def upgrade_to_gloas(pre: sila_fulu.BeaconState) -> BeaconState:
         pending_consolidations=pre.pending_consolidations,
         proposer_lookahead=pre.proposer_lookahead,
         # [New in Gloas:SIP7732]
-        builders=[],
-        # [New in Gloas:SIP7732]
-        next_withdrawal_builder_index=BuilderIndex(0),
-        # [New in Gloas:SIP7732]
         execution_payload_availability=[0b1 for _ in range(SLOTS_PER_HISTORICAL_ROOT)],
         # [New in Gloas:SIP7732]
         builder_pending_payments=[BuilderPendingPayment() for _ in range(2 * SLOTS_PER_EPOCH)],
         # [New in Gloas:SIP7732]
         builder_pending_withdrawals=[],
         # [New in Gloas:SIP7732]
-        latest_execution_payload_bid=ExecutionPayloadBid(
-            block_hash=pre.latest_execution_payload_header.block_hash,
-            gas_limit=pre.latest_execution_payload_header.gas_limit,
-            execution_requests_root=hash_tree_root(ExecutionRequests()),
-        ),
+        latest_block_hash=pre.latest_execution_payload_header.block_hash,
         # [New in Gloas:SIP7732]
-        payload_expected_withdrawals=[],
-        # [New in Gloas:SIP7732]
-        ptc_window=initialize_ptc_window(pre),
+        latest_withdrawals_root=Root(),
     )
-
-    # [New in Gloas:SIP7732]
-    onboard_builders_from_pending_deposits(post)
 
     return post
 ```

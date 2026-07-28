@@ -24,7 +24,8 @@ def collect_prev_forks(fork: str) -> list[str]:
 
 def requires_mypy_type_ignore(value: str) -> bool:
     return (
-        value.startswith(("Bitlist", "ByteVector"))
+        value.startswith("Bitlist")
+        or value.startswith("ByteVector")
         or (value.startswith("List") and not re.match(r"^List\[\w+,\s*\w+\]$", value))
         or (value.startswith("Vector") and any(k in value for k in ["ceillog2", "floorlog2"]))
     )
@@ -63,7 +64,7 @@ def objects_to_spec(
 
     def format_protocol(protocol_name: str, protocol_def: ProtocolDefinition) -> str:
         abstract_functions = ["verify_and_notify_new_payload"]
-        for key in protocol_def.functions:
+        for key in protocol_def.functions.keys():
             if key in abstract_functions:
                 make_function_abstract(protocol_def, key)
 
@@ -85,24 +86,12 @@ def objects_to_spec(
     functions = reduce(
         lambda fns, builder: builder.implement_optimizations(fns), builders, spec_object.functions
     )
-    # Remove deprecated functions
-    deprecate_functions = reduce(
-        lambda obj, builder: obj.union(builder.deprecate_functions()), builders, set()
-    )
-    functions = {k: v for k, v in functions.items() if k not in deprecate_functions}
     functions_spec = "\n\n\n".join(functions.values())
-    # Remove deprecated containers
-    deprecate_containers = reduce(
-        lambda obj, builder: obj.union(builder.deprecate_containers()), builders, set()
-    )
-    ordered_class_objects = {
-        k: v for k, v in ordered_class_objects.items() if k not in deprecate_containers
-    }
     ordered_class_objects_spec = "\n\n\n".join(ordered_class_objects.values())
 
     # Access global dict of config vars for runtime configurables
     # Ignore variable between quotes and doubles quotes
-    for name in spec_object.config_vars:
+    for name in spec_object.config_vars.keys():
         functions_spec = re.sub(rf"(?<!['\"])\b{name}\b(?!['\"])", "config." + name, functions_spec)
         ordered_class_objects_spec = re.sub(
             rf"(?<!['\"])\b{name}\b(?!['\"])", "config." + name, ordered_class_objects_spec
@@ -214,14 +203,19 @@ def objects_to_spec(
         format_constant(k, v) for k, v in spec_object.preset_vars.items()
     )
     ssz_dep_constants = "\n".join(
-        f"{x} = {hardcoded_ssz_dep_constants[x]}" for x in hardcoded_ssz_dep_constants
+        map(lambda x: f"{x} = {hardcoded_ssz_dep_constants[x]}", hardcoded_ssz_dep_constants)
     )
     ssz_dep_constants_verification = "\n".join(
-        f"assert {x} == {spec_object.ssz_dep_constants[x]}" for x in filtered_ssz_dep_constants
+        map(
+            lambda x: f"assert {x} == {spec_object.ssz_dep_constants[x]}",
+            filtered_ssz_dep_constants,
+        )
     )
     func_dep_presets_verification = "\n".join(
-        f"assert {x} == {spec_object.func_dep_presets[x]}  # noqa: E501"
-        for x in filtered_hardcoded_func_dep_presets
+        map(
+            lambda x: f"assert {x} == {spec_object.func_dep_presets[x]}  # noqa: E501",
+            filtered_hardcoded_func_dep_presets,
+        )
     )
     spec_strs = [
         imports,
@@ -244,6 +238,8 @@ def objects_to_spec(
         functions_spec,
         sundry_functions,
         execution_engine_cls,
+        # Since some constants are hardcoded in setup.py, the following assertions verify that the hardcoded constants are
+        # as same as the spec definition.
         ssz_dep_constants_verification,
         func_dep_presets_verification,
     ]
@@ -294,7 +290,6 @@ ignored_dependencies = [
     "Dict",
     "field",
     "floorlog2",
-    "list",
     "List",
     "Optional",
     "ProgressiveBitlist",
@@ -400,7 +395,7 @@ def finalized_spec_object(spec_object: SpecObject) -> SpecObject:
     custom_types = {}
     ssz_objects = spec_object.ssz_objects
     for name, value in spec_object.custom_types.items():
-        if any(name in k for k in all_config_dependencies):
+        if any(k in name for k in all_config_dependencies):
             custom_types[name] = value
         else:
             ssz_objects[name] = gen_new_type_definition(name, value)
@@ -424,7 +419,7 @@ def parse_config_vars(conf: dict[str, str]) -> dict[str, str | list[dict[str, st
     """
     Parses a dict of basic str/int/list types into a dict for insertion into the spec code.
     """
-    out: dict[str, str | list[dict[str, str]]] = {}
+    out: dict[str, str | list[dict[str, str]]] = dict()
     for k, v in conf.items():
         if isinstance(v, list):
             # A special case for list of records

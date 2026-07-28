@@ -8,8 +8,8 @@
     - [`notify_forkchoice_updated`](#notify_forkchoice_updated)
 - [Helpers](#helpers)
   - [Modified `PayloadAttributes`](#modified-payloadattributes)
-- [Handlers](#handlers)
-  - [Modified `on_block`](#modified-on_block)
+- [Updated fork-choice handlers](#updated-fork-choice-handlers)
+  - [`on_block`](#on_block)
 
 <!-- mdformat-toc end -->
 
@@ -51,7 +51,7 @@ def notify_forkchoice_updated(
 
 ```python
 @dataclass
-class PayloadAttributes:
+class PayloadAttributes(object):
     timestamp: uint64
     prev_randao: Bytes32
     suggested_fee_recipient: ExecutionAddress
@@ -59,9 +59,9 @@ class PayloadAttributes:
     withdrawals: Sequence[Withdrawal]
 ```
 
-## Handlers
+## Updated fork-choice handlers
 
-### Modified `on_block`
+### `on_block`
 
 *Note*: The only modification is the deletion of the verification of merge
 transition block conditions.
@@ -92,17 +92,26 @@ def on_block(store: Store, signed_block: SignedBeaconBlock) -> None:
     # Make a copy of the state to avoid mutability issues
     state = copy(store.block_states[block.parent_root])
     block_root = hash_tree_root(block)
-    state_transition(state, signed_block, validate_result=True)
+    state_transition(state, signed_block, True)
 
-    # Compute head before applying the block
-    head = get_head(store)
     # Add new block to the store
     store.blocks[block_root] = block
     # Add new state for this block to the store
     store.block_states[block_root] = state
 
-    record_block_timeliness(store, block_root)
-    update_proposer_boost_root(store, head.root, block_root)
+    # Add block timeliness to the store
+    seconds_since_genesis = store.time - store.genesis_time
+    time_into_slot_ms = seconds_to_milliseconds(seconds_since_genesis) % SLOT_DURATION_MS
+    epoch = get_current_store_epoch(store)
+    attestation_threshold_ms = get_attestation_due_ms(epoch)
+    is_before_attesting_interval = time_into_slot_ms < attestation_threshold_ms
+    is_timely = get_current_slot(store) == block.slot and is_before_attesting_interval
+    store.block_timeliness[hash_tree_root(block)] = is_timely
+
+    # Add proposer score boost if the block is timely and not conflicting with an existing block
+    is_first_block = store.proposer_boost_root == Root()
+    if is_timely and is_first_block:
+        store.proposer_boost_root = hash_tree_root(block)
 
     # Update checkpoints in store if necessary
     update_checkpoints(store, state.current_justified_checkpoint, state.finalized_checkpoint)

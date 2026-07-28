@@ -31,9 +31,9 @@ definitions defined in this document, and documents it extends, carry over
 unless explicitly noted or overridden.
 
 All terminology, constants, functions, and protocol mechanics defined in the
-updated beacon-chain specifications of [Bellatrix](./beacon-chain.md) are
-requisite for this document and used throughout. Please see related beacon-chain
-specifications before continuing and use them as a reference throughout.
+updated Beacon Chain doc of [Bellatrix](./beacon-chain.md) are requisite for
+this document and used throughout. Please see related Beacon Chain doc before
+continuing and use them as a reference throughout.
 
 ## Helpers
 
@@ -41,7 +41,7 @@ specifications before continuing and use them as a reference throughout.
 
 ```python
 @dataclass
-class GetPayloadResponse:
+class GetPayloadResponse(object):
     execution_payload: ExecutionPayload
 ```
 
@@ -70,7 +70,7 @@ def get_pow_block_at_terminal_total_difficulty(
 
 ```python
 def get_terminal_pow_block(pow_chain: Dict[Hash32, PowBlock]) -> Optional[PowBlock]:
-    if TERMINAL_BLOCK_HASH != EMPTY_BLOCK_HASH:
+    if TERMINAL_BLOCK_HASH != Hash32():
         # Terminal block hash override takes precedence over terminal total difficulty
         if TERMINAL_BLOCK_HASH in pow_chain:
             return pow_chain[TERMINAL_BLOCK_HASH]
@@ -81,30 +81,30 @@ def get_terminal_pow_block(pow_chain: Dict[Hash32, PowBlock]) -> Optional[PowBlo
 ```
 
 *Note*: This function does *not* use simple serialize `hash_tree_root` as to
-avoid requiring simple serialize hashing capabilities in the execution layer.
+avoid requiring simple serialize hashing capabilities in the Execution Layer.
 
 ## Protocols
 
 ### `ExecutionEngine`
 
-*Note*: The `get_payload` function is added to the `ExecutionEngine` protocol
-for use as a validator.
+*Note*: `get_payload` function is added to the `ExecutionEngine` protocol for
+use as a validator.
 
 The body of this function is implementation dependent. The Engine API may be
 used to implement it with an external execution engine.
 
 #### `get_payload`
 
-*Note*: Given the `payload_id`, the `get_payload` function returns
-`GetPayloadResponse` with the most recent version of the execution payload that
-has been built since the corresponding call to `notify_forkchoice_updated`
-method.
+Given the `payload_id`, `get_payload` returns `GetPayloadResponse` with the most
+recent version of the execution payload that has been built since the
+corresponding call to `notify_forkchoice_updated` method.
 
 ```python
 def get_payload(self: ExecutionEngine, payload_id: PayloadId) -> GetPayloadResponse:
     """
-    Return ExecutionPayload object.
+    Return ``GetPayloadResponse`` object.
     """
+    ...
 ```
 
 ## Beacon chain responsibilities
@@ -113,7 +113,7 @@ All validator responsibilities remain unchanged other than those noted below.
 Namely, the transition block handling and the addition of `ExecutionPayload`.
 
 *Note*: A validator must not propose on or attest to a block that isn't deemed
-valid, i.e. hasn't yet passed the beacon-chain state transition and execution
+valid, i.e. hasn't yet passed the beacon chain state transition and execution
 validations. In future upgrades, an "execution Proof-of-Custody" will be
 integrated to prevent outsourcing of execution payload validations.
 
@@ -127,19 +127,19 @@ To obtain an execution payload, a block proposer building a block on top of a
 `state` must take the following actions:
 
 1. Set
-   `payload_id = prepare_execution_payload(state, safe_block_hash, finalized_block_hash, suggested_fee_recipient, execution_engine, pow_chain)`,
+   `payload_id = prepare_execution_payload(state, pow_chain, safe_block_hash, finalized_block_hash, suggested_fee_recipient, execution_engine)`,
    where:
    - `state` is the state object after applying `process_slots(state, slot)`
      transition to the resulting state of the parent block processing
+   - `pow_chain` is a `Dict[Hash32, PowBlock]` dictionary that abstractly
+     represents all blocks in the PoW chain with block hash as the dictionary
+     key
    - `safe_block_hash` is the return value of the
      `get_safe_execution_block_hash(store: Store)` function call
    - `finalized_block_hash` is the block hash of the latest finalized execution
      payload (`Hash32()` if none yet finalized)
    - `suggested_fee_recipient` is the value suggested to be used for the
      `fee_recipient` field of the execution payload
-   - `pow_chain` is a `Dict[Hash32, PowBlock]` dictionary that abstractly
-     represents all blocks in the PoW chain with block hash as the dictionary
-     key
 
 ```python
 def prepare_execution_payload(
@@ -152,7 +152,7 @@ def prepare_execution_payload(
 ) -> Optional[PayloadId]:
     if not is_merge_transition_complete(state):
         assert pow_chain is not None
-        is_terminal_block_hash_set = TERMINAL_BLOCK_HASH != EMPTY_BLOCK_HASH
+        is_terminal_block_hash_set = TERMINAL_BLOCK_HASH != Hash32()
         is_activation_epoch_reached = (
             get_current_epoch(state) >= TERMINAL_BLOCK_HASH_ACTIVATION_EPOCH
         )

@@ -1,5 +1,4 @@
-from pysetup.constants import BELLATRIX
-
+from ..constants import BELLATRIX
 from .base import BaseSpecBuilder
 
 
@@ -10,8 +9,8 @@ class BellatrixSpecBuilder(BaseSpecBuilder):
     def imports(cls, preset_name: str):
         return f"""
 from typing import Protocol
-from sil_consensus_specs.altair import {preset_name} as altair
-from sil_consensus_specs.utils.ssz.ssz_typing import Bytes8, Bytes20, ByteList, ByteVector
+from sil2spec.altair import {preset_name} as altair
+from sil2spec.utils.ssz.ssz_typing import Bytes8, Bytes20, ByteList, ByteVector
 """
 
     @classmethod
@@ -24,7 +23,16 @@ def get_pow_block(hash: Bytes32) -> Optional[PowBlock]:
     return PowBlock(block_hash=hash, parent_hash=Bytes32(), total_difficulty=uint256(0))
 
 
+def get_execution_state(_execution_state_root: Bytes32) -> ExecutionState:
+    pass
+
+
+def get_pow_chain_head() -> PowBlock:
+    pass
+
+
 def validator_is_connected(validator_index: ValidatorIndex) -> bool:
+    # pylint: disable=unused-argument
     return True"""
 
     @classmethod
@@ -43,6 +51,7 @@ class NoopExecutionEngine(ExecutionEngine):
         pass
 
     def get_payload(self: ExecutionEngine, payload_id: PayloadId) -> GetPayloadResponse:
+        # pylint: disable=unused-argument
         raise NotImplementedError("no default block production")
 
     def is_valid_block_hash(self: ExecutionEngine, execution_payload: ExecutionPayload) -> bool:
@@ -54,10 +63,3 @@ class NoopExecutionEngine(ExecutionEngine):
 
 
 EXECUTION_ENGINE = NoopExecutionEngine()"""
-
-    @classmethod
-    def deprecate_functions(cls) -> set[str]:
-        return {
-            "translate_participation",
-            "upgrade_to_altair",
-        }

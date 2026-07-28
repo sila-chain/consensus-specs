@@ -1,62 +1,40 @@
 categories:
   # Forks
   - title: Phase0
-    when:
-      label: phase0
+    label: phase0
   - title: Altair
-    when:
-      label: altair
+    label: altair
   - title: Bellatrix
-    when:
-      label: bellatrix
+    label: bellatrix
   - title: Capella
-    when:
-      label: capella
+    label: capella
   - title: SilaDeneb
-    when:
-      label: sila_deneb
+    label: deneb
   - title: Electra
-    when:
-      label: electra
+    label: electra
   - title: SilaFulu
-    when:
-      labels:
-        - sila_fulu
-        - sip7594
+    labels:
+      - fulu
+      - sip7594
   - title: Gloas
-    when:
-      labels:
-        - gloas
-        - sip7732
-        - sip7843
-        - sip7928
-        - sip8061
-  - title: Heze
-    when:
-      labels:
-        - heze
-        - sip7805
+    labels:
+      - gloas
+      - sip7732
+      - sip7928
 
   # Features
-  - title: SIP-6914
-    when:
-      label: sip6914
+  - title: SIP-6110
+    label: sip6110
+  - title: SIP-7441
+    label: sip7441
+  - title: SIP-7805
+    label: sip7805
   - title: SIP-8025
-    when:
-      label: sip8025
-  - title: SIP-8148
-    when:
-      label: sip8148
+    label: sip8025
 
   # Testing
   - title: Testing
-    when:
-      label: testing
-
-  # Dependencies
-  - title: Dependencies
-    when:
-      label: dependencies
+    label: testing
 
   # Fallback
   - title: Other

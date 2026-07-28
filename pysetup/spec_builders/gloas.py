@@ -1,5 +1,4 @@
-from pysetup.constants import GLOAS
-
+from ..constants import GLOAS
 from .base import BaseSpecBuilder
 
 
@@ -9,57 +8,22 @@ class GloasSpecBuilder(BaseSpecBuilder):
     @classmethod
     def imports(cls, preset_name: str):
         return f"""
-from sil_consensus_specs.sila_fulu import {preset_name} as sila_fulu
+from sil2spec.fulu import {preset_name} as fulu
 """
 
     @classmethod
-    def hardcoded_ssz_dep_constants(cls) -> dict[str, str]:
-        return {
-            "EXECUTION_BLOCK_HASH_GINDEX": "GeneralizedIndex(412)",
-            "EXECUTION_BLOCK_HASH_GINDEX_SILA_DENEB": "GeneralizedIndex(812)",
-            "EXECUTION_BLOCK_HASH_GINDEX_GLOAS": "GeneralizedIndex(832)",
-        }
+    def deprecate_constants(cls) -> set[str]:
+        return set(
+            [
+                "EXECUTION_PAYLOAD_GINDEX",
+            ]
+        )
 
     @classmethod
     def deprecate_presets(cls) -> set[str]:
-        return {
-            "KZG_COMMITMENT_INCLUSION_PROOF_DEPTH",
-            "KZG_COMMITMENTS_INCLUSION_PROOF_DEPTH",
-        }
-
-    @classmethod
-    def deprecate_containers(cls) -> set[str]:
-        return {
-            "ExecutionPayloadHeader",
-            "PartialDataColumnHeader",
-        }
-
-    @classmethod
-    def deprecate_functions(cls) -> set[str]:
-        return {
-            "compute_proposer_index",
-            "get_activation_exit_churn_limit",
-            "get_balance_churn_limit",
-            "initialize_proposer_lookahead",
-            "process_execution_payload",
-            "retrieve_column_sidecars",
-            "upgrade_to_sila_fulu",
-            "verify_partial_data_column_header_inclusion_proof",
-            # TODO(jtraglia): Temporarily deprecate these until we update them for Gloas.
-            "validate_data_column_sidecar_gossip",
-            "validate_partial_data_column_sidecar_gossip",
-        }
-
-    @classmethod
-    def sundry_functions(cls) -> str:
-        return """
-def retrieve_column_sidecars_and_kzg_commitments(
-    beacon_block_root: Root
-) -> tuple[Sequence[DataColumnSidecar], Sequence[KZGCommitment]]:
-    return [], []
-
-_get_parent_payload_status = get_parent_payload_status
-get_parent_payload_status = cache_this(
-    lambda store, block: block.hash_tree_root(),
-    _get_parent_payload_status, lru_size=1024)
-"""
+        return set(
+            [
+                "KZG_COMMITMENT_INCLUSION_PROOF_DEPTH",
+                "KZG_COMMITMENTS_INCLUSION_PROOF_DEPTH",
+            ]
+        )

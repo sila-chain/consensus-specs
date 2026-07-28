@@ -1,49 +1,19 @@
-import asyncio
-from collections import Counter, OrderedDict
-from collections.abc import Collection, Iterable
+from collections.abc import Iterable
 from itertools import product
-from pathlib import Path
+from os import path
 
-from minizinc import Instance, Model, Solver, Status
+from minizinc import Instance, Model, Solver
 from ruamel.yaml import YAML
 from toolz.dicttoolz import merge
 
-base_dir = Path(__file__).parent
-model_dir = base_dir / "model"
-
-
-def to_hashable(obj):
-    if isinstance(obj, dict):
-        return frozenset((to_hashable(k), to_hashable(v)) for k, v in obj.items())
-    elif isinstance(obj, list):
-        return tuple(map(to_hashable, obj))
-    elif isinstance(obj, set):
-        return frozenset(map(to_hashable, obj))
-    else:
-        return obj
-
-
-def check_uniqueness(solutions: Collection[dict]):
-    """
-    Checks that each solution is unique.
-    Throws an exception, if any duplicate found.
-    """
-
-    hashable_solutions = list(map(to_hashable, solutions))
-    solution_counter = Counter(hashable_solutions)
-    if solution_counter.total() != len(solution_counter):
-        print(f"duplicate solutions found: {solution_counter.total()} vs {len(solution_counter)}")
-        for sol, count in solution_counter.most_common(5):
-            if count >= 1:
-                print(f"{count} solutions: {sol}")
-
-        raise AssertionError
+base_dir = path.dirname(__file__)
+model_dir = path.join(base_dir, "model")
 
 
 def solve_sm_links(
     anchor_epoch: int, number_of_epochs: int, number_of_links: int, number_of_solutions: int
 ):
-    sm_links = Model(str(model_dir / "SM_links.mzn"))
+    sm_links = Model(path.join(model_dir, "SM_links.mzn"))
     solver = Solver.lookup("gecode")
     instance = Instance(solver, sm_links)
     instance["AE"] = anchor_epoch  # anchor epoch
@@ -54,9 +24,7 @@ def solve_sm_links(
     solutions = instance.solve(all_solutions=True)
 
     for i in range(len(solutions)):
-        yield {
-            "sm_links": list(zip(solutions[i, "sources"], solutions[i, "targets"], strict=False))
-        }
+        yield {"sm_links": list(zip(solutions[i, "sources"], solutions[i, "targets"]))}
 
 
 def generate_sm_links(params):
@@ -70,7 +38,7 @@ def generate_sm_links(params):
 def solve_block_tree(
     number_of_blocks: int, max_children: int, number_of_solutions: int
 ) -> Iterable[dict]:
-    model = Model(str(model_dir / "Block_tree.mzn"))
+    model = Model(path.join(model_dir, "Block_tree.mzn"))
     solver = Solver.lookup("gecode")
     instance = Instance(solver, model)
     instance["NB"] = number_of_blocks
@@ -99,7 +67,7 @@ def solve_block_cover(
     block_is_leaf: bool,
     number_of_solutions: int,
 ):
-    block_cover3 = Model(str(model_dir / "Block_cover.mzn"))
+    block_cover3 = Model(path.join(model_dir, "Block_cover.mzn"))
     solver = Solver.lookup("gecode")
     instance = Instance(solver, block_cover3)
     instance["AE"] = anchor_epoch
@@ -111,13 +79,14 @@ def solve_block_cover(
     instance["block_is_leaf"] = block_is_leaf
 
     assert number_of_solutions is not None
+    result = instance.solve(nr_solutions=number_of_solutions)
 
     if anchor_epoch == 0 and not store_justified_epoch_equal_zero:
         return
 
-    def extract_values(s):
+    for s in result.solution:
         max_block = s.max_block
-        return {
+        yield {
             "block_epochs": s.es[: max_block + 1],
             "parents": s.parents[: max_block + 1],
             "previous_justifications": s.prevs[: max_block + 1],
@@ -132,22 +101,6 @@ def solve_block_cover(
                 "block_is_leaf": block_is_leaf,
             },
         }
-
-    async def get_unique_solutions(number_of_solutions):
-        solution_map = OrderedDict()
-        async for res in instance.solutions(all_solutions=True):
-            if res.status == Status.SATISFIED:
-                sol = extract_values(res.solution)
-                key = to_hashable(sol)
-                if key not in solution_map:
-                    solution_map[key] = sol
-                    if len(solution_map) >= number_of_solutions:
-                        break
-            else:
-                break
-        return solution_map.values()
-
-    yield from asyncio.run(get_unique_solutions(number_of_solutions))
 
 
 def generate_block_cover(params):
@@ -260,7 +213,7 @@ gen_params = {
         "params": [
             (
                 {"anchor_epoch": 0, "number_of_epochs": 6, "number_of_links": 4},
-                {"number_of_blocks": 15, "max_children": 2, "number_of_solutions": 5},
+                {"number_of_blocks": 16, "max_children": 2, "number_of_solutions": 5},
             ),
             (
                 [{"sm_links": [[0, 1], [0, 2], [2, 3], [3, 4]]}],
@@ -282,7 +235,7 @@ gen_params = {
         "params": [
             (
                 {"anchor_epoch": 0, "number_of_epochs": 6, "number_of_links": 4},
-                {"number_of_blocks": 15, "max_children": 2, "number_of_solutions": 5},
+                {"number_of_blocks": 16, "max_children": 2, "number_of_solutions": 5},
             ),
             (
                 [{"sm_links": [[0, 1], [0, 2], [2, 3], [3, 4]]}],
@@ -325,12 +278,12 @@ if __name__ == "__main__":
 
     for model_name, parameters in gen_params.items():
         print(f"processing {model_name}")
-        out_path = base_dir / parameters["out_path"]
+        out_path = path.join(base_dir, parameters["out_path"])
         models = parameters["models"]
         solutions = []
         for params in parameters["params"]:
             model_solutions = []
-            for model, mod_params in zip(models, params, strict=False):
+            for model, mod_params in zip(models, params):
                 print(f"  model: {model}")
                 print(f"  parameters: {mod_params}")
                 if isinstance(mod_params, list):
@@ -345,10 +298,8 @@ if __name__ == "__main__":
                     else:
                         print("todo", model, mod_params)
                 else:
-                    raise AssertionError
+                    assert False
             results = [merge(*sol) for sol in product(*model_solutions)]
             solutions.extend(results)
-
-        check_uniqueness(solutions)
-        with out_path.open("w") as f:
+        with open(out_path, "w") as f:
             yaml.dump(solutions, f)

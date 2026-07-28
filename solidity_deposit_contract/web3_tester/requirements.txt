@@ -1,0 +1,5 @@
+sil-tester[py-evm]>=0.12.0b1
+web3>=6.11.0
+pytest>=4.4
+# The sil2spec
+../../

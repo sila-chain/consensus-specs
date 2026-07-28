@@ -2,7 +2,7 @@
 
 <!-- mdformat-toc start --slug=github --no-anchors --maxlevel=6 --minlevel=2 -->
 
-- [Helpers](#helpers)
+- [Helper functions](#helper-functions)
 - [Generalized Merkle tree index](#generalized-merkle-tree-index)
 - [SSZ object to index](#ssz-object-to-index)
   - [Helpers for generalized indices](#helpers-for-generalized-indices)
@@ -15,7 +15,7 @@
 
 <!-- mdformat-toc end -->
 
-## Helpers
+## Helper functions
 
 ```python
 def get_power_of_two_ceil(x: int) -> int:

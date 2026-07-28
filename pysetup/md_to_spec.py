@@ -1,5 +1,4 @@
 import ast
-import contextlib
 import json
 import re
 import string
@@ -80,7 +79,7 @@ class MarkdownToSpec:
         """
         Parses the markdown file into document elements.
         """
-        with file_name.open() as source_file:
+        with open(file_name) as source_file:
             document = parse_markdown(source_file.read())
             return iter(document.children)
 
@@ -191,7 +190,7 @@ class MarkdownToSpec:
         """
         Processes a table and updates the spec with its data.
         """
-        for row in cast("list[TableRow]", table.children):
+        for row in cast(list[TableRow], table.children):
             if len(row.children) < 2:
                 continue
 
@@ -235,7 +234,7 @@ class MarkdownToSpec:
             value_def = _parse_value(name, value)
             # It is a preset
             if name in self.preset:
-                if self.preset_name == "sila_mainnet":
+                if self.preset_name == "sila-mainnet":
                     check_yaml_matches_spec(name, self.preset, value_def)
 
                 self.spec["preset_vars"][name] = VariableDefinition(
@@ -244,7 +243,7 @@ class MarkdownToSpec:
 
             # It is a config variable
             elif name in self.config:
-                if self.preset_name == "sila_mainnet":
+                if self.preset_name == "sila-mainnet":
                     check_yaml_matches_spec(name, self.config, value_def)
 
                 config_value = self.config[name]
@@ -272,7 +271,7 @@ class MarkdownToSpec:
         """
         Extracts the name, value, and description fields from a table row element.
         """
-        cells = cast("list[TableCell]", row.children)
+        cells = cast(list[TableCell], row.children)
         name_cell = cells[0]
         name = name_cell.children[0].children
 
@@ -319,9 +318,9 @@ class MarkdownToSpec:
             list_of_records_name, type_map
         )
 
-        # For sila_mainnet, check that the spec config & file config are the same
+        # For sila-mainnet, check that the spec config & file config are the same
         # For minimal, we expect this to be different; just use the file config
-        if self.preset_name == "sila_mainnet":
+        if self.preset_name == "sila-mainnet":
             assert list_of_records_spec == list_of_records_config_file, (
                 f"list of records mismatch: {list_of_records_spec} vs {list_of_records_config_file}"
             )
@@ -357,7 +356,7 @@ class MarkdownToSpec:
         """
 
         # Save the table header, used for field names (skip last item: description)
-        header_row = cast("TableRow", table.children[0])
+        header_row = cast(TableRow, table.children[0])
         list_of_records_spec_header = [
             re.sub(r"\s+", "_", value.children[0].children.upper())
             for value in header_row.children[:-1]
@@ -380,7 +379,7 @@ class MarkdownToSpec:
         for record in records:
             lines.append("    frozendict({")
             for key, value in record.items():
-                lines.append(f'        "{key!s}": {value!s},')
+                lines.append(f'        "{str(key)}": {str(value)},')
             lines.append("    }),")
         lines.append(")")
         return "\n".join(lines)
@@ -416,7 +415,7 @@ class MarkdownToSpec:
         body = html.body.strip()
 
         # This comment marks that we should skip the next element
-        if body == "<!-- sil_consensus_specs: skip -->":
+        if body == "<!-- sil2spec: skip -->":
             self._skip_element()
 
         # Handle list-of-records tables
@@ -433,12 +432,18 @@ class MarkdownToSpec:
 
     def _finalize_types(self) -> None:
         """
-        Calls helper functions to update KZG setups if needed.
+        Calls helper functions to update KZG and CURDLEPROOFS setups if needed.
         """
         # Update KZG trusted setup if needed
         if any("KZG_SETUP" in name for name in self.spec["constant_vars"]):
             _update_constant_vars_with_kzg_setups(
                 self.spec["constant_vars"], self.spec["preset_dep_constant_vars"], self.preset_name
+            )
+
+        # Update CURDLEPROOFS CRS if needed
+        if any("CURDLEPROOFS_CRS" in name for name in self.spec["constant_vars"]):
+            _update_constant_vars_with_curdleproofs_crs(
+                self.spec["constant_vars"], self.preset_name
             )
 
     def _build_spec_object(self) -> SpecObject:
@@ -509,7 +514,7 @@ def _is_constant_id(name: str) -> bool:
     """
     if name[0] not in string.ascii_uppercase + "_":
         return False
-    return all(c in string.ascii_uppercase + "_" + string.digits for c in name[1:])
+    return all(map(lambda c: c in string.ascii_uppercase + "_" + string.digits, name[1:]))
 
 
 @cache
@@ -521,7 +526,7 @@ def _load_kzg_trusted_setups(preset_name: str) -> tuple[list[str], list[str], li
         + "/trusted_setups/trusted_setup_4096.json"
     )
 
-    with Path(trusted_setups_file_path).open() as f:
+    with open(trusted_setups_file_path) as f:
         json_data = json.load(f)
         trusted_setup_G1_monomial = json_data["g1_monomial"]
         trusted_setup_G1_lagrange = json_data["g1_lagrange"]
@@ -530,9 +535,32 @@ def _load_kzg_trusted_setups(preset_name: str) -> tuple[list[str], list[str], li
     return trusted_setup_G1_monomial, trusted_setup_G1_lagrange, trusted_setup_G2_monomial
 
 
+@cache
+def _load_curdleproofs_crs(preset_name: str) -> dict[str, list[str]]:
+    """
+    NOTE: File generated from https://github.com/asn-d6/curdleproofs/blob/8e8bf6d4191fb6a844002f75666fb7009716319b/tests/crs.rs#L53-L67
+    """
+    file_path = (
+        str(Path(__file__).parent.parent)
+        + "/presets/"
+        + preset_name
+        + "/trusted_setups/curdleproofs_crs.json"
+    )
+
+    with open(file_path) as f:
+        json_data = json.load(f)
+
+    return json_data
+
+
 ALL_KZG_SETUPS = {
     "minimal": _load_kzg_trusted_setups("minimal"),
-    "sila_mainnet": _load_kzg_trusted_setups("sila_mainnet"),
+    "sila-mainnet": _load_kzg_trusted_setups("sila-mainnet"),
+}
+
+ALL_CURDLEPROOFS_CRS = {
+    "minimal": _load_curdleproofs_crs("minimal"),
+    "sila-mainnet": _load_curdleproofs_crs("sila-mainnet"),
 }
 
 
@@ -573,6 +601,20 @@ def _update_constant_vars_with_kzg_setups(
     )
 
 
+def _update_constant_vars_with_curdleproofs_crs(
+    constant_vars: dict[str, VariableDefinition], preset_name: str
+) -> None:
+    comment = "noqa: E501"
+    constant_vars["CURDLEPROOFS_CRS"] = VariableDefinition(
+        None,
+        "curdleproofs.CurdleproofsCrs.from_json(json.dumps("
+        + str(ALL_CURDLEPROOFS_CRS[str(preset_name)]).replace("0x", "")
+        + "))",
+        comment,
+        None,
+    )
+
+
 @cache
 def parse_markdown(content: str) -> Document:
     return gfm.parse(content)
@@ -600,11 +642,13 @@ def check_yaml_matches_spec(
 
             else:
                 raise ValueError(f"Variable {var} should be a string in the yaml file.")
-    # NameError is okay; anything more serious will surface elsewhere.
-    with contextlib.suppress(NameError):
+    try:
         assert yaml[var_name] == repr(eval(updated_value)), (
             f"mismatch for {var_name}: {yaml[var_name]} vs {eval(updated_value)}"
         )
+    except NameError:
+        # Okay it's probably something more serious, let's ignore
+        pass
 
 
 def _has_decorator(decorateable: ast.ClassDef | ast.FunctionDef, name: str) -> bool:

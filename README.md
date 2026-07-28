@@ -1,9 +1,8 @@
 # Sila Proof-of-Stake Consensus Specifications
 
-[![tests](https://github.com/sila-chain/consensus-specs/actions/workflows/tests.yml/badge.svg?branch=master&event=schedule)](https://github.com/sila-chain/consensus-specs/actions/workflows/tests.yml)
-[![image](https://img.shields.io/pypi/v/sil-consensus-specs.svg)](https://pypi.python.org/pypi/sil-consensus-specs)
-[![image](https://img.shields.io/pypi/l/sil-consensus-specs.svg)](https://pypi.python.org/pypi/sil-consensus-specs)
-[![Discord](https://img.shields.io/badge/Discord-%235865F2.svg?logo=discord&logoColor=white)](https://discord.gg/qGpsxSA)
+[![Join the chat at https://discord.gg/qGpsxSA](https://img.shields.io/badge/chat-on%20discord-blue.svg)](https://discord.gg/qGpsxSA)
+[![nightly-tests](https://github.com/sila/consensus-specs/actions/workflows/nightly-tests.yml/badge.svg?branch=master&event=schedule)](https://github.com/sila/consensus-specs/actions/workflows/nightly-tests.yml)
+[![nightly-reftests](https://github.com/sila/consensus-specs/actions/workflows/nightly-reftests.yml/badge.svg?branch=master&event=schedule)](https://github.com/sila/consensus-specs/actions/workflows/nightly-reftests.yml)
 
 This repository hosts the current Sila
 [proof-of-stake](https://sila.org/en/developers/docs/consensus-mechanisms/pos/)
@@ -18,24 +17,23 @@ Core specifications for Sila proof-of-stake clients can be found in
 developed in parallel, and then consolidated into sequential upgrades when
 ready.
 
-### Stable specifications
+### Stable Specifications
 
-| Seq. | Code Name     | Fork Epoch | Links                                                                                   |
-| ---- | ------------- | ---------- | --------------------------------------------------------------------------------------- |
-| 0    | **Phase0**    | `0`        | [Specs](specs/phase0), [Tests](tests/core/pyspec/sil_consensus_specs/test/phase0)       |
-| 1    | **Altair**    | `74240`    | [Specs](specs/altair), [Tests](tests/core/pyspec/sil_consensus_specs/test/altair)       |
-| 2    | **Bellatrix** | `144896`   | [Specs](specs/bellatrix), [Tests](tests/core/pyspec/sil_consensus_specs/test/bellatrix) |
-| 3    | **Capella**   | `194048`   | [Specs](specs/capella), [Tests](tests/core/pyspec/sil_consensus_specs/test/capella)     |
-| 4    | **SilaDeneb**     | `269568`   | [Specs](specs/sila_deneb), [Tests](tests/core/pyspec/sil_consensus_specs/test/sila_deneb)         |
-| 5    | **Electra**   | `364032`   | [Specs](specs/electra), [Tests](tests/core/pyspec/sil_consensus_specs/test/electra)     |
-| 6    | **SilaFulu**      | `411392`   | [Specs](specs/sila_fulu), [Tests](tests/core/pyspec/sil_consensus_specs/test/sila_fulu)           |
+| Seq. | Code Name     | Fork Epoch | Links                                                                        |
+| ---- | ------------- | ---------- | ---------------------------------------------------------------------------- |
+| 0    | **Phase0**    | `0`        | [Specs](specs/phase0), [Tests](tests/core/pyspec/sil2spec/test/phase0)       |
+| 1    | **Altair**    | `74240`    | [Specs](specs/altair), [Tests](tests/core/pyspec/sil2spec/test/altair)       |
+| 2    | **Bellatrix** | `144896`   | [Specs](specs/bellatrix), [Tests](tests/core/pyspec/sil2spec/test/bellatrix) |
+| 3    | **Capella**   | `194048`   | [Specs](specs/capella), [Tests](tests/core/pyspec/sil2spec/test/capella)     |
+| 4    | **SilaDeneb**     | `269568`   | [Specs](specs/deneb), [Tests](tests/core/pyspec/sil2spec/test/deneb)         |
+| 5    | **Electra**   | `364032`   | [Specs](specs/electra), [Tests](tests/core/pyspec/sil2spec/test/electra)     |
+| 6    | **SilaFulu**      | `411392`   | [Specs](specs/fulu), [Tests](tests/core/pyspec/sil2spec/test/fulu)           |
 
-### Unstable specifications
+### In-development Specifications
 
-| Seq. | Code Name | Fork Epoch | Links                                                                           |
-| ---- | --------- | ---------- | ------------------------------------------------------------------------------- |
-| 7    | **Gloas** | TBD        | [Specs](specs/gloas), [Tests](tests/core/pyspec/sil_consensus_specs/test/gloas) |
-| 8    | **Heze**  | TBD        | [Specs](specs/heze), [Tests](tests/core/pyspec/sil_consensus_specs/test/heze)   |
+| Seq. | Code Name | Fork Epoch | Links                                                                |
+| ---- | --------- | ---------- | -------------------------------------------------------------------- |
+| 7    | **Gloas** | TBD        | [Specs](specs/gloas), [Tests](tests/core/pyspec/sil2spec/test/gloas) |
 
 ### Accompanying documents
 
@@ -45,26 +43,35 @@ ready.
 
 ### External specifications
 
-- [Deposit Contract](https://github.com/sila-chain/solidity-deposit-contract)
-- [Beacon APIs](https://github.com/sila-chain/beacon-apis)
-- [Engine APIs](https://github.com/sila-chain/execution-apis/tree/main/src/engine)
-- [Beacon Metrics](https://github.com/sila-chain/beacon-metrics)
-- [Builder Specs](https://github.com/sila-chain/builder-specs)
+Additional specifications and standards outside of requisite client
+functionality can be found in the following repositories:
+
+- [Beacon APIs](https://github.com/sila/beacon-apis)
+- [Engine APIs](https://github.com/sila/execution-apis/tree/main/src/engine)
+- [Beacon Metrics](https://github.com/sila/beacon-metrics)
+- [Builder Specs](https://github.com/sila/builder-specs)
 
 ### Reference tests
 
-- Stable reference tests are available as
-  [release assets](https://github.com/sila-chain/consensus-specs/releases).
-- Unstable reference tests are available as
-  [nightly builds](https://github.com/sila-chain/consensus-specs/actions/workflows/tests.yml).
+Reference tests built from the executable Python specifications are available in
+the release assets for each release in this repository. There are also *nightly*
+reference tests which are built from the latest version of the specifications
+[here](https://github.com/sila/consensus-specs/actions/workflows/nightly-reftests.yml).
 
 ## Contributors
 
 ### Prerequisites
 
-Install [`uv`](https://docs.astral.sh/uv/) with:
+This project uses `uv` ([docs.astral.sh/uv](https://docs.astral.sh/uv/)) to
+manage its dependencies and virtual environment. `uv` can
+[download Python](https://docs.astral.sh/uv/guides/install-python/#installing-a-specific-version)
+for your target platform if one of the required versions (3.10-3.13) is not
+available natively.
 
-```
+`uv` can be installed via curl (recommended over a pip-install as it can
+self-update and manage Python versions):
+
+```console
 curl -LsSf https://astral.sh/uv/install.sh | sh
 ```
 
@@ -72,19 +79,19 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 
 Clone the repository with:
 
-```
-git clone git@github.com:sila/consensus-specs.git
+```bash
+git clone https://github.com/sila/consensus-specs.git
 ```
 
 Switch to the directory:
 
-```
+```bash
 cd consensus-specs
 ```
 
 View the help output:
 
-```
+```bash
 make help
 ```
 
@@ -109,5 +116,5 @@ consensus specifications:
 - [Combining GHOST and Casper paper](https://arxiv.org/abs/2003.03052)
 - [Specifications viewer (mkdocs)](https://sila.github.io/consensus-specs/)
 - [Specifications viewer (jtraglia)](https://jtraglia.github.io/sil-spec-viewer/)
-- [The Sil2 Book](https://sil2book.info)
+- [The Eth2 Book](https://sil2book.info)
 - [PySpec Tests](tests/core/pyspec/README.md)

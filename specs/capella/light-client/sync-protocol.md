@@ -3,7 +3,7 @@
 <!-- mdformat-toc start --slug=github --no-anchors --maxlevel=6 --minlevel=2 -->
 
 - [Introduction](#introduction)
-- [Types](#types)
+- [Custom types](#custom-types)
 - [Constants](#constants)
 - [Containers](#containers)
   - [Modified `LightClientHeader`](#modified-lightclientheader)
@@ -12,7 +12,7 @@
   - [Modified `LightClientFinalityUpdate`](#modified-lightclientfinalityupdate)
   - [Modified `LightClientOptimisticUpdate`](#modified-lightclientoptimisticupdate)
   - [Modified `LightClientStore`](#modified-lightclientstore)
-- [Helpers](#helpers)
+- [Helper functions](#helper-functions)
   - [`get_lc_execution_root`](#get_lc_execution_root)
   - [Modified `is_valid_light_client_header`](#modified-is_valid_light_client_header)
 
@@ -26,12 +26,12 @@ as part of the Capella upgrade. It extends the
 The [fork document](./fork.md) explains how to upgrade existing Altair based
 deployments to Capella.
 
-Additional documents describe the impact of the upgrade on certain roles:
+Additional documents describes the impact of the upgrade on certain roles:
 
 - [Full node](./full-node.md)
 - [Networking](./p2p-interface.md)
 
-## Types
+## Custom types
 
 | Name              | SSZ equivalent                                         | Description                                                   |
 | ----------------- | ------------------------------------------------------ | ------------------------------------------------------------- |
@@ -108,7 +108,7 @@ class LightClientOptimisticUpdate(Container):
 
 ```python
 @dataclass
-class LightClientStore:
+class LightClientStore(object):
     # [Modified in Capella]
     finalized_header: LightClientHeader
     current_sync_committee: SyncCommittee
@@ -121,7 +121,7 @@ class LightClientStore:
     current_max_active_participants: uint64
 ```
 
-## Helpers
+## Helper functions
 
 ### `get_lc_execution_root`
 

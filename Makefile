@@ -7,19 +7,23 @@ ALL_EXECUTABLE_SPEC_NAMES = \
 	altair    \
 	bellatrix \
 	capella   \
-	sila_deneb     \
+	deneb     \
 	electra   \
-	sila_fulu      \
+	fulu      \
 	gloas     \
-	heze      \
-	sip8025
+	sip6800   \
+	sip7441   \
+	sip7805   \
+	sip7928
 
 # A list of fake targets.
 .PHONY: \
 	_sync         \
 	clean         \
+	coverage      \
 	help          \
 	lint          \
+	reftests      \
 	serve_docs    \
 	test
 
@@ -27,8 +31,8 @@ ALL_EXECUTABLE_SPEC_NAMES = \
 # Help
 ###############################################################################
 
-BOLD := $(shell tput bold)
-NORM := $(shell tput sgr0)
+BOLD = $(shell tput bold)
+NORM = $(shell tput sgr0)
 
 # Print help.
 help:
@@ -42,7 +46,9 @@ endif
 help-nonverbose:
 	@echo "make $(BOLD)clean$(NORM)      -- delete all untracked files"
 	@echo "make $(BOLD)comptests$(NORM)  -- generate compliance tests"
-	@echo "make $(BOLD)lint$(NORM)       -- run linters and checks"
+	@echo "make $(BOLD)coverage$(NORM)   -- run pyspec tests with coverage"
+	@echo "make $(BOLD)lint$(NORM)       -- run the linters"
+	@echo "make $(BOLD)reftests$(NORM)   -- generate reference tests"
 	@echo "make $(BOLD)serve_docs$(NORM) -- start a local docs web server"
 	@echo "make $(BOLD)test$(NORM)       -- run pyspec tests"
 	@echo ""
@@ -60,74 +66,96 @@ help-verbose:
 	@echo "  Runs pyspec tests with various configuration options. Tests run in parallel"
 	@echo "  by default using pytest with the minimal preset and fastest BLS library."
 	@echo ""
-	@echo "  Filtering:"
-	@echo "    k=<name>           Run only tests matching this name"
-	@echo "    fork=<fork>        Run only tests for this fork (phase0, altair, bellatrix, capella, etc.)"
-	@echo "    preset=<preset>    Preset to use: sila_mainnet, minimal (default: minimal)"
-	@echo ""
-	@echo "  Libraries:"
-	@echo "    kzg=<type>         KZG library: spec, ckzg (default: ckzg)"
-	@echo ""
-	@echo "  Output:"
-	@echo "    verbose=true       Enable verbose pytest output"
-	@echo "    reftests=true      Generate reference test vectors"
-	@echo "    coverage=true      Enable code coverage tracking"
+	@echo "  Parameters:"
+	@echo "    k=<test>          Run specific test by name"
+	@echo "    fork=<fork>       Test specific fork (phase0, altair, bellatrix, capella, etc.)"
+	@echo "    preset=<preset>   Use specific preset (sila-mainnet or minimal; default: minimal)"
+	@echo "    bls=<type>        BLS library type (py_ecc, milagro, arkworks, fastest; default: fastest)"
+	@echo "    component=<value> Test component: (all, pyspec, fw; default: all)"
 	@echo ""
 	@echo "  Examples:"
 	@echo "    make test"
 	@echo "    make test k=test_verify_kzg_proof"
-	@echo "    make test fork=sila_deneb"
-	@echo "    make test preset=sila_mainnet"
-	@echo "    make test preset=sila_mainnet fork=sila_deneb k=test_verify_kzg_proof"
-	@echo "    make test reftests=true"
-	@echo "    make test reftests=true fork=sila_fulu"
-	@echo "    make test reftests=true preset=sila_mainnet fork=sila_fulu k=invalid_committee_index"
-	@echo "    make test coverage=true k=test_process_attestation"
-	@echo "    make test coverage=true fork=electra"
+	@echo "    make test fork=deneb"
+	@echo "    make test preset=sila-mainnet"
+	@echo "    make test preset=sila-mainnet fork=deneb k=test_verify_kzg_proof"
+	@echo "    make test bls=arkworks"
+	@echo "    make test component=fw"
+	@echo ""
+	@echo "$(BOLD)make coverage$(NORM)"
+	@echo ""
+	@echo "  Runs tests with code coverage tracking and generates an HTML report."
+	@echo "  Automatically opens the coverage report in your browser after completion."
+	@echo ""
+	@echo "  Parameters:"
+	@echo "    k=<test>    Run specific test by name"
+	@echo "    fork=<fork> Test specific fork"
+	@echo ""
+	@echo "  Examples:"
+	@echo "    make coverage"
+	@echo "    make coverage k=test_process_attestation"
+	@echo "    make coverage fork=electra"
 	@echo ""
 	@echo "$(BOLD)CODE QUALITY$(NORM)"
 	@echo "$(BOLD)--------------------------------------------------------------------------------$(NORM)"
 	@echo ""
 	@echo "$(BOLD)make lint$(NORM)"
 	@echo ""
-	@echo "  Runs all linters, formatters, and checks:"
+	@echo "  Runs all linters and formatters to check code quality:"
 	@echo "    - mdformat: Formats markdown files"
 	@echo "    - codespell: Checks for spelling mistakes"
 	@echo "    - ruff: Python linter and formatter"
 	@echo "    - mypy: Static type checker for Python"
-	@echo "    - Fork comments validation (scripts/check_fork_comments.py)"
-	@echo "    - Markdown headings validation (scripts/check_markdown_headings.py)"
-	@echo "    - Markdown note style fix (scripts/fix_note_style.py)"
-	@echo "    - Trailing whitespace check"
 	@echo ""
 	@echo "  Example: make lint"
 	@echo ""
 	@echo "$(BOLD)TEST GENERATION$(NORM)"
 	@echo "$(BOLD)--------------------------------------------------------------------------------$(NORM)"
 	@echo ""
+	@echo "$(BOLD)make reftests$(NORM)"
+	@echo ""
+	@echo "  Generates reference test vectors for consensus spec tests. These tests are"
+	@echo "  used by client implementations to verify correctness. This command will write"
+	@echo "  reference tests to the ../consensus-spec-tests/ directory."
+	@echo ""
+	@echo "  Parameters:"
+	@echo "    runner=<runner>   Generate tests for specific runner (bls, operations, etc.)"
+	@echo "    k=<test>          Generate specific test cases (comma-separated)"
+	@echo "    fork=<fork>       Generate for specific fork (comma-separated)"
+	@echo "    preset=<preset>   Generate for specific preset (comma-separated)"
+	@echo "    threads=N         Number of threads to use (default: auto)"
+	@echo "    verbose=true      Enable verbose output"
+	@echo ""
+	@echo "  Examples:"
+	@echo "    make reftests"
+	@echo "    make reftests runner=bls"
+	@echo "    make reftests runner=operations k=invalid_committee_index"
+	@echo "    make reftests runner=operations fork=fulu"
+	@echo "    make reftests runner=operations preset=sila-mainnet"
+	@echo "    make reftests runner=operations k=invalid_committee_index,invalid_too_many_committee_bits"
+	@echo "    make reftests runner=operations preset=sila-mainnet fork=fulu k=invalid_committee_index"
+	@echo "    make reftests runner=bls threads=1 verbose=true"
+	@echo ""
+	@echo "  Tip:"
+	@echo "    Use the following command to list available runners:"
+	@echo "    ls -1 tests/generators/runners | grep -v '/$$' | sed 's/\.py$$//'"
+	@echo ""
 	@echo "$(BOLD)make comptests$(NORM)"
 	@echo ""
 	@echo "  Generates compliance tests for fork choice. These tests verify that"
 	@echo "  implementations correctly handle fork choice scenarios."
-	@echo "  Uses pytest collection and xdist parallelism."
 	@echo ""
 	@echo "  Parameters:"
 	@echo "    fc_gen_config=<config> Configuration size (tiny, small, standard; default: tiny)"
 	@echo "    fork=<fork>            Generate for specific fork (comma-separated)"
 	@echo "    preset=<preset>        Generate for specific preset (comma-separated)"
-	@echo "    comptests_dir=<dir>    Output directory for generated compliance tests"
 	@echo "    threads=N              Number of threads to use"
 	@echo "    seed=N                 Override test seeds (fuzzing mode)"
-	@echo "    group_slice_index=N    0-based shard index for deterministic test-group slicing"
-	@echo "    group_slice_count=N    Number of deterministic test-group slices"
-	@echo "    k=<name>               Run only generated cases matching this pytest pattern"
 	@echo ""
 	@echo "  Examples:"
 	@echo "    make comptests"
 	@echo "    make comptests fc_gen_config=standard"
-	@echo "    make comptests comptests_dir=./compliance-spec-tests/tests"
-	@echo "    make comptests fc_gen_config=standard fork=sila_deneb preset=sila_mainnet threads=8"
-	@echo "    make comptests fc_gen_config=tiny fork=gloas group_slice_index=0 group_slice_count=4"
+	@echo "    make comptests fc_gen_config=standard fork=deneb preset=sila-mainnet threads=8"
 	@echo ""
 	@echo "$(BOLD)DOCUMENTATION$(NORM)"
 	@echo "$(BOLD)--------------------------------------------------------------------------------$(NORM)"
@@ -160,7 +188,12 @@ help-verbose:
 # Virtual Environment
 ###############################################################################
 
+VENV = .venv
+
+# Use editable installs for all non-generation targets, but use non-editable
+# installs for generators. More details: sila/consensus-specs#4633.
 UV_RUN    = uv run
+UV_RUN_NE = uv run --no-editable --reinstall-package=sil2spec
 
 # Sync dependencies using uv.
 _sync: MAYBE_VERBOSE := $(if $(filter true,$(verbose)),--verbose)
@@ -189,52 +222,67 @@ _pyspec: _sync
 ###############################################################################
 
 TEST_REPORT_DIR = $(PYSPEC_DIR)/test-reports
-REFTESTS_DIR = $(CURDIR)/reftests
-COV_REPORT_DIR = $(PYSPEC_DIR)/.htmlcov
 
 # Run pyspec tests.
-#
-# Filtering
-test: MAYBE_TEST := $(if $(k),-k "$(k)")
+test: MAYBE_TEST := $(if $(k),-k=$(k))
+# Disable parallelism when running a specific test.
+# Parallelism makes debugging difficult (print doesn't work).
+test: MAYBE_PARALLEL := $(if $(k),,-n auto)
 test: MAYBE_FORK := $(if $(fork),--fork=$(fork))
-test: PRESET := $(if $(preset),--preset=$(preset),)
-# Disable parallelism when running a specific test. Makes debugging difficult (print doesn't work).
-test: MAYBE_PARALLEL := $(if $(k),,-n logical --dist=worksteal)
-#
-# Libraries
-test: KZG := --kzg-type=$(if $(kzg),$(kzg),ckzg)
-#
-# Output
-test: MAYBE_VERBOSE := $(if $(filter true,$(verbose)),-v)
-test: MAYBE_REFTESTS := $(if $(filter true,$(reftests)),--reftests --reftests-output=$(REFTESTS_DIR))
-test: COVERAGE_PRESETS := $(if $(preset),$(preset),$(if $(filter true,$(reftests)),minimal sila_mainnet,minimal))
-test: COV_SCOPE_SINGLE := $(foreach P,$(COVERAGE_PRESETS), --cov=sil_consensus_specs.$(fork).$P)
-test: COV_SCOPE_ALL := $(foreach P,$(COVERAGE_PRESETS),$(foreach S,$(ALL_EXECUTABLE_SPEC_NAMES), --cov=sil_consensus_specs.$S.$P))
-test: COV_SCOPE := $(if $(filter true,$(coverage)),$(if $(fork),$(COV_SCOPE_SINGLE),$(COV_SCOPE_ALL)))
-test: COVERAGE := $(if $(filter true,$(coverage)),--coverage $(COV_SCOPE) --cov-report="html:$(COV_REPORT_DIR)" --cov-report="json:$(COV_REPORT_DIR)/coverage.json" --cov-branch --no-cov-on-fail)
+test: PRESET := $(if $(filter fw,$(component)),,--preset=$(if $(preset),$(preset),minimal))
+test: BLS := $(if $(filter fw,$(component)),,--bls-type=$(if $(bls),$(bls),fastest))
+test: MAYBE_SIL2SPEC := $(if $(filter fw,$(component)),,$(PYSPEC_DIR)/sil2spec)
+test: MAYBE_INFRA := $(if $(filter pyspec,$(component)),,$(CURDIR)/tests/infra)
 test: _pyspec
 	@mkdir -p $(TEST_REPORT_DIR)
 	@$(UV_RUN) pytest \
 		$(MAYBE_PARALLEL) \
 		--capture=no \
-		$(MAYBE_VERBOSE) \
 		$(MAYBE_TEST) \
 		$(MAYBE_FORK) \
 		$(PRESET) \
-		$(KZG) \
+		$(BLS) \
 		--junitxml=$(TEST_REPORT_DIR)/test_results.xml \
 		--html=$(TEST_REPORT_DIR)/test_results.html \
 		--self-contained-html \
-		$(MAYBE_REFTESTS) \
-		$(COVERAGE) \
-		$(PYSPEC_DIR)/sil_consensus_specs
+		$(MAYBE_INFRA) \
+		$(MAYBE_SIL2SPEC)
 
+###############################################################################
+# Coverage
+###############################################################################
+
+TEST_PRESET_TYPE ?= minimal
+COV_HTML_OUT=$(PYSPEC_DIR)/.htmlcov
+COV_INDEX_FILE=$(COV_HTML_OUT)/index.html
+COVERAGE_SCOPE := $(foreach S,$(ALL_EXECUTABLE_SPEC_NAMES), --cov=sil2spec.$S.$(TEST_PRESET_TYPE))
+
+# Run pytest with coverage tracking
+_test_with_coverage: MAYBE_TEST := $(if $(k),-k=$(k))
+_test_with_coverage: MAYBE_FORK := $(if $(fork),--fork=$(fork))
+_test_with_coverage: _pyspec
+	@$(UV_RUN) pytest \
+		-n auto \
+		$(MAYBE_TEST) \
+		$(MAYBE_FORK) \
+		--disable-bls \
+		$(COVERAGE_SCOPE) \
+		--cov-report="html:$(COV_HTML_OUT)" \
+		--cov-branch \
+		$(PYSPEC_DIR)/sil2spec
+
+# Run tests with coverage then open the coverage report.
+# See `make test` for a list of options.
+coverage: _test_with_coverage
+	@echo "Opening result: $(COV_INDEX_FILE)"
+	@((open "$(COV_INDEX_FILE)" || xdg-open "$(COV_INDEX_FILE)") &> /dev/null) &
 
 ###############################################################################
 # Documentation
 ###############################################################################
 
 DOCS_DIR = ./docs
+FORK_CHOICE_DIR = ./fork_choice
 SPEC_DIR = ./specs
 SSZ_DIR = ./ssz
 SYNC_DIR = ./sync
@@ -242,8 +290,10 @@ SYNC_DIR = ./sync
 # Copy files to the docs directory.
 _copy_docs:
 	@cp -r $(SPEC_DIR) $(DOCS_DIR)
+	@rm -rf $(DOCS_DIR)/specs/_deprecated
 	@cp -r $(SYNC_DIR) $(DOCS_DIR)
 	@cp -r $(SSZ_DIR) $(DOCS_DIR)
+	@cp -r $(FORK_CHOICE_DIR) $(DOCS_DIR)
 	@cp $(CURDIR)/README.md $(DOCS_DIR)/README.md
 
 # Start a local documentation server.
@@ -255,64 +305,58 @@ serve_docs: _pyspec _copy_docs
 # Checks
 ###############################################################################
 
-LINT_DIFF_BEFORE := .lint_diff_before
-LINT_DIFF_AFTER := .lint_diff_after
-MARKDOWN_FILES := $(shell find $(CURDIR) -name '*.md' -not -path '$(CURDIR)/.git/*' -not -path '$(CURDIR)/.venv/*')
+MARKDOWN_FILES := $(shell find $(CURDIR) -name '*.md')
 MYPY_PACKAGE_BASE := $(subst /,.,$(PYSPEC_DIR:$(CURDIR)/%=%))
-MYPY_SCOPE := $(foreach S,$(ALL_EXECUTABLE_SPEC_NAMES), -p $(MYPY_PACKAGE_BASE).sil_consensus_specs.$S)
+MYPY_SCOPE := $(foreach S,$(ALL_EXECUTABLE_SPEC_NAMES), -p $(MYPY_PACKAGE_BASE).sil2spec.$S)
 
 # Check for mistakes.
 lint: _pyspec
-	@rm -f $(LINT_DIFF_BEFORE) $(LINT_DIFF_AFTER)
-	@git diff > $(LINT_DIFF_BEFORE)
 	@uv --quiet lock --check
-	@$(UV_RUN) codespell
-	@$(UV_RUN) python $(CURDIR)/scripts/fix_note_style.py
-	@$(UV_RUN) python $(CURDIR)/scripts/fix_trailing_whitespace.py
-	@$(UV_RUN) python $(CURDIR)/scripts/check_fork_comments.py
-	@$(UV_RUN) python $(CURDIR)/scripts/check_markdown_headings.py
-	@$(UV_RUN) python $(CURDIR)/scripts/check_value_annotations.py
 	@$(UV_RUN) mdformat --number --wrap=80 $(MARKDOWN_FILES)
-	@$(UV_RUN) ruff check --fix --quiet $(CURDIR)/tests $(CURDIR)/pysetup $(CURDIR)/specs
-	@$(UV_RUN) ruff format --quiet $(CURDIR)/tests $(CURDIR)/pysetup
-	@$(UV_RUN) ruff format --preview --quiet $(CURDIR)/specs
-	@output="$$($(UV_RUN) mypy $(MYPY_SCOPE) 2>&1)" || \
-		{ echo "$$output"; exit 1; }
-	@git diff > $(LINT_DIFF_AFTER)
-	@diff -q $(LINT_DIFF_BEFORE) $(LINT_DIFF_AFTER) >/dev/null 2>&1 || \
-		echo "$(BOLD)Note: make lint modified tracked files$(NORM)"
-	@rm -f $(LINT_DIFF_BEFORE) $(LINT_DIFF_AFTER)
+	@$(UV_RUN) codespell
+	@$(UV_RUN) ruff check --fix --quiet $(CURDIR)/tests $(CURDIR)/pysetup $(CURDIR)/setup.py
+	@$(UV_RUN) ruff format --quiet $(CURDIR)/tests $(CURDIR)/pysetup $(CURDIR)/setup.py
+	@$(UV_RUN) mypy $(MYPY_SCOPE)
 
 ###############################################################################
 # Generators
 ###############################################################################
 
 COMMA:= ,
-DEFAULT_COMPTESTS_DIR = $(CURDIR)/../compliance-spec-tests/tests
-COMPTESTS_DIR = $(if $(comptests_dir),$(comptests_dir),$(DEFAULT_COMPTESTS_DIR))
+TEST_VECTOR_DIR = $(CURDIR)/../consensus-spec-tests/tests
+COMP_TEST_VECTOR_DIR = $(CURDIR)/../compliance-spec-tests/tests
+
+# Generate reference tests.
+reftests: MAYBE_VERBOSE := $(if $(filter true,$(verbose)),--verbose)
+reftests: MAYBE_THREADS := $(if $(threads),--threads=$(threads))
+reftests: MAYBE_RUNNERS := $(if $(runner),--runners $(subst ${COMMA}, ,$(runner)))
+reftests: MAYBE_TESTS := $(if $(k),--cases $(subst ${COMMA}, ,$(k)))
+reftests: MAYBE_FORKS := $(if $(fork),--forks $(subst ${COMMA}, ,$(fork)))
+reftests: MAYBE_PRESETS := $(if $(preset),--presets $(subst ${COMMA}, ,$(preset)))
+reftests: _pyspec
+	@$(UV_RUN_NE) python -m tests.generators.main \
+		--output $(TEST_VECTOR_DIR) \
+		$(MAYBE_VERBOSE) \
+		$(MAYBE_THREADS) \
+		$(MAYBE_RUNNERS) \
+		$(MAYBE_TESTS) \
+		$(MAYBE_FORKS) \
+		$(MAYBE_PRESETS)
 
 # Generate compliance tests (fork choice).
 comptests: FC_GEN_CONFIG := $(if $(fc_gen_config),$(fc_gen_config),tiny)
-comptests: MAYBE_TEST := $(if $(k),-k "$(k)")
-comptests: MAYBE_PARALLEL := $(if $(filter 1,$(threads)),,$(if $(threads),-n $(threads) --dist=worksteal,-n logical --dist=worksteal))
-comptests: MAYBE_FORKS := $(foreach F,$(subst ${COMMA}, ,$(fork)),--forks $(F))
-comptests: MAYBE_PRESETS := $(foreach P,$(subst ${COMMA}, ,$(preset)),--presets $(P))
+comptests: MAYBE_THREADS := $(if $(threads),--threads=$(threads),--fc-gen-multi-processing)
+comptests: MAYBE_FORKS := $(if $(fork),--forks $(subst ${COMMA}, ,$(fork)))
+comptests: MAYBE_PRESETS := $(if $(preset),--presets $(subst ${COMMA}, ,$(preset)))
 comptests: MAYBE_SEED := $(if $(seed),--fc-gen-seed $(seed))
-comptests: MAYBE_GROUP_SLICE_INDEX := $(if $(group_slice_index),--group-slice-index $(group_slice_index))
-comptests: MAYBE_GROUP_SLICE_COUNT := $(if $(group_slice_count),--group-slice-count $(group_slice_count))
 comptests: _pyspec
-	@$(UV_RUN) pytest \
-		$(MAYBE_PARALLEL) \
-		--capture=no \
-		$(MAYBE_TEST) \
-		--comptests-output=$(COMPTESTS_DIR) \
+	@$(UV_RUN_NE) python -m tests.generators.compliance_runners.fork_choice.test_gen \
+		--output $(COMP_TEST_VECTOR_DIR) \
 		--fc-gen-config $(FC_GEN_CONFIG) \
+		$(MAYBE_THREADS) \
 		$(MAYBE_FORKS) \
 		$(MAYBE_PRESETS) \
-		$(MAYBE_SEED) \
-		$(MAYBE_GROUP_SLICE_INDEX) \
-		$(MAYBE_GROUP_SLICE_COUNT) \
-		$(CURDIR)/tests/generators/compliance_runners/fork_choice/generate_comptests.py
+		$(MAYBE_SEED)
 
 ###############################################################################
 # Cleaning

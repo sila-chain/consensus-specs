@@ -77,8 +77,8 @@ optimistically imported blocks which have only received a `NOT_VALIDATED`
 designation from an execution engine (i.e., they are not known to be
 `INVALIDATED` or `VALID`).
 
-Let `current_slot: Slot` be `(time - genesis_time) * 1000 // SLOT_DURATION_MS`
-where `time` is the UNIX time according to the local system clock.
+Let `current_slot: Slot` be `(time - genesis_time) // SECONDS_PER_SLOT` where
+`time` is the UNIX time according to the local system clock.
 
 ```python
 @dataclass
@@ -222,7 +222,7 @@ parameter. The general approach is as follows:
    `NOT_VALIDATED` to `INVALIDATED`.
 
 | `latestValidHash`       | `invalidBlock`                                                                                                                                |
-| ----------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| :---------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------- |
 | Execution block hash    | The *child* of a block with `body.execution_payload.block_hash == latestValidHash` in the chain containing the block with payload in question |
 | `0x00..00` (all zeroes) | The first block with `body.execution_payload != ExecutionPayload()` in the chain containing a block with payload in question                  |
 | `null`                  | Block with payload in question                                                                                                                |
@@ -332,7 +332,7 @@ across the `DOMAIN_SYNC_COMMITTEE`, `DOMAIN_SYNC_COMMITTEE_SELECTION_PROOF` or
 ## Sila Beacon APIs
 
 Consensus engines which provide an implementation of the
-[Sila Beacon APIs](https://github.com/sila-chain/beacon-APIs) must take care
+[Sila Beacon APIs](https://github.com/sila/beacon-APIs) must take care
 to ensure the `execution_optimistic` value is set to `True` whenever the request
 references optimistic blocks (and vice-versa).
 
@@ -350,7 +350,7 @@ able to complete because the recent state soon becomes unavailable due to state
 trie pruning.
 
 Optimistic block import (i.e. import when the execution engine *cannot*
-currently validate the payload) breaks a deadlock between the execution-layer
+currently validate the payload) breaks a deadlock between the execution layer
 sync process and importing beacon blocks while the execution engine is syncing.
 
 Optimistic sync is also an optimal strategy for execution engines using block

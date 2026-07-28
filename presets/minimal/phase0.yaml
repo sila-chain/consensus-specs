@@ -37,7 +37,7 @@ MIN_SEED_LOOKAHEAD: 1
 # 2**2 (= 4) epochs
 MAX_SEED_LOOKAHEAD: 4
 # [customized] 2**2 (= 4) epochs
-EPOCHS_PER_SIL1_VOTING_PERIOD: 4
+EPOCHS_PER_ETH1_VOTING_PERIOD: 4
 # [customized] 2**6 (= 64) slots
 SLOTS_PER_HISTORICAL_ROOT: 64
 # 2**2 (= 4) epochs
@@ -66,7 +66,7 @@ PROPOSER_REWARD_QUOTIENT: 8
 INACTIVITY_PENALTY_QUOTIENT: 33554432
 # [customized] 2**6 (= 64)
 MIN_SLASHING_PENALTY_QUOTIENT: 64
-# [customized] 2 (lower safety margin than Phase0 genesis but different than sila_mainnet config for testing)
+# [customized] 2 (lower safety margin than Phase0 genesis but different than sila-mainnet config for testing)
 PROPORTIONAL_SLASHING_MULTIPLIER: 2
 
 # Max operations per block

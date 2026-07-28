@@ -3,7 +3,7 @@
 <!-- mdformat-toc start --slug=github --no-anchors --maxlevel=6 --minlevel=2 -->
 
 - [Introduction](#introduction)
-- [Helpers](#helpers)
+- [Helper functions](#helper-functions)
   - [`normalize_merkle_branch`](#normalize_merkle_branch)
 - [Upgrading light client data](#upgrading-light-client-data)
 - [Upgrading the store](#upgrading-the-store)
@@ -13,12 +13,12 @@
 ## Introduction
 
 This document describes how to upgrade existing light client objects based on
-the [SilaDeneb specification](../../sila_deneb/light-client/sync-protocol.md) to Electra.
+the [SilaDeneb specification](../../deneb/light-client/sync-protocol.md) to Electra.
 This is necessary when processing pre-Electra data with a post-Electra
 `LightClientStore`. Note that the data being exchanged over the network
 protocols uses the original format.
 
-## Helpers
+## Helper functions
 
 ### `normalize_merkle_branch`
 
@@ -38,7 +38,7 @@ order to do so, that pre-Electra data needs to be locally upgraded to Electra
 before processing.
 
 ```python
-def upgrade_lc_header_to_electra(pre: sila_deneb.LightClientHeader) -> LightClientHeader:
+def upgrade_lc_header_to_electra(pre: deneb.LightClientHeader) -> LightClientHeader:
     return LightClientHeader(
         beacon=pre.beacon,
         execution=pre.execution,
@@ -47,7 +47,7 @@ def upgrade_lc_header_to_electra(pre: sila_deneb.LightClientHeader) -> LightClie
 ```
 
 ```python
-def upgrade_lc_bootstrap_to_electra(pre: sila_deneb.LightClientBootstrap) -> LightClientBootstrap:
+def upgrade_lc_bootstrap_to_electra(pre: deneb.LightClientBootstrap) -> LightClientBootstrap:
     return LightClientBootstrap(
         header=upgrade_lc_header_to_electra(pre.header),
         current_sync_committee=pre.current_sync_committee,
@@ -58,7 +58,7 @@ def upgrade_lc_bootstrap_to_electra(pre: sila_deneb.LightClientBootstrap) -> Lig
 ```
 
 ```python
-def upgrade_lc_update_to_electra(pre: sila_deneb.LightClientUpdate) -> LightClientUpdate:
+def upgrade_lc_update_to_electra(pre: deneb.LightClientUpdate) -> LightClientUpdate:
     return LightClientUpdate(
         attested_header=upgrade_lc_header_to_electra(pre.attested_header),
         next_sync_committee=pre.next_sync_committee,
@@ -74,7 +74,7 @@ def upgrade_lc_update_to_electra(pre: sila_deneb.LightClientUpdate) -> LightClie
 
 ```python
 def upgrade_lc_finality_update_to_electra(
-    pre: sila_deneb.LightClientFinalityUpdate,
+    pre: deneb.LightClientFinalityUpdate,
 ) -> LightClientFinalityUpdate:
     return LightClientFinalityUpdate(
         attested_header=upgrade_lc_header_to_electra(pre.attested_header),
@@ -87,7 +87,7 @@ def upgrade_lc_finality_update_to_electra(
 
 ```python
 def upgrade_lc_optimistic_update_to_electra(
-    pre: sila_deneb.LightClientOptimisticUpdate,
+    pre: deneb.LightClientOptimisticUpdate,
 ) -> LightClientOptimisticUpdate:
     return LightClientOptimisticUpdate(
         attested_header=upgrade_lc_header_to_electra(pre.attested_header),
@@ -103,7 +103,7 @@ before Electra based light client data can be processed. The `LightClientStore`
 upgrade MAY be performed before `ELECTRA_FORK_EPOCH`.
 
 ```python
-def upgrade_lc_store_to_electra(pre: sila_deneb.LightClientStore) -> LightClientStore:
+def upgrade_lc_store_to_electra(pre: deneb.LightClientStore) -> LightClientStore:
     if pre.best_valid_update is None:
         best_valid_update = None
     else:

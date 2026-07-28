@@ -28,18 +28,13 @@ sub-transition. No value if the sub-transition processing is aborted.
 
 ### `pre_epoch.ssz_snappy`
 
-Optional. An SSZ-snappy encoded `BeaconState`, the state before running the
-epoch transition.
-
-Some test cases mutate the state between sub-transitions to exercise a specific
-one in isolation. If this is the case, this file is omitted, since
-`process_epoch(pre_epoch)` would not reproduce the mutated state.
+An SSZ-snappy encoded `BeaconState`, the state before running the epoch
+transition.
 
 ### `post_epoch.ssz_snappy`
 
-Optional. An SSZ-snappy encoded `BeaconState`, the state after applying the
-epoch transition. No value if the transition processing is aborted. Omitted in
-the same circumstances as `pre_epoch.ssz_snappy`.
+An SSZ-snappy encoded `BeaconState`, the state after applying the epoch
+transition. No value if the transition processing is aborted.
 
 ## Condition
 
@@ -73,9 +68,8 @@ The resulting state should match the expected `post` state.
 ## Condition (alternative)
 
 Instead of having a different handler for each sub-transition, a single handler
-for all cases should load `pre_epoch` state, call `process_epoch` and then
-assert that the result state should match `post_epoch` state. Because these
-files are optional, this handler must skip cases that do not provide them.
+for all cases should load `pre_full` state, call `process_epoch` and then assert
+that the result state should match `post_full` state.
 
 This has the advantages:
 

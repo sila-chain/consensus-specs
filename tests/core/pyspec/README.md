@@ -40,27 +40,15 @@ Or, to run all tests under a single fork specify `fork=<name>`:
 make test fork=phase0
 ```
 
-*Note*: these options can be used together, like:
+Note: these options can be used together, like:
 
 ```shell
-make test preset=minimal k=test_verify_kzg_proof fork=sila_deneb
+make test preset=minimal k=test_verify_kzg_proof fork=deneb
 ```
 
-### How to generate coverage reports
+### How to view code coverage report
 
-Run `make test coverage=true` to enable coverage tracking and generate reports.
-
-Reports are saved at:
-
-- **HTML report**: `tests/core/pyspec/.htmlcov/index.html`
-- **JSON report**: `tests/core/pyspec/.htmlcov/coverage.json`
-
-To open the HTML report in a browser:
-
-```shell
-xdg-open tests/core/pyspec/.htmlcov/index.html   # Linux
-open tests/core/pyspec/.htmlcov/index.html       # macOS
-```
+Run `make coverage` to run all tests and open the html code coverage report.
 
 ## Contributing
 

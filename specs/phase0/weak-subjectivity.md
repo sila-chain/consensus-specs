@@ -4,7 +4,7 @@
 
 - [Introduction](#introduction)
 - [Prerequisites](#prerequisites)
-- [Types](#types)
+- [Custom Types](#custom-types)
 - [Constants](#constants)
 - [Configuration](#configuration)
 - [Weak Subjectivity Checkpoint](#weak-subjectivity-checkpoint)
@@ -35,11 +35,11 @@ This document uses data structures, constants, functions, and terminology from
 [Phase 0 -- The Beacon Chain](./beacon-chain.md) and
 [Phase 0 -- Beacon Chain Fork Choice](./fork-choice.md).
 
-## Types
+## Custom Types
 
 | Name    | SSZ Equivalent | Description        |
 | ------- | -------------- | ------------------ |
-| `Ether` | `uint64`       | An amount in Ether |
+| `Ether` | `uint64`       | an amount in Ether |
 
 ## Constants
 
@@ -108,7 +108,7 @@ def compute_weak_subjectivity_period(state: BeaconState) -> uint64:
     Delta = MAX_DEPOSITS * SLOTS_PER_EPOCH
     D = SAFETY_DECAY
 
-    if t * (200 + 12 * D) > T * (200 + 3 * D):
+    if T * (200 + 3 * D) < t * (200 + 12 * D):
         epochs_for_validator_set_churn = (
             N * (t * (200 + 12 * D) - T * (200 + 3 * D)) // (600 * delta * (2 * t + T))
         )

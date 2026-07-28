@@ -13,7 +13,7 @@ actions of a "validator" participating in the Sila proof-of-stake protocol.
 - [Configuration](#configuration)
   - [Time parameters](#time-parameters)
 - [Containers](#containers)
-  - [`Sil1Block`](#sil1block)
+  - [`Eth1Block`](#sil1block)
   - [`AggregateAndProof`](#aggregateandproof)
   - [`SignedAggregateAndProof`](#signedaggregateandproof)
 - [Becoming a validator](#becoming-a-validator)
@@ -36,8 +36,8 @@ actions of a "validator" participating in the Sila proof-of-stake protocol.
       - [Parent root](#parent-root)
     - [Constructing the `BeaconBlockBody`](#constructing-the-beaconblockbody)
       - [Randao reveal](#randao-reveal)
-      - [Sil1 Data](#sil1-data)
-        - [`get_sil1_data`](#get_sil1_data)
+      - [Eth1 Data](#sil1-data)
+        - [`get_eth1_data`](#get_eth1_data)
       - [Proposer slashings](#proposer-slashings)
       - [Attester slashings](#attester-slashings)
       - [Attestations](#attestations)
@@ -92,33 +92,33 @@ protocol.
 
 All terminology, constants, functions, and protocol mechanics defined in the
 [Phase 0 -- The Beacon Chain](./beacon-chain.md) and
-[Phase 0 -- Deposit Contract](./deposit-contract.md) specifications are
-requisite for this document and used throughout. Please see the Phase 0
-specifications before continuing and use as a reference throughout.
+[Phase 0 -- Deposit Contract](./deposit-contract.md) doc are requisite for this
+document and used throughout. Please see the Phase 0 doc before continuing and
+use as a reference throughout.
 
 ## Constants
 
 ### Misc
 
-| Name                               | Value         | Unit       |
-| ---------------------------------- | ------------- | ---------- |
+| Name                               | Value         |    Unit    |
+| ---------------------------------- | ------------- | :--------: |
 | `TARGET_AGGREGATORS_PER_COMMITTEE` | `2**4` (= 16) | validators |
 
 ## Configuration
 
 ### Time parameters
 
-| Name                  | Value          | Unit         | Duration                   |
-| --------------------- | -------------- | ------------ | -------------------------- |
+| Name                  | Value          |     Unit     |          Duration          |
+| --------------------- | -------------- | :----------: | :------------------------: |
 | `ATTESTATION_DUE_BPS` | `uint64(3333)` | basis points | ~33% of `SLOT_DURATION_MS` |
 | `AGGREGATE_DUE_BPS`   | `uint64(6667)` | basis points | ~67% of `SLOT_DURATION_MS` |
 
 ## Containers
 
-### `Sil1Block`
+### `Eth1Block`
 
 ```python
-class Sil1Block(Container):
+class Eth1Block(Container):
     timestamp: uint64
     deposit_root: Root
     deposit_count: uint64
@@ -179,8 +179,8 @@ kept in cold storage.
 
 ##### `SIL1_ADDRESS_WITHDRAWAL_PREFIX`
 
-Withdrawal credentials with the Sil1 address withdrawal prefix specify a 20-byte
-Sil1 address `sil1_withdrawal_address` as the recipient for all withdrawals. The
+Withdrawal credentials with the Eth1 address withdrawal prefix specify a 20-byte
+Eth1 address `sil1_withdrawal_address` as the recipient for all withdrawals. The
 `sil1_withdrawal_address` can be the address of either an externally owned
 account or of a contract.
 
@@ -190,7 +190,7 @@ The `withdrawal_credentials` field must be such that:
 - `withdrawal_credentials[1:12] == b'\x00' * 11`
 - `withdrawal_credentials[12:] == sil1_withdrawal_address`
 
-After the merge of the current Sila execution layer into the beacon chain,
+After the merge of the current Sila execution layer into the Beacon Chain,
 withdrawals to `sil1_withdrawal_address` will simply be increases to the
 account's SIL balance that do **NOT** trigger any EVM execution.
 
@@ -233,11 +233,11 @@ be activated when total deposits for the validator pubkey meet or exceed
 
 Deposits cannot be processed into the beacon chain until the proof-of-work block
 in which they were deposited or any of its descendants is added to the beacon
-chain `state.sil1_data`. This takes _a minimum_ of `SIL1_FOLLOW_DISTANCE` Sil1
-blocks plus `EPOCHS_PER_SIL1_VOTING_PERIOD` epochs. Once the requisite
-proof-of-work block data is added, the deposit will normally be added to a
-beacon-chain block and processed into the `state.validators` within an epoch or
-two. The validator is then in a queue to be activated.
+chain `state.sil1_data`. This takes _a minimum_ of `SIL1_FOLLOW_DISTANCE` Eth1
+blocks (~8 hours) plus `EPOCHS_PER_SIL1_VOTING_PERIOD` epochs (~6.8 hours). Once
+the requisite proof-of-work block data is added, the deposit will normally be
+added to a beacon chain block and processed into the `state.validators` within
+an epoch or two. The validator is then in a queue to be activated.
 
 ### Validator index
 
@@ -254,7 +254,7 @@ any point and should be stored locally.
 
 In normal operation, the validator is quickly activated, at which point the
 validator is added to the shuffling and begins validation after an additional
-`MAX_SEED_LOOKAHEAD` epochs.
+`MAX_SEED_LOOKAHEAD` epochs (25.6 minutes).
 
 The function [`is_active_validator`](./beacon-chain.md#is_active_validator) can
 be used to check if a validator is active during a given epoch. Usage is as
@@ -324,7 +324,7 @@ in a given epoch each responsibility might occur at a different slot.
 
 ### Lookahead
 
-The beacon-chain shufflings are designed to provide a minimum of 1 epoch
+The beacon chain shufflings are designed to provide a minimum of 1 epoch
 lookahead on the validator's upcoming committee assignments for attesting
 dictated by the shuffling and slot. Note that this lookahead does not apply to
 proposing, which must be checked during the epoch in question.
@@ -375,22 +375,23 @@ To propose, the validator selects a `BeaconBlock`, `parent` using this process:
 
 1. Compute fork choice's view of the head at the start of `slot`, after running
    `on_tick` and applying any queued attestations from `slot - 1`. Set
-   `head_node = get_head(store)`.
+   `head_root = get_head(store)`.
 2. Compute the _proposer head_, which is the head upon which the proposer SHOULD
    build in order to incentivise timely block propagation by other validators.
-   Set `parent_node = get_proposer_head(store, head_node, slot)`. A proposer may
-   set `parent_node == head_node` if proposer re-orgs are not implemented or
+   Set `parent_root = get_proposer_head(store, head_root, slot)`. A proposer may
+   set `parent_root == head_root` if proposer re-orgs are not implemented or
    have been disabled.
-3. Let `parent` be the block with `parent_node.root`.
+3. Let `parent` be the block with `parent_root`.
 
 The validator creates, signs, and broadcasts a `block` that is a child of
 `parent` and satisfies a valid
-[beacon-chain state transition](./beacon-chain.md#beacon-chain-state-transition-function).
+[beacon chain state transition](./beacon-chain.md#beacon-chain-state-transition-function).
 Note that the parent's slot must be strictly less than the slot of the block
 about to be proposed, i.e. `parent.slot < slot`.
 
 There is one proposer per slot, so if there are N active validators any
-individual validator will on average be assigned to propose once per N slots.
+individual validator will on average be assigned to propose once per N slots
+(e.g. at 312,500 validators = 10 million SIL, that's once per ~6 weeks).
 
 *Note*: In this section, `state` is the state of the slot for the block proposal
 _without_ the block yet applied. That is, `state` is the `previous_state`
@@ -436,27 +437,27 @@ def get_epoch_signature(state: BeaconState, block: BeaconBlock, privkey: int) ->
     return bls.Sign(privkey, signing_root)
 ```
 
-##### Sil1 Data
+##### Eth1 Data
 
-The `block.body.sil1_data` field is for block proposers to vote on recent Sil1
-data. This recent data contains an Sil1 block hash as well as the associated
+The `block.body.sil1_data` field is for block proposers to vote on recent Eth1
+data. This recent data contains an Eth1 block hash as well as the associated
 deposit root (as calculated by the `get_deposit_root()` method of the deposit
-contract) and deposit count after execution of the corresponding Sil1 block. If
-over half of the block proposers in the current Sil1 voting period vote for the
+contract) and deposit count after execution of the corresponding Eth1 block. If
+over half of the block proposers in the current Eth1 voting period vote for the
 same `sil1_data` then `state.sil1_data` updates immediately allowing new
 deposits to be processed. Each deposit in `block.body.deposits` must verify
 against `state.sil1_data.deposit_root`.
 
-###### `get_sil1_data`
+###### `get_eth1_data`
 
-Let `Sil1Block` be an abstract object representing Sil1 blocks with the
+Let `Eth1Block` be an abstract object representing Eth1 blocks with the
 `timestamp` and deposit contract data available.
 
-Let `get_sil1_data(block: Sil1Block) -> Sil1Data` be the function that returns
-the Sil1 data for a given Sil1 block.
+Let `get_eth1_data(block: Eth1Block) -> Eth1Data` be the function that returns
+the Eth1 data for a given Eth1 block.
 
 An honest block proposer sets
-`block.body.sil1_data = get_sil1_vote(state, sil1_chain)` where:
+`block.body.sil1_data = get_eth1_vote(state, sil1_chain)` where:
 
 ```python
 def voting_period_start_time(state: BeaconState) -> uint64:
@@ -467,7 +468,7 @@ def voting_period_start_time(state: BeaconState) -> uint64:
 ```
 
 ```python
-def is_candidate_block(block: Sil1Block, period_start: uint64) -> bool:
+def is_candidate_block(block: Eth1Block, period_start: uint64) -> bool:
     return (
         block.timestamp + SECONDS_PER_SIL1_BLOCK * SIL1_FOLLOW_DISTANCE <= period_start
         and block.timestamp + SECONDS_PER_SIL1_BLOCK * SIL1_FOLLOW_DISTANCE * 2 >= period_start
@@ -475,16 +476,16 @@ def is_candidate_block(block: Sil1Block, period_start: uint64) -> bool:
 ```
 
 ```python
-def get_sil1_vote(state: BeaconState, sil1_chain: Sequence[Sil1Block]) -> Sil1Data:
+def get_eth1_vote(state: BeaconState, sil1_chain: Sequence[Eth1Block]) -> Eth1Data:
     period_start = voting_period_start_time(state)
     # `sil1_chain` abstractly represents all blocks in the sil1 chain sorted by ascending block height
     votes_to_consider = [
-        get_sil1_data(block)
+        get_eth1_data(block)
         for block in sil1_chain
         if (
             is_candidate_block(block, period_start)
             # Ensure cannot move back to earlier deposit contract states
-            and get_sil1_data(block).deposit_count >= state.sil1_data.deposit_count
+            and get_eth1_data(block).deposit_count >= state.sil1_data.deposit_count
         )
     ]
 
@@ -493,9 +494,9 @@ def get_sil1_vote(state: BeaconState, sil1_chain: Sequence[Sil1Block]) -> Sil1Da
 
     # Default vote on latest sil1 block data in the period range unless sil1 chain is not live
     # Non-substantive casting for linter
-    state_sil1_data: Sil1Data = state.sil1_data
+    state_eth1_data: Eth1Data = state.sil1_data
     default_vote = (
-        votes_to_consider[len(votes_to_consider) - 1] if any(votes_to_consider) else state_sil1_data
+        votes_to_consider[len(votes_to_consider) - 1] if any(votes_to_consider) else state_eth1_data
     )
 
     return max(
@@ -553,7 +554,7 @@ contained in `state.sil1_data` rather than the deposit root at the time the
 deposit was initially logged from the proof-of-work chain. This entails storing
 a full deposit merkle tree locally and computing updated proofs against the
 `sil1_data.deposit_root` as needed. See
-[`minimal_merkle.py`](https://github.com/sila-chain/research/blob/master/spec_pythonizer/utils/merkle_minimal.py)
+[`minimal_merkle.py`](https://github.com/sila/research/blob/master/spec_pythonizer/utils/merkle_minimal.py)
 for a sample implementation.
 
 ##### Voluntary exits
@@ -610,8 +611,8 @@ validator performs this role during an epoch are defined by
 A validator should create and broadcast the `attestation` to the associated
 attestation subnet when either (a) the validator has received a valid block from
 the expected block proposer for the assigned `slot` or (b)
-`get_attestation_due_ms()` milliseconds has transpired since the start of the
-slot -- whichever comes first.
+`get_attestation_due_ms(epoch)` milliseconds has transpired since the start of
+the slot -- whichever comes first.
 
 *Note*: Although attestations during `GENESIS_EPOCH` do not count toward FFG
 finality, these initial attestations do give weight to the fork choice, are
@@ -650,7 +651,7 @@ Set `attestation_data.beacon_block_root = hash_tree_root(head_block)`.
 
 - Let `start_slot = compute_start_slot_at_epoch(get_current_epoch(head_state))`.
 - Let
-  `epoch_boundary_block_root = hash_tree_root(head_block) if start_slot == head_state.slot else get_block_root(head_state, get_current_epoch(head_state))`.
+  `epoch_boundary_block_root = hash_tree_root(head_block) if start_slot == head_state.slot else get_block_root(state, get_current_epoch(head_state))`.
 
 #### Construct attestation
 
@@ -775,8 +776,8 @@ def get_aggregate_signature(attestations: Sequence[Attestation]) -> BLSSignature
 
 If the validator is selected to aggregate (`is_aggregator`), then they broadcast
 their best aggregate as a `SignedAggregateAndProof` to the global aggregate
-channel (`beacon_aggregate_and_proof`) `get_aggregate_due_ms()` milliseconds
-into the slot.
+channel (`beacon_aggregate_and_proof`) `get_aggregate_due_ms(epoch)`
+milliseconds into the slot.
 
 Selection proofs are provided in `AggregateAndProof` to prove to the gossip
 channel that the validator has been selected as an aggregator.
@@ -885,7 +886,7 @@ beacon node as untrusted. This means that the validator client should protect:
 3. Recovered validator -- Recovering a validator from a private key will result
    in an empty local slashing db. Best practice is to import (from a trusted
    source) that validator's attestation history. See
-   [SIP 3076](https://github.com/sila-chain/SIPs/pull/3076/files) for a standard
+   [SIP 3076](https://github.com/sila/SIPs/pull/3076/files) for a standard
    slashing interchange format.
 4. Far future signing requests -- A validator client can be requested to sign a
    far into the future attestation, resulting in a valid non-slashable request.

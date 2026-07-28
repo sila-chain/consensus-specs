@@ -3,11 +3,11 @@
 <!-- mdformat-toc start --slug=github --no-anchors --maxlevel=6 --minlevel=2 -->
 
 - [Introduction](#introduction)
-- [Types](#types)
+- [Custom types](#custom-types)
 - [Constants](#constants)
   - [Participation flag indices](#participation-flag-indices)
   - [Incentivization weights](#incentivization-weights)
-  - [Domains](#domains)
+  - [Domain types](#domain-types)
   - [Misc](#misc)
 - [Preset](#preset)
   - [Rewards and penalties](#rewards-and-penalties)
@@ -21,7 +21,7 @@
   - [New containers](#new-containers)
     - [`SyncAggregate`](#syncaggregate)
     - [`SyncCommittee`](#synccommittee)
-- [Helpers](#helpers)
+- [Helper functions](#helper-functions)
   - [Crypto](#crypto)
   - [Misc](#misc-1)
     - [`add_flag`](#add_flag)
@@ -55,17 +55,17 @@
 
 ## Introduction
 
-Altair is the first beacon-chain upgrade. Its main features are:
+Altair is the first beacon chain hard fork. Its main features are:
 
-- Sync committees to support light clients
-- Incentive accounting reforms to reduce specification complexity
-- Penalty parameter updates towards their planned maximally punitive values
+- sync committees to support light clients
+- incentive accounting reforms to reduce spec complexity
+- penalty parameter updates towards their planned maximally punitive values
 
-## Types
+## Custom types
 
 | Name                 | SSZ equivalent | Description                                                |
 | -------------------- | -------------- | ---------------------------------------------------------- |
-| `ParticipationFlags` | `uint8`        | A succinct representation of 8 boolean participation flags |
+| `ParticipationFlags` | `uint8`        | a succinct representation of 8 boolean participation flags |
 
 ## Constants
 
@@ -90,7 +90,7 @@ Altair is the first beacon-chain upgrade. Its main features are:
 
 *Note*: The sum of the weights equal `WEIGHT_DENOMINATOR`.
 
-### Domains
+### Domain types
 
 | Name                                    | Value                      |
 | --------------------------------------- | -------------------------- |
@@ -111,6 +111,9 @@ Altair is the first beacon-chain upgrade. Its main features are:
 This patch updates a few configuration values to move penalty parameters closer
 to their final, maximum security values.
 
+*Note*: The spec does *not* override previous configuration values but instead
+creates new values and replaces usage throughout.
+
 | Name                                      | Value                              |
 | ----------------------------------------- | ---------------------------------- |
 | `INACTIVITY_PENALTY_QUOTIENT_ALTAIR`      | `uint64(3 * 2**24)` (= 50,331,648) |
@@ -119,10 +122,10 @@ to their final, maximum security values.
 
 ### Sync committee
 
-| Name                               | Value                  | Unit       |
-| ---------------------------------- | ---------------------- | ---------- |
-| `SYNC_COMMITTEE_SIZE`              | `uint64(2**9)` (= 512) | validators |
-| `EPOCHS_PER_SYNC_COMMITTEE_PERIOD` | `uint64(2**8)` (= 256) | epochs     |
+| Name                               | Value                  | Unit       | Duration  |
+| ---------------------------------- | ---------------------- | ---------- | --------- |
+| `SYNC_COMMITTEE_SIZE`              | `uint64(2**9)` (= 512) | validators |           |
+| `EPOCHS_PER_SYNC_COMMITTEE_PERIOD` | `uint64(2**8)` (= 256) | epochs     | ~27 hours |
 
 ## Configuration
 
@@ -130,8 +133,8 @@ to their final, maximum security values.
 
 | Name                             | Value                 | Description                      |
 | -------------------------------- | --------------------- | -------------------------------- |
-| `INACTIVITY_SCORE_BIAS`          | `uint64(2**2)` (= 4)  | Score points per inactive epoch  |
-| `INACTIVITY_SCORE_RECOVERY_RATE` | `uint64(2**4)` (= 16) | Score points per leak-free epoch |
+| `INACTIVITY_SCORE_BIAS`          | `uint64(2**2)` (= 4)  | score points per inactive epoch  |
+| `INACTIVITY_SCORE_RECOVERY_RATE` | `uint64(2**4)` (= 16) | score points per leak-free epoch |
 
 ## Containers
 
@@ -142,7 +145,7 @@ to their final, maximum security values.
 ```python
 class BeaconBlockBody(Container):
     randao_reveal: BLSSignature
-    sil1_data: Sil1Data
+    sil1_data: Eth1Data
     graffiti: Bytes32
     proposer_slashings: List[ProposerSlashing, MAX_PROPOSER_SLASHINGS]
     attester_slashings: List[AttesterSlashing, MAX_ATTESTER_SLASHINGS]
@@ -165,8 +168,8 @@ class BeaconState(Container):
     block_roots: Vector[Root, SLOTS_PER_HISTORICAL_ROOT]
     state_roots: Vector[Root, SLOTS_PER_HISTORICAL_ROOT]
     historical_roots: List[Root, HISTORICAL_ROOTS_LIMIT]
-    sil1_data: Sil1Data
-    sil1_data_votes: List[Sil1Data, EPOCHS_PER_SIL1_VOTING_PERIOD * SLOTS_PER_EPOCH]
+    sil1_data: Eth1Data
+    sil1_data_votes: List[Eth1Data, EPOCHS_PER_ETH1_VOTING_PERIOD * SLOTS_PER_EPOCH]
     sil1_deposit_index: uint64
     validators: List[Validator, VALIDATOR_REGISTRY_LIMIT]
     balances: List[Gwei, VALIDATOR_REGISTRY_LIMIT]
@@ -206,7 +209,7 @@ class SyncCommittee(Container):
     aggregate_pubkey: BLSPubkey
 ```
 
-## Helpers
+## Helper functions
 
 ### Crypto
 
@@ -457,9 +460,7 @@ calculating the proposer reward.
 
 ```python
 def slash_validator(
-    state: BeaconState,
-    slashed_index: ValidatorIndex,
-    whistleblower_index: Optional[ValidatorIndex] = None,
+    state: BeaconState, slashed_index: ValidatorIndex, whistleblower_index: ValidatorIndex = None
 ) -> None:
     """
     Slash the validator with index ``slashed_index``.
@@ -492,7 +493,7 @@ def slash_validator(
 def process_block(state: BeaconState, block: BeaconBlock) -> None:
     process_block_header(state, block)
     process_randao(state, block.body)
-    process_sil1_data(state, block.body)
+    process_eth1_data(state, block.body)
     # [Modified in Altair]
     process_operations(state, block.body)
     # [New in Altair]
@@ -582,7 +583,7 @@ def process_sync_aggregate(state: BeaconState, sync_aggregate: SyncAggregate) ->
         # More than half participated - subtract non-participant keys.
         # First determine nonparticipating members
         non_participant_pubkeys = [
-            pubkey for pubkey, bit in zip(committee_pubkeys, committee_bits, strict=True) if not bit
+            pubkey for pubkey, bit in zip(committee_pubkeys, committee_bits) if not bit
         ]
         # Compute aggregate of non-participants
         non_participant_aggregate = sil_aggregate_pubkeys(non_participant_pubkeys)
@@ -597,9 +598,7 @@ def process_sync_aggregate(state: BeaconState, sync_aggregate: SyncAggregate) ->
         # Less than half participated - aggregate participant keys
         participant_pubkeys = [
             pubkey
-            for pubkey, bit in zip(
-                committee_pubkeys, sync_aggregate.sync_committee_bits, strict=True
-            )
+            for pubkey, bit in zip(committee_pubkeys, sync_aggregate.sync_committee_bits)
             if bit
         ]
     previous_slot = max(state.slot, Slot(1)) - Slot(1)
@@ -627,7 +626,7 @@ def process_sync_aggregate(state: BeaconState, sync_aggregate: SyncAggregate) ->
         ValidatorIndex(all_pubkeys.index(pubkey)) for pubkey in state.current_sync_committee.pubkeys
     ]
     for participant_index, participation_bit in zip(
-        committee_indices, sync_aggregate.sync_committee_bits, strict=True
+        committee_indices, sync_aggregate.sync_committee_bits
     ):
         if participation_bit:
             increase_balance(state, participant_index, participant_reward)
@@ -649,13 +648,11 @@ def process_epoch(state: BeaconState) -> None:
     process_registry_updates(state)
     # [Modified in Altair]
     process_slashings(state)
-    process_sil1_data_reset(state)
+    process_eth1_data_reset(state)
     process_effective_balance_updates(state)
     process_slashings_reset(state)
     process_randao_mixes_reset(state)
     process_historical_roots_update(state)
-    # [Modified in Altair]
-    # Removed `process_participation_record_updates`
     # [New in Altair]
     process_participation_flag_updates(state)
     # [New in Altair]

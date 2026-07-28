@@ -3,8 +3,7 @@
 <!-- mdformat-toc start --slug=github --no-anchors --maxlevel=6 --minlevel=2 -->
 
 - [Introduction](#introduction)
-- [Types](#types)
-- [Constants](#constants)
+- [Custom types](#custom-types)
 - [Preset](#preset)
   - [Rewards and penalties](#rewards-and-penalties)
   - [Execution](#execution)
@@ -17,7 +16,7 @@
   - [New containers](#new-containers)
     - [`ExecutionPayload`](#executionpayload)
     - [`ExecutionPayloadHeader`](#executionpayloadheader)
-- [Helpers](#helpers)
+- [Helper functions](#helper-functions)
   - [Predicates](#predicates)
     - [`is_merge_transition_complete`](#is_merge_transition_complete)
     - [`is_merge_transition_block`](#is_merge_transition_block)
@@ -44,26 +43,21 @@
 
 ## Introduction
 
-Bellatrix is a consensus-layer upgrade containing a number of features.
-Including:
+This upgrade adds transaction execution to the beacon chain as part of Bellatrix
+upgrade.
 
-- Transaction execution
+Additionally, this upgrade introduces the following minor changes:
+
 - Penalty parameter updates to their planned maximally punitive values
 
-## Types
+## Custom types
 
 *Note*: The `Transaction` type is a stub which is not final.
 
 | Name               | SSZ equivalent                        | Description                                                                                                                                       |
 | ------------------ | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `Transaction`      | `ByteList[MAX_BYTES_PER_TRANSACTION]` | Either a [typed transaction envelope](https://sips.sila.org/SIPS/sip-2718#opaque-byte-array-rather-than-an-rlp-array) or a legacy transaction |
+| `Transaction`      | `ByteList[MAX_BYTES_PER_TRANSACTION]` | either a [typed transaction envelope](https://sips.sila.org/SIPS/sip-2718#opaque-byte-array-rather-than-an-rlp-array) or a legacy transaction |
 | `ExecutionAddress` | `Bytes20`                             | Address of account on the execution layer                                                                                                         |
-
-## Constants
-
-| Name               | Value      |
-| ------------------ | ---------- |
-| `EMPTY_BLOCK_HASH` | `Hash32()` |
 
 ## Preset
 
@@ -71,6 +65,9 @@ Including:
 
 Bellatrix updates a few configuration values to move penalty parameters to their
 final, maximum security values.
+
+*Note*: The spec does *not* override previous configuration values but instead
+creates new values and replaces usage throughout.
 
 | Name                                         | Value                          |
 | -------------------------------------------- | ------------------------------ |
@@ -85,7 +82,7 @@ final, maximum security values.
 | `MAX_BYTES_PER_TRANSACTION`    | `uint64(2**30)` (= 1,073,741,824) |
 | `MAX_TRANSACTIONS_PER_PAYLOAD` | `uint64(2**20)` (= 1,048,576)     |
 | `BYTES_PER_LOGS_BLOOM`         | `uint64(2**8)` (= 256)            |
-| `MAX_EXTRA_DATA_BYTES`         | `uint64(2**5)` (= 32)             |
+| `MAX_EXTRA_DATA_BYTES`         | `2**5` (= 32)                     |
 
 ## Configuration
 
@@ -106,7 +103,7 @@ final, maximum security values.
 ```python
 class BeaconBlockBody(Container):
     randao_reveal: BLSSignature
-    sil1_data: Sil1Data
+    sil1_data: Eth1Data
     graffiti: Bytes32
     proposer_slashings: List[ProposerSlashing, MAX_PROPOSER_SLASHINGS]
     attester_slashings: List[AttesterSlashing, MAX_ATTESTER_SLASHINGS]
@@ -130,8 +127,8 @@ class BeaconState(Container):
     block_roots: Vector[Root, SLOTS_PER_HISTORICAL_ROOT]
     state_roots: Vector[Root, SLOTS_PER_HISTORICAL_ROOT]
     historical_roots: List[Root, HISTORICAL_ROOTS_LIMIT]
-    sil1_data: Sil1Data
-    sil1_data_votes: List[Sil1Data, EPOCHS_PER_SIL1_VOTING_PERIOD * SLOTS_PER_EPOCH]
+    sil1_data: Eth1Data
+    sil1_data_votes: List[Eth1Data, EPOCHS_PER_ETH1_VOTING_PERIOD * SLOTS_PER_EPOCH]
     sil1_deposit_index: uint64
     validators: List[Validator, VALIDATOR_REGISTRY_LIMIT]
     balances: List[Gwei, VALIDATOR_REGISTRY_LIMIT]
@@ -199,7 +196,7 @@ class ExecutionPayloadHeader(Container):
     transactions_root: Root
 ```
 
-## Helpers
+## Helper functions
 
 ### Predicates
 
@@ -262,9 +259,7 @@ def get_inactivity_penalty_deltas(state: BeaconState) -> Tuple[Sequence[Gwei], S
 
 ```python
 def slash_validator(
-    state: BeaconState,
-    slashed_index: ValidatorIndex,
-    whistleblower_index: Optional[ValidatorIndex] = None,
+    state: BeaconState, slashed_index: ValidatorIndex, whistleblower_index: ValidatorIndex = None
 ) -> None:
     """
     Slash the validator with index ``slashed_index``.
@@ -301,7 +296,7 @@ def slash_validator(
 
 ```python
 @dataclass
-class NewPayloadRequest:
+class NewPayloadRequest(object):
     execution_payload: ExecutionPayload
 ```
 
@@ -328,6 +323,7 @@ def notify_new_payload(self: ExecutionEngine, execution_payload: ExecutionPayloa
     """
     Return ``True`` if and only if ``execution_payload`` is valid with respect to ``self.execution_state``.
     """
+    ...
 ```
 
 #### `is_valid_block_hash`
@@ -337,6 +333,7 @@ def is_valid_block_hash(self: ExecutionEngine, execution_payload: ExecutionPaylo
     """
     Return ``True`` if and only if ``execution_payload.block_hash`` is computed correctly.
     """
+    ...
 ```
 
 #### `verify_and_notify_new_payload`
@@ -375,7 +372,7 @@ def process_block(state: BeaconState, block: BeaconBlock) -> None:
         # [New in Bellatrix]
         process_execution_payload(state, block.body, EXECUTION_ENGINE)
     process_randao(state, block.body)
-    process_sil1_data(state, block.body)
+    process_eth1_data(state, block.body)
     process_operations(state, block.body)
     process_sync_aggregate(state, block.body.sync_aggregate)
 ```
