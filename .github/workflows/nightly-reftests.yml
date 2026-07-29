@@ -2,14 +2,16 @@ name: Nightly Reference Tests
 
 # Phase 1 (branch ci/github-hosted-reftests):
 #   GitHub-hosted CANARY / BENCHMARK only.
-#   Do NOT run full `make reftests` on a single ubuntu-latest job —
-#   it will exceed practical time/resource limits.
-#   After canary metrics, decide shard count, then expand.
+#   Auto-starts on push to this branch (no Run workflow button required).
+#   Do NOT run full `make reftests` on a single ubuntu-latest job.
 #
-# Target locked source (dispatch input ref):
+# Locked generation source:
 #   f37421391232170b69efeb90ace7a1bea34b03d5
 
 on:
+  push:
+    branches:
+      - ci/github-hosted-reftests
   workflow_dispatch:
     inputs:
       repo:
@@ -46,29 +48,38 @@ jobs:
     defaults:
       run:
         shell: bash
+    env:
+      # Defaults used on push; workflow_dispatch inputs override when present.
+      GEN_REPO: ${{ inputs.repo || 'sila-chain/consensus-specs' }}
+      GEN_REF: ${{ inputs.ref || 'f37421391232170b69efeb90ace7a1bea34b03d5' }}
+      CANARY_MINUTES: ${{ inputs.canary_minutes || '10' }}
+      GEN_THREADS: ${{ inputs.threads || '2' }}
+      GEN_RUNNERS: ${{ inputs.runners || 'bls,ssz_generic' }}
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
-          repository: ${{ inputs.repo }}
+          repository: ${{ env.GEN_REPO }}
           path: consensus-specs
-          ref: ${{ inputs.ref }}
+          ref: ${{ env.GEN_REF }}
 
       - name: Record checkout identity
         run: |
           set -euo pipefail
           cd consensus-specs
           {
-            echo "DISPATCH_REPO=${{ inputs.repo }}"
-            echo "DISPATCH_REF=${{ inputs.ref }}"
+            echo "EVENT_NAME=${{ github.event_name }}"
+            echo "WORKFLOW_SHA=${{ github.sha }}"
+            echo "GEN_REPO=${GEN_REPO}"
+            echo "GEN_REF=${GEN_REF}"
             echo "CHECKED_OUT_HEAD=$(git rev-parse HEAD)"
             echo "CHECKED_OUT_SHORT=$(git rev-parse --short HEAD)"
             echo "RUNNER_OS=${RUNNER_OS}"
             echo "RUNNER_ARCH=${RUNNER_ARCH}"
-            echo "CANARY_MINUTES=${{ inputs.canary_minutes }}"
-            echo "THREADS=${{ inputs.threads }}"
-            echo "RUNNERS=${{ inputs.runners }}"
+            echo "CANARY_MINUTES=${CANARY_MINUTES}"
+            echo "THREADS=${GEN_THREADS}"
+            echo "RUNNERS=${GEN_RUNNERS}"
           } | tee ../canary-identity.txt
 
       - name: Host resource baseline
@@ -108,11 +119,10 @@ jobs:
 
           set +e
           # Timebox: exit 124 on timeout is expected for canary.
-          # PIPESTATUS[0] = timeout/make, PIPESTATUS[1] = tee
-          timeout --signal=TERM --kill-after=60s "${{ inputs.canary_minutes }}m" \
+          timeout --signal=TERM --kill-after=60s "${CANARY_MINUTES}m" \
             make reftests verbose=true \
-              threads="${{ inputs.threads }}" \
-              runner="${{ inputs.runners }}" \
+              threads="${GEN_THREADS}" \
+              runner="${GEN_RUNNERS}" \
             2>&1 | tee ../consensustestgen-canary.log
           PIPE_RC=${PIPESTATUS[0]}
           set -e
@@ -145,8 +155,6 @@ jobs:
             df -h
           } | tee host-after.txt
 
-          # Canary success = toolchain works and some generation progressed OR clean timeout after work.
-          # Fail hard only on unexpected early failure with zero progress.
           if [ "$PIPE_RC" -eq 124 ]; then
             echo "CANARY_RESULT=TIMEBOX_REACHED"
             if [ "${GENERATED:-0}" -eq 0 ] && [ "${SKIPPED:-0}" -eq 0 ]; then
