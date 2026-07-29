@@ -1,75 +1,189 @@
 name: Nightly Reference Tests
 
-defaults:
-  run:
-    shell: zsh -e {0}
+# Phase 1 (branch ci/github-hosted-reftests):
+#   GitHub-hosted CANARY / BENCHMARK only.
+#   Do NOT run full `make reftests` on a single ubuntu-latest job —
+#   it will exceed practical time/resource limits.
+#   After canary metrics, decide shard count, then expand.
+#
+# Target locked source (dispatch input ref):
+#   f37421391232170b69efeb90ace7a1bea34b03d5
 
 on:
   workflow_dispatch:
     inputs:
       repo:
-        description: The repository to use (e.g. user/consensus-specs)
-        default: sila/consensus-specs
+        description: The repository to checkout for generation (e.g. sila-chain/consensus-specs)
+        default: sila-chain/consensus-specs
         type: string
         required: true
       ref:
-        description: The branch, tag or SHA to checkout and build from
-        default: master
+        description: Branch, tag, or SHA to checkout and build from
+        default: f37421391232170b69efeb90ace7a1bea34b03d5
         type: string
         required: true
-  schedule:
-    - cron: "0 2 * * *"
+      canary_minutes:
+        description: Hard timebox for canary generation (minutes)
+        default: "10"
+        type: string
+        required: true
+      threads:
+        description: Generator worker threads for canary
+        default: "2"
+        type: string
+        required: true
+      runners:
+        description: Comma-separated generator runners for canary (small subset)
+        default: bls,ssz_generic
+        type: string
+        required: true
 
 jobs:
-  generate-tests:
-    timeout-minutes: 720 # 12 hours
-    runs-on: [self-hosted-ghr-custom, size-xl-x64, profile-consensusSpecs]
+  reftests-canary:
+    name: reftests-canary (github-hosted)
+    timeout-minutes: 30
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           repository: ${{ inputs.repo }}
-          path: "consensus-specs"
+          path: consensus-specs
           ref: ${{ inputs.ref }}
+
+      - name: Record checkout identity
+        run: |
+          set -euo pipefail
+          cd consensus-specs
+          {
+            echo "DISPATCH_REPO=${{ inputs.repo }}"
+            echo "DISPATCH_REF=${{ inputs.ref }}"
+            echo "CHECKED_OUT_HEAD=$(git rev-parse HEAD)"
+            echo "CHECKED_OUT_SHORT=$(git rev-parse --short HEAD)"
+            echo "RUNNER_OS=${RUNNER_OS}"
+            echo "RUNNER_ARCH=${RUNNER_ARCH}"
+            echo "CANARY_MINUTES=${{ inputs.canary_minutes }}"
+            echo "THREADS=${{ inputs.threads }}"
+            echo "RUNNERS=${{ inputs.runners }}"
+          } | tee ../canary-identity.txt
+
+      - name: Host resource baseline
+        run: |
+          set -euo pipefail
+          {
+            echo "=== free -h ==="
+            free -h
+            echo "=== nproc ==="
+            nproc
+            echo "=== df -h ==="
+            df -h
+            echo "=== lscpu (model) ==="
+            lscpu | sed -n '1,20p'
+          } | tee host-baseline.txt
+
       - name: Set up Python
         uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
         with:
-          python-version-file: "consensus-specs/pyproject.toml"
+          python-version-file: consensus-specs/pyproject.toml
+
       - name: Install uv ${{ vars.UV_VERSION }}
         uses: astral-sh/setup-uv@5a7eac68fb9809dea845d802897dc5c723910fa3 # v7.1.3
         with:
           enable-cache: true
           version: ${{ vars.UV_VERSION }}
-      - name: Generate tests
+
+      - name: Canary generate (timeboxed subset)
+        id: canary
         run: |
+          set -uo pipefail
+          mkdir -p consensus-spec-tests/tests
           cd consensus-specs
-          set -o pipefail
-          make reftests verbose=true 2>&1 | tee ../consensustestgen.log
-          cp -r presets/ ../consensus-spec-tests/presets
-          cp -r configs/ ../consensus-spec-tests/configs
-      - name: Archive configurations
+
+          START_EPOCH=$(date +%s)
+          echo "CANARY_START_UTC=$(date -u +%Y-%m-%dT%H:%M:%SZ)" | tee -a ../canary-metrics.txt
+
+          set +e
+          # Timebox: exit 124 on timeout is expected for canary.
+          # PIPESTATUS[0] = timeout/make, PIPESTATUS[1] = tee
+          timeout --signal=TERM --kill-after=60s "${{ inputs.canary_minutes }}m" \
+            make reftests verbose=true \
+              threads="${{ inputs.threads }}" \
+              runner="${{ inputs.runners }}" \
+            2>&1 | tee ../consensustestgen-canary.log
+          PIPE_RC=${PIPESTATUS[0]}
+          set -e
+          END_EPOCH=$(date +%s)
+          ELAPSED=$((END_EPOCH - START_EPOCH))
+
+          GENERATED=$(grep -c '^Generated:' ../consensustestgen-canary.log || true)
+          SKIPPED=$(grep -c '^Skipped:' ../consensustestgen-canary.log || true)
+          PROGRESS=$(grep '^Progress:' ../consensustestgen-canary.log | tail -1 || true)
+          CPS=0
+          if [ "$ELAPSED" -gt 0 ]; then
+            CPS=$(awk -v g="${GENERATED:-0}" -v e="$ELAPSED" 'BEGIN{printf "%.4f", g/e}')
+          fi
+
+          {
+            echo "CANARY_END_UTC=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            echo "CANARY_ELAPSED_SEC=$ELAPSED"
+            echo "TIMEOUT_OR_MAKE_RC=$PIPE_RC"
+            echo "GENERATED_LINES=$GENERATED"
+            echo "SKIPPED_LINES=$SKIPPED"
+            echo "CASES_PER_SECOND=$CPS"
+            echo "LAST_PROGRESS=$PROGRESS"
+            echo "NOTE=RC 124 means canary timebox reached (expected). Full build not authorised by this job."
+          } | tee -a ../canary-metrics.txt
+
+          {
+            echo "=== free -h (after) ==="
+            free -h
+            echo "=== df -h (after) ==="
+            df -h
+          } | tee host-after.txt
+
+          # Canary success = toolchain works and some generation progressed OR clean timeout after work.
+          # Fail hard only on unexpected early failure with zero progress.
+          if [ "$PIPE_RC" -eq 124 ]; then
+            echo "CANARY_RESULT=TIMEBOX_REACHED"
+            if [ "${GENERATED:-0}" -eq 0 ] && [ "${SKIPPED:-0}" -eq 0 ]; then
+              echo "CANARY_RESULT=FAIL_NO_PROGRESS_BEFORE_TIMEOUT"
+              exit 1
+            fi
+            exit 0
+          fi
+          if [ "$PIPE_RC" -eq 0 ]; then
+            echo "CANARY_RESULT=SUBSET_COMPLETED_BEFORE_TIMEOUT"
+            exit 0
+          fi
+          if [ "${GENERATED:-0}" -gt 0 ] || [ "${SKIPPED:-0}" -gt 0 ]; then
+            echo "CANARY_RESULT=PARTIAL_WITH_NONZERO_RC_$PIPE_RC"
+            exit 0
+          fi
+          echo "CANARY_RESULT=FAIL_RC_$PIPE_RC"
+          exit "$PIPE_RC"
+
+      - name: Upload canary metrics
+        if: always()
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        with:
+          name: canary-metrics
+          path: |
+            canary-identity.txt
+            canary-metrics.txt
+            host-baseline.txt
+            host-after.txt
+            consensustestgen-canary.log
+
+      - name: Shard planning note
+        if: always()
         run: |
-          cd consensus-spec-tests
-          tar -czvf general.tar.gz tests/general
-          tar -czvf minimal.tar.gz tests/minimal
-          tar -czvf sila-mainnet.tar.gz tests/sila-mainnet
-      - name: Upload general.tar.gz
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
-        with:
-          name: General Test Configuration
-          path: consensus-spec-tests/general.tar.gz
-      - name: Upload minimal.tar.gz
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
-        with:
-          name: Minimal Test Configuration
-          path: consensus-spec-tests/minimal.tar.gz
-      - name: Upload sila-mainnet.tar.gz
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
-        with:
-          name: SilaMainnet Test Configuration
-          path: consensus-spec-tests/sila-mainnet.tar.gz
-      - name: Upload consensustestgen
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
-        with:
-          name: consensustestgen.log
-          path: consensustestgen.log
+          cat <<'EOF'
+          CANARY_ONLY=YES
+          FULL_REFTESTS_AUTHORISED=NO
+          NEXT_STAGE=REVIEW_CANARY_METRICS_THEN_DECIDE_SHARD_COUNT
+          Do not treat this workflow run as publication assets.
+          EOF
