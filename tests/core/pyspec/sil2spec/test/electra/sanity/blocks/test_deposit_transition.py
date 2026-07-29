@@ -117,7 +117,7 @@ def prepare_state_and_block(
         state.sil1_deposit_index = 0
         if not sil1_data_deposit_count:
             sil1_data_deposit_count = deposit_cnt
-        state.sil1_data = spec.Eth1Data(
+        state.sil1_data = spec.Sil1Data(
             deposit_root=deposit_root,
             deposit_count=sil1_data_deposit_count,
             block_hash=state.sil1_data.block_hash,
@@ -170,7 +170,7 @@ def test_deposit_transition__start_index_is_set(spec, state):
 
 @with_phases([ELECTRA])
 @spec_state_test
-def test_deposit_transition__process_eth1_deposits(spec, state):
+def test_deposit_transition__process_sil1_deposits(spec, state):
     # 3 deposits, 1 deposit request, state.sil1_data.deposit_count < state.deposit_requests_start_index
     state, block = prepare_state_and_block(
         spec,
@@ -186,7 +186,7 @@ def test_deposit_transition__process_eth1_deposits(spec, state):
 
 @with_phases([ELECTRA])
 @spec_state_test
-def test_deposit_transition__process_max_eth1_deposits(spec, state):
+def test_deposit_transition__process_max_sil1_deposits(spec, state):
     # spec.MAX_DEPOSITS deposits, 1 deposit request, state.sil1_data.deposit_count > state.deposit_requests_start_index
     # state.deposit_requests_start_index == spec.MAX_DEPOSITS
     state, block = prepare_state_and_block(
@@ -204,7 +204,7 @@ def test_deposit_transition__process_max_eth1_deposits(spec, state):
 
 @with_phases([ELECTRA])
 @spec_state_test
-def test_deposit_transition__process_eth1_deposits_up_to_start_index(spec, state):
+def test_deposit_transition__process_sil1_deposits_up_to_start_index(spec, state):
     # 3 deposits, 1 deposit request, state.sil1_data.deposit_count == state.deposit_requests_start_index
     state, block = prepare_state_and_block(
         spec,
@@ -220,7 +220,7 @@ def test_deposit_transition__process_eth1_deposits_up_to_start_index(spec, state
 
 @with_phases([ELECTRA])
 @spec_state_test
-def test_deposit_transition__invalid_not_enough_eth1_deposits(spec, state):
+def test_deposit_transition__invalid_not_enough_sil1_deposits(spec, state):
     # 3 deposits, 1 deposit request, state.sil1_data.deposit_count < state.deposit_requests_start_index
     state, block = prepare_state_and_block(
         spec,
@@ -237,7 +237,7 @@ def test_deposit_transition__invalid_not_enough_eth1_deposits(spec, state):
 
 @with_phases([ELECTRA])
 @spec_state_test
-def test_deposit_transition__invalid_too_many_eth1_deposits(spec, state):
+def test_deposit_transition__invalid_too_many_sil1_deposits(spec, state):
     # 3 deposits, 1 deposit request, state.sil1_data.deposit_count < state.sil1_data_index
     state, block = prepare_state_and_block(
         spec,
@@ -254,7 +254,7 @@ def test_deposit_transition__invalid_too_many_eth1_deposits(spec, state):
 
 @with_phases([ELECTRA])
 @spec_state_test
-def test_deposit_transition__invalid_eth1_deposits_overlap_in_protocol_deposits(spec, state):
+def test_deposit_transition__invalid_sil1_deposits_overlap_in_protocol_deposits(spec, state):
     # spec.MAX_DEPOSITS deposits, 1 deposit request, state.sil1_data.deposit_count > state.deposit_requests_start_index
     # state.deposit_requests_start_index == spec.MAX_DEPOSITS - 1
     state, block = prepare_state_and_block(

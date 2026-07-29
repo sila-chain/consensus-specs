@@ -13,7 +13,7 @@ actions of a "validator" participating in the Sila proof-of-stake protocol.
 - [Configuration](#configuration)
   - [Time parameters](#time-parameters)
 - [Containers](#containers)
-  - [`Eth1Block`](#sil1block)
+  - [`Sil1Block`](#sil1block)
   - [`AggregateAndProof`](#aggregateandproof)
   - [`SignedAggregateAndProof`](#signedaggregateandproof)
 - [Becoming a validator](#becoming-a-validator)
@@ -36,8 +36,8 @@ actions of a "validator" participating in the Sila proof-of-stake protocol.
       - [Parent root](#parent-root)
     - [Constructing the `BeaconBlockBody`](#constructing-the-beaconblockbody)
       - [Randao reveal](#randao-reveal)
-      - [Eth1 Data](#sil1-data)
-        - [`get_eth1_data`](#get_eth1_data)
+      - [Sil1 Data](#sil1-data)
+        - [`get_sil1_data`](#get_sil1_data)
       - [Proposer slashings](#proposer-slashings)
       - [Attester slashings](#attester-slashings)
       - [Attestations](#attestations)
@@ -115,10 +115,10 @@ use as a reference throughout.
 
 ## Containers
 
-### `Eth1Block`
+### `Sil1Block`
 
 ```python
-class Eth1Block(Container):
+class Sil1Block(Container):
     timestamp: uint64
     deposit_root: Root
     deposit_count: uint64
@@ -179,8 +179,8 @@ kept in cold storage.
 
 ##### `SIL1_ADDRESS_WITHDRAWAL_PREFIX`
 
-Withdrawal credentials with the Eth1 address withdrawal prefix specify a 20-byte
-Eth1 address `sil1_withdrawal_address` as the recipient for all withdrawals. The
+Withdrawal credentials with the Sil1 address withdrawal prefix specify a 20-byte
+Sil1 address `sil1_withdrawal_address` as the recipient for all withdrawals. The
 `sil1_withdrawal_address` can be the address of either an externally owned
 account or of a contract.
 
@@ -233,7 +233,7 @@ be activated when total deposits for the validator pubkey meet or exceed
 
 Deposits cannot be processed into the beacon chain until the proof-of-work block
 in which they were deposited or any of its descendants is added to the beacon
-chain `state.sil1_data`. This takes _a minimum_ of `SIL1_FOLLOW_DISTANCE` Eth1
+chain `state.sil1_data`. This takes _a minimum_ of `SIL1_FOLLOW_DISTANCE` Sil1
 blocks (~8 hours) plus `EPOCHS_PER_SIL1_VOTING_PERIOD` epochs (~6.8 hours). Once
 the requisite proof-of-work block data is added, the deposit will normally be
 added to a beacon chain block and processed into the `state.validators` within
@@ -437,27 +437,27 @@ def get_epoch_signature(state: BeaconState, block: BeaconBlock, privkey: int) ->
     return bls.Sign(privkey, signing_root)
 ```
 
-##### Eth1 Data
+##### Sil1 Data
 
-The `block.body.sil1_data` field is for block proposers to vote on recent Eth1
-data. This recent data contains an Eth1 block hash as well as the associated
+The `block.body.sil1_data` field is for block proposers to vote on recent Sil1
+data. This recent data contains an Sil1 block hash as well as the associated
 deposit root (as calculated by the `get_deposit_root()` method of the deposit
-contract) and deposit count after execution of the corresponding Eth1 block. If
-over half of the block proposers in the current Eth1 voting period vote for the
+contract) and deposit count after execution of the corresponding Sil1 block. If
+over half of the block proposers in the current Sil1 voting period vote for the
 same `sil1_data` then `state.sil1_data` updates immediately allowing new
 deposits to be processed. Each deposit in `block.body.deposits` must verify
 against `state.sil1_data.deposit_root`.
 
-###### `get_eth1_data`
+###### `get_sil1_data`
 
-Let `Eth1Block` be an abstract object representing Eth1 blocks with the
+Let `Sil1Block` be an abstract object representing Sil1 blocks with the
 `timestamp` and deposit contract data available.
 
-Let `get_eth1_data(block: Eth1Block) -> Eth1Data` be the function that returns
-the Eth1 data for a given Eth1 block.
+Let `get_sil1_data(block: Sil1Block) -> Sil1Data` be the function that returns
+the Sil1 data for a given Sil1 block.
 
 An honest block proposer sets
-`block.body.sil1_data = get_eth1_vote(state, sil1_chain)` where:
+`block.body.sil1_data = get_sil1_vote(state, sil1_chain)` where:
 
 ```python
 def voting_period_start_time(state: BeaconState) -> uint64:
@@ -468,7 +468,7 @@ def voting_period_start_time(state: BeaconState) -> uint64:
 ```
 
 ```python
-def is_candidate_block(block: Eth1Block, period_start: uint64) -> bool:
+def is_candidate_block(block: Sil1Block, period_start: uint64) -> bool:
     return (
         block.timestamp + SECONDS_PER_SIL1_BLOCK * SIL1_FOLLOW_DISTANCE <= period_start
         and block.timestamp + SECONDS_PER_SIL1_BLOCK * SIL1_FOLLOW_DISTANCE * 2 >= period_start
@@ -476,16 +476,16 @@ def is_candidate_block(block: Eth1Block, period_start: uint64) -> bool:
 ```
 
 ```python
-def get_eth1_vote(state: BeaconState, sil1_chain: Sequence[Eth1Block]) -> Eth1Data:
+def get_sil1_vote(state: BeaconState, sil1_chain: Sequence[Sil1Block]) -> Sil1Data:
     period_start = voting_period_start_time(state)
     # `sil1_chain` abstractly represents all blocks in the sil1 chain sorted by ascending block height
     votes_to_consider = [
-        get_eth1_data(block)
+        get_sil1_data(block)
         for block in sil1_chain
         if (
             is_candidate_block(block, period_start)
             # Ensure cannot move back to earlier deposit contract states
-            and get_eth1_data(block).deposit_count >= state.sil1_data.deposit_count
+            and get_sil1_data(block).deposit_count >= state.sil1_data.deposit_count
         )
     ]
 
@@ -494,9 +494,9 @@ def get_eth1_vote(state: BeaconState, sil1_chain: Sequence[Eth1Block]) -> Eth1Da
 
     # Default vote on latest sil1 block data in the period range unless sil1 chain is not live
     # Non-substantive casting for linter
-    state_eth1_data: Eth1Data = state.sil1_data
+    state_sil1_data: Sil1Data = state.sil1_data
     default_vote = (
-        votes_to_consider[len(votes_to_consider) - 1] if any(votes_to_consider) else state_eth1_data
+        votes_to_consider[len(votes_to_consider) - 1] if any(votes_to_consider) else state_sil1_data
     )
 
     return max(

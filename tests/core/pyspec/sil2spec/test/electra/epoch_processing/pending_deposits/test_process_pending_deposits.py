@@ -27,7 +27,7 @@ def _ensure_enough_churn_to_process_deposits(spec, state):
     state.deposit_balance_to_consume = sum(d.amount for d in state.pending_deposits)
 
 
-def _prepare_eth1_bridge_deprecation(spec, state, sil1_bridge_flags):
+def _prepare_sil1_bridge_deprecation(spec, state, sil1_bridge_flags):
     new_pending_deposits = []
     validator_index_base = len(state.validators)
     deposit_request_slot = spec.Slot(1)
@@ -43,7 +43,7 @@ def _prepare_eth1_bridge_deprecation(spec, state, sil1_bridge_flags):
         )
         new_pending_deposits.append(pending_deposit)
 
-        # Eth1 bridge deposits instantly yield new validator records
+        # Sil1 bridge deposits instantly yield new validator records
         if sil1_bridge:
             spec.add_validator_to_registry(
                 state, pending_deposit.pubkey, pending_deposit.withdrawal_credentials, spec.Gwei(0)
@@ -71,7 +71,7 @@ def _check_pending_deposits_induced_new_validators(
     sil1_bridge_deposits = [d for d in applied_pending_deposits if d.slot == spec.GENESIS_SLOT]
     deposit_requests = [d for d in applied_pending_deposits if d.slot > spec.GENESIS_SLOT]
 
-    # Eth1 bridge deposits should induce new validators in the first place
+    # Sil1 bridge deposits should induce new validators in the first place
     for index, deposit in enumerate(sil1_bridge_deposits):
         validator_index = pre_validator_count + index
         validator = state.validators[validator_index]
@@ -94,19 +94,19 @@ def _check_pending_deposits_induced_new_validators(
 
 @with_electra_and_later
 @spec_state_test
-def test_process_pending_deposits_eth1_bridge_transition_pending(spec, state):
-    # There are pending Eth1 bridge deposits
+def test_process_pending_deposits_sil1_bridge_transition_pending(spec, state):
+    # There are pending Sil1 bridge deposits
     # state.sil1_deposit_index < state.deposit_requests_start_index
     pre_validator_count = len(state.validators)
     state.sil1_data.deposit_count = len(state.validators) + 3
     state.deposit_requests_start_index = state.sil1_data.deposit_count
 
-    state, new_pending_deposits = _prepare_eth1_bridge_deprecation(spec, state, [True, True, False])
+    state, new_pending_deposits = _prepare_sil1_bridge_deprecation(spec, state, [True, True, False])
     assert state.sil1_deposit_index < state.deposit_requests_start_index
 
     yield from run_process_pending_deposits(spec, state)
 
-    # Eth1 bridge deposits were applied
+    # Sil1 bridge deposits were applied
     _check_pending_deposits_induced_new_validators(
         spec, state, pre_validator_count, new_pending_deposits[:2]
     )
@@ -118,19 +118,19 @@ def test_process_pending_deposits_eth1_bridge_transition_pending(spec, state):
 
 @with_electra_and_later
 @spec_state_test
-def test_process_pending_deposits_eth1_bridge_transition_not_applied(spec, state):
-    # There are pending Eth1 bridge deposits
+def test_process_pending_deposits_sil1_bridge_transition_not_applied(spec, state):
+    # There are pending Sil1 bridge deposits
     # state.sil1_deposit_index < state.deposit_requests_start_index
     pre_validator_count = len(state.validators)
     state.sil1_data.deposit_count = len(state.validators) + 3
     state.deposit_requests_start_index = state.sil1_data.deposit_count
 
-    state, new_pending_deposits = _prepare_eth1_bridge_deprecation(spec, state, [False, True, True])
+    state, new_pending_deposits = _prepare_sil1_bridge_deprecation(spec, state, [False, True, True])
     assert state.sil1_deposit_index < state.deposit_requests_start_index
 
     yield from run_process_pending_deposits(spec, state)
 
-    # no pending deposit was processed, however Eth1 bridge deposits induced new validators
+    # no pending deposit was processed, however Sil1 bridge deposits induced new validators
     assert pre_validator_count + 2 == len(state.validators)
     assert state.pending_deposits == new_pending_deposits
     # deposit_balance_to_consume was reset to 0
@@ -139,14 +139,14 @@ def test_process_pending_deposits_eth1_bridge_transition_not_applied(spec, state
 
 @with_electra_and_later
 @spec_state_test
-def test_process_pending_deposits_eth1_bridge_transition_complete(spec, state):
-    # There is no pending Eth1 bridge deposits
+def test_process_pending_deposits_sil1_bridge_transition_complete(spec, state):
+    # There is no pending Sil1 bridge deposits
     # state.sil1_deposit_index == state.deposit_requests_start_index
     pre_validator_count = len(state.validators)
     state.sil1_data.deposit_count = len(state.validators) + 2
     state.deposit_requests_start_index = state.sil1_data.deposit_count
 
-    state, new_pending_deposits = _prepare_eth1_bridge_deprecation(spec, state, [True, False, True])
+    state, new_pending_deposits = _prepare_sil1_bridge_deprecation(spec, state, [True, False, True])
     assert state.sil1_deposit_index == state.deposit_requests_start_index
 
     yield from run_process_pending_deposits(spec, state)

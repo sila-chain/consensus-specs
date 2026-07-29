@@ -15,7 +15,7 @@ def get_process_calls(spec):
         "process_rewards_and_penalties",
         "process_registry_updates",
         "process_slashings",
-        "process_eth1_data_reset",
+        "process_sil1_data_reset",
         "process_pending_deposits",  # electra
         "process_pending_consolidations",  # electra
         "process_effective_balance_updates",

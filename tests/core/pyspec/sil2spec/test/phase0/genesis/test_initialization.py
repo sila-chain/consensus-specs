@@ -34,7 +34,7 @@ def sil1_init_data(sil1_block_hash, sil1_timestamp):
 @spec_test
 @single_phase
 @with_presets([MINIMAL], reason="too slow")
-def test_initialize_beacon_state_from_eth1(spec):
+def test_initialize_beacon_state_from_sil1(spec):
     if is_post_altair(spec):
         yield "description", "meta", get_post_altair_description(spec)
 
@@ -53,7 +53,7 @@ def test_initialize_beacon_state_from_eth1(spec):
     yield "deposits", deposits
 
     # initialize beacon_state
-    state = spec.initialize_beacon_state_from_eth1(sil1_block_hash, sil1_timestamp, deposits)
+    state = spec.initialize_beacon_state_from_sil1(sil1_block_hash, sil1_timestamp, deposits)
 
     assert state.genesis_time == sil1_timestamp + spec.config.GENESIS_DELAY
     assert len(state.validators) == deposit_count
@@ -104,7 +104,7 @@ def test_initialize_beacon_state_some_small_balances(spec):
     yield "deposits", deposits
 
     # initialize beacon_state
-    state = spec.initialize_beacon_state_from_eth1(sil1_block_hash, sil1_timestamp, deposits)
+    state = spec.initialize_beacon_state_from_sil1(sil1_block_hash, sil1_timestamp, deposits)
 
     assert state.genesis_time == sil1_timestamp + spec.config.GENESIS_DELAY
     assert len(state.validators) == small_deposit_count
@@ -166,7 +166,7 @@ def test_initialize_beacon_state_one_topup_activation(spec):
     yield "deposits", deposits
 
     # initialize beacon_state
-    state = spec.initialize_beacon_state_from_eth1(sil1_block_hash, sil1_timestamp, deposits)
+    state = spec.initialize_beacon_state_from_sil1(sil1_block_hash, sil1_timestamp, deposits)
     assert spec.is_valid_genesis_state(state)
 
     # yield state
@@ -194,7 +194,7 @@ def test_initialize_beacon_state_random_invalid_genesis(spec):
     yield "deposits", deposits
 
     # initialize beacon_state
-    state = spec.initialize_beacon_state_from_eth1(sil1_block_hash, sil1_timestamp, deposits)
+    state = spec.initialize_beacon_state_from_sil1(sil1_block_hash, sil1_timestamp, deposits)
     assert not spec.is_valid_genesis_state(state)
 
     yield "state", state
@@ -233,7 +233,7 @@ def test_initialize_beacon_state_random_valid_genesis(spec):
     yield "deposits", deposits
 
     # initialize beacon_state
-    state = spec.initialize_beacon_state_from_eth1(sil1_block_hash, sil1_timestamp, deposits)
+    state = spec.initialize_beacon_state_from_sil1(sil1_block_hash, sil1_timestamp, deposits)
     assert spec.is_valid_genesis_state(state)
 
     yield "state", state

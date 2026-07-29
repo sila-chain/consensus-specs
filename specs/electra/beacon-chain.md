@@ -326,7 +326,7 @@ class AttesterSlashing(Container):
 ```python
 class BeaconBlockBody(Container):
     randao_reveal: BLSSignature
-    sil1_data: Eth1Data
+    sil1_data: Sil1Data
     graffiti: Bytes32
     proposer_slashings: List[ProposerSlashing, MAX_PROPOSER_SLASHINGS]
     # [Modified in Electra:SIP7549]
@@ -379,8 +379,8 @@ class BeaconState(Container):
     block_roots: Vector[Root, SLOTS_PER_HISTORICAL_ROOT]
     state_roots: Vector[Root, SLOTS_PER_HISTORICAL_ROOT]
     historical_roots: List[Root, HISTORICAL_ROOTS_LIMIT]
-    sil1_data: Eth1Data
-    sil1_data_votes: List[Eth1Data, EPOCHS_PER_SIL1_VOTING_PERIOD * SLOTS_PER_EPOCH]
+    sil1_data: Sil1Data
+    sil1_data_votes: List[Sil1Data, EPOCHS_PER_SIL1_VOTING_PERIOD * SLOTS_PER_EPOCH]
     sil1_deposit_index: uint64
     validators: List[Validator, VALIDATOR_REGISTRY_LIMIT]
     balances: List[Gwei, VALIDATOR_REGISTRY_LIMIT]
@@ -496,7 +496,7 @@ def has_execution_withdrawal_credential(validator: Validator) -> bool:
     Check if ``validator`` has a 0x01 or 0x02 prefixed withdrawal credential.
     """
     return (
-        has_eth1_withdrawal_credential(validator)  # 0x01
+        has_sil1_withdrawal_credential(validator)  # 0x01
         or has_compounding_withdrawal_credential(validator)  # 0x02
     )
 ```
@@ -505,7 +505,7 @@ def has_execution_withdrawal_credential(validator: Validator) -> bool:
 
 *Note*: The function `is_fully_withdrawable_validator` is modified to use
 `has_execution_withdrawal_credential` instead of
-`has_eth1_withdrawal_credential`.
+`has_sil1_withdrawal_credential`.
 
 ```python
 def is_fully_withdrawable_validator(validator: Validator, balance: Gwei, epoch: Epoch) -> bool:
@@ -525,7 +525,7 @@ def is_fully_withdrawable_validator(validator: Validator, balance: Gwei, epoch: 
 *Note*: The function `is_partially_withdrawable_validator` is modified to use
 `get_max_effective_balance` instead of `MAX_EFFECTIVE_BALANCE` and
 `has_execution_withdrawal_credential` instead of
-`has_eth1_withdrawal_credential`.
+`has_sil1_withdrawal_credential`.
 
 ```python
 def is_partially_withdrawable_validator(validator: Validator, balance: Gwei) -> bool:
@@ -848,7 +848,7 @@ def process_epoch(state: BeaconState) -> None:
     process_registry_updates(state)
     # [Modified in Electra:SIP7251]
     process_slashings(state)
-    process_eth1_data_reset(state)
+    process_sil1_data_reset(state)
     # [New in Electra:SIP7251]
     process_pending_deposits(state)
     # [New in Electra:SIP7251]
@@ -945,7 +945,7 @@ def apply_pending_deposit(state: BeaconState, deposit: PendingDeposit) -> None:
 Iterating over `pending_deposits` queue this function runs the following checks
 before applying pending deposit:
 
-1. All Eth1 bridge deposits are processed before the first deposit request gets
+1. All Sil1 bridge deposits are processed before the first deposit request gets
    processed.
 2. Deposit position in the queue is finalized.
 3. Deposit does not exceed the `MAX_PENDING_DEPOSITS_PER_EPOCH` limit.
@@ -964,12 +964,12 @@ def process_pending_deposits(state: BeaconState) -> None:
     finalized_slot = compute_start_slot_at_epoch(state.finalized_checkpoint.epoch)
 
     for deposit in state.pending_deposits:
-        # Do not process deposit requests if Eth1 bridge deposits are not yet applied.
+        # Do not process deposit requests if Sil1 bridge deposits are not yet applied.
         if (
             # Is deposit request
             deposit.slot > GENESIS_SLOT
             and
-            # There are pending Eth1 bridge deposits
+            # There are pending Sil1 bridge deposits
             state.sil1_deposit_index < state.deposit_requests_start_index
         ):
             break
@@ -1175,7 +1175,7 @@ def process_block(state: BeaconState, block: BeaconBlock) -> None:
     # [Modified in Electra:SIP6110]
     process_execution_payload(state, block.body, EXECUTION_ENGINE)
     process_randao(state, block.body)
-    process_eth1_data(state, block.body)
+    process_sil1_data(state, block.body)
     # [Modified in Electra:SIP6110:SIP7002:SIP7549:SIP7251]
     process_operations(state, block.body)
     process_sync_aggregate(state, block.body.sync_aggregate)
@@ -1771,7 +1771,7 @@ def is_valid_switch_to_compounding_request(
         return False
 
     # Verify source withdrawal credentials
-    if not has_eth1_withdrawal_credential(source_validator):
+    if not has_sil1_withdrawal_credential(source_validator):
         return False
 
     # Verify the source is active

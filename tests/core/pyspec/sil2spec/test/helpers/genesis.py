@@ -151,7 +151,7 @@ def create_genesis_state(spec, validator_balances, activation_threshold):
     state = spec.BeaconState(
         genesis_time=0,
         sil1_deposit_index=len(validator_balances),
-        sil1_data=spec.Eth1Data(
+        sil1_data=spec.Sil1Data(
             deposit_root=deposit_root,
             deposit_count=len(validator_balances),
             block_hash=sil1_block_hash,

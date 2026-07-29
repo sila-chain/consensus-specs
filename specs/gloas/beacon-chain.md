@@ -240,7 +240,7 @@ class SignedExecutionPayloadEnvelope(Container):
 ```python
 class BeaconBlockBody(Container):
     randao_reveal: BLSSignature
-    sil1_data: Eth1Data
+    sil1_data: Sil1Data
     graffiti: Bytes32
     proposer_slashings: List[ProposerSlashing, MAX_PROPOSER_SLASHINGS]
     attester_slashings: List[AttesterSlashing, MAX_ATTESTER_SLASHINGS_ELECTRA]
@@ -273,8 +273,8 @@ class BeaconState(Container):
     block_roots: Vector[Root, SLOTS_PER_HISTORICAL_ROOT]
     state_roots: Vector[Root, SLOTS_PER_HISTORICAL_ROOT]
     historical_roots: List[Root, HISTORICAL_ROOTS_LIMIT]
-    sil1_data: Eth1Data
-    sil1_data_votes: List[Eth1Data, EPOCHS_PER_SIL1_VOTING_PERIOD * SLOTS_PER_EPOCH]
+    sil1_data: Sil1Data
+    sil1_data_votes: List[Sil1Data, EPOCHS_PER_SIL1_VOTING_PERIOD * SLOTS_PER_EPOCH]
     sil1_deposit_index: uint64
     validators: List[Validator, VALIDATOR_REGISTRY_LIMIT]
     balances: List[Gwei, VALIDATOR_REGISTRY_LIMIT]
@@ -681,7 +681,7 @@ def process_epoch(state: BeaconState) -> None:
     process_rewards_and_penalties(state)
     process_registry_updates(state)
     process_slashings(state)
-    process_eth1_data_reset(state)
+    process_sil1_data_reset(state)
     process_pending_deposits(state)
     process_pending_consolidations(state)
     # [New in Gloas:SIP7732]
@@ -728,7 +728,7 @@ def process_block(state: BeaconState, block: BeaconBlock) -> None:
     # [New in Gloas:SIP7732]
     process_execution_payload_bid(state, block)
     process_randao(state, block.body)
-    process_eth1_data(state, block.body)
+    process_sil1_data(state, block.body)
     # [Modified in Gloas:SIP7732]
     process_operations(state, block.body)
     process_sync_aggregate(state, block.body.sync_aggregate)

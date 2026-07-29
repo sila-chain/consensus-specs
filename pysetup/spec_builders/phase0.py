@@ -35,11 +35,11 @@ SSZObject = TypeVar('SSZObject', bound=View)
     @classmethod
     def sundry_functions(cls) -> str:
         return '''
-def get_eth1_data(block: Eth1Block) -> Eth1Data:
+def get_sil1_data(block: Sil1Block) -> Sil1Data:
     """
-    A stub function return mocking Eth1Data.
+    A stub function return mocking Sil1Data.
     """
-    return Eth1Data(
+    return Sil1Data(
         deposit_root=block.deposit_root,
         deposit_count=block.deposit_count,
         block_hash=hash_tree_root(block))

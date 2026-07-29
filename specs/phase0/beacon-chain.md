@@ -29,7 +29,7 @@
     - [`AttestationData`](#attestationdata)
     - [`IndexedAttestation`](#indexedattestation)
     - [`PendingAttestation`](#pendingattestation)
-    - [`Eth1Data`](#sil1data)
+    - [`Sil1Data`](#sil1data)
     - [`HistoricalBatch`](#historicalbatch)
     - [`DepositMessage`](#depositmessage)
     - [`DepositData`](#depositdata)
@@ -116,7 +116,7 @@
       - [`process_rewards_and_penalties`](#process_rewards_and_penalties)
     - [Registry updates](#registry-updates)
     - [Slashings](#slashings)
-    - [Eth1 data votes updates](#sil1-data-votes-updates)
+    - [Sil1 data votes updates](#sil1-data-votes-updates)
     - [Effective balances updates](#effective-balances-updates)
     - [Slashings balances updates](#slashings-balances-updates)
     - [Randao mixes updates](#randao-mixes-updates)
@@ -125,7 +125,7 @@
   - [Block processing](#block-processing)
     - [Block header](#block-header)
     - [RANDAO](#randao)
-    - [Eth1 data](#sil1-data)
+    - [Sil1 data](#sil1-data)
     - [Operations](#operations)
       - [Proposer slashings](#proposer-slashings)
       - [Attester slashings](#attester-slashings)
@@ -339,7 +339,7 @@ and other types of chain instances may use a different configuration.
 | `SECONDS_PER_SIL1_BLOCK`              | `uint64(14)`              |   seconds    | 14 seconds |
 | `MIN_VALIDATOR_WITHDRAWABILITY_DELAY` | `uint64(2**8)` (= 256)    |    epochs    | ~27 hours  |
 | `SHARD_COMMITTEE_PERIOD`              | `uint64(2**8)` (= 256)    |    epochs    | ~27 hours  |
-| `SIL1_FOLLOW_DISTANCE`                | `uint64(2**11)` (= 2,048) | Eth1 blocks  |  ~8 hours  |
+| `SIL1_FOLLOW_DISTANCE`                | `uint64(2**11)` (= 2,048) | Sil1 blocks  |  ~8 hours  |
 
 ### Validator cycle
 
@@ -430,10 +430,10 @@ class PendingAttestation(Container):
     proposer_index: ValidatorIndex
 ```
 
-#### `Eth1Data`
+#### `Sil1Data`
 
 ```python
-class Eth1Data(Container):
+class Sil1Data(Container):
     deposit_root: Root
     deposit_count: uint64
     block_hash: Hash32
@@ -539,7 +539,7 @@ class VoluntaryExit(Container):
 ```python
 class BeaconBlockBody(Container):
     randao_reveal: BLSSignature
-    sil1_data: Eth1Data
+    sil1_data: Sil1Data
     graffiti: Bytes32
     proposer_slashings: List[ProposerSlashing, MAX_PROPOSER_SLASHINGS]
     attester_slashings: List[AttesterSlashing, MAX_ATTESTER_SLASHINGS]
@@ -573,8 +573,8 @@ class BeaconState(Container):
     block_roots: Vector[Root, SLOTS_PER_HISTORICAL_ROOT]
     state_roots: Vector[Root, SLOTS_PER_HISTORICAL_ROOT]
     historical_roots: List[Root, HISTORICAL_ROOTS_LIMIT]
-    sil1_data: Eth1Data
-    sil1_data_votes: List[Eth1Data, EPOCHS_PER_SIL1_VOTING_PERIOD * SLOTS_PER_EPOCH]
+    sil1_data: Sil1Data
+    sil1_data_votes: List[Sil1Data, EPOCHS_PER_SIL1_VOTING_PERIOD * SLOTS_PER_EPOCH]
     sil1_deposit_index: uint64
     validators: List[Validator, VALIDATOR_REGISTRY_LIMIT]
     balances: List[Gwei, VALIDATOR_REGISTRY_LIMIT]
@@ -1256,7 +1256,7 @@ def slash_validator(
 
 Before the Sila beacon chain genesis has been triggered, and for every
 Sila proof-of-work block, let
-`candidate_state = initialize_beacon_state_from_eth1(sil1_block_hash, sil1_timestamp, deposits)`
+`candidate_state = initialize_beacon_state_from_sil1(sil1_block_hash, sil1_timestamp, deposits)`
 where:
 
 - `sil1_block_hash` is the hash of the Sila proof-of-work block
@@ -1273,7 +1273,7 @@ Due to this constraint, if
 configured to avoid this case.
 
 ```python
-def initialize_beacon_state_from_eth1(
+def initialize_beacon_state_from_sil1(
     sil1_block_hash: Hash32, sil1_timestamp: uint64, deposits: Sequence[Deposit]
 ) -> BeaconState:
     fork = Fork(
@@ -1284,10 +1284,10 @@ def initialize_beacon_state_from_eth1(
     state = BeaconState(
         genesis_time=sil1_timestamp + GENESIS_DELAY,
         fork=fork,
-        sil1_data=Eth1Data(block_hash=sil1_block_hash, deposit_count=uint64(len(deposits))),
+        sil1_data=Sil1Data(block_hash=sil1_block_hash, deposit_count=uint64(len(deposits))),
         latest_block_header=BeaconBlockHeader(body_root=hash_tree_root(BeaconBlockBody())),
         randao_mixes=[sil1_block_hash]
-        * EPOCHS_PER_HISTORICAL_VECTOR,  # Seed RANDAO with Eth1 entropy
+        * EPOCHS_PER_HISTORICAL_VECTOR,  # Seed RANDAO with Sil1 entropy
     )
 
     # Process deposits
@@ -1400,7 +1400,7 @@ def process_epoch(state: BeaconState) -> None:
     process_rewards_and_penalties(state)
     process_registry_updates(state)
     process_slashings(state)
-    process_eth1_data_reset(state)
+    process_sil1_data_reset(state)
     process_effective_balance_updates(state)
     process_slashings_reset(state)
     process_randao_mixes_reset(state)
@@ -1774,10 +1774,10 @@ def process_slashings(state: BeaconState) -> None:
             decrease_balance(state, ValidatorIndex(index), penalty)
 ```
 
-#### Eth1 data votes updates
+#### Sil1 data votes updates
 
 ```python
-def process_eth1_data_reset(state: BeaconState) -> None:
+def process_sil1_data_reset(state: BeaconState) -> None:
     next_epoch = Epoch(get_current_epoch(state) + 1)
     # Reset sil1 data votes
     if next_epoch % EPOCHS_PER_SIL1_VOTING_PERIOD == 0:
@@ -1852,7 +1852,7 @@ def process_participation_record_updates(state: BeaconState) -> None:
 def process_block(state: BeaconState, block: BeaconBlock) -> None:
     process_block_header(state, block)
     process_randao(state, block.body)
-    process_eth1_data(state, block.body)
+    process_sil1_data(state, block.body)
     process_operations(state, block.body)
 ```
 
@@ -1896,10 +1896,10 @@ def process_randao(state: BeaconState, body: BeaconBlockBody) -> None:
     state.randao_mixes[epoch % EPOCHS_PER_HISTORICAL_VECTOR] = mix
 ```
 
-#### Eth1 data
+#### Sil1 data
 
 ```python
-def process_eth1_data(state: BeaconState, body: BeaconBlockBody) -> None:
+def process_sil1_data(state: BeaconState, body: BeaconBlockBody) -> None:
     state.sil1_data_votes.append(body.sil1_data)
     if (
         state.sil1_data_votes.count(body.sil1_data) * 2

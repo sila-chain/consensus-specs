@@ -154,7 +154,7 @@ def compute_on_chain_aggregate(network_aggregates: Sequence[Attestation]) -> Att
 result of the following function:
 
 ```python
-def get_eth1_pending_deposit_count(state: BeaconState) -> uint64:
+def get_sil1_pending_deposit_count(state: BeaconState) -> uint64:
     sil1_deposit_index_limit = min(
         state.sil1_data.deposit_count, state.deposit_requests_start_index
     )
@@ -164,13 +164,13 @@ def get_eth1_pending_deposit_count(state: BeaconState) -> uint64:
         return uint64(0)
 ```
 
-*Note*: Clients will be able to remove the `Eth1Data` polling mechanism in an
+*Note*: Clients will be able to remove the `Sil1Data` polling mechanism in an
 uncoordinated fashion once the transition period is finished. The transition
 period is considered finished when a network reaches the point where
 `state.sil1_deposit_index == state.deposit_requests_start_index`.
 
 ```python
-def get_eth1_vote(state: BeaconState, sil1_chain: Sequence[Eth1Block]) -> Eth1Data:
+def get_sil1_vote(state: BeaconState, sil1_chain: Sequence[Sil1Block]) -> Sil1Data:
     # [New in Electra:SIP6110]
     if state.sil1_deposit_index == state.deposit_requests_start_index:
         return state.sil1_data
@@ -178,12 +178,12 @@ def get_eth1_vote(state: BeaconState, sil1_chain: Sequence[Eth1Block]) -> Eth1Da
     period_start = voting_period_start_time(state)
     # `sil1_chain` abstractly represents all blocks in the sil1 chain sorted by ascending block height
     votes_to_consider = [
-        get_eth1_data(block)
+        get_sil1_data(block)
         for block in sil1_chain
         if (
             is_candidate_block(block, period_start)
             # Ensure cannot move back to earlier deposit contract states
-            and get_eth1_data(block).deposit_count >= state.sil1_data.deposit_count
+            and get_sil1_data(block).deposit_count >= state.sil1_data.deposit_count
         )
     ]
 
@@ -192,9 +192,9 @@ def get_eth1_vote(state: BeaconState, sil1_chain: Sequence[Eth1Block]) -> Eth1Da
 
     # Default vote on latest sil1 block data in the period range unless sil1 chain is not live
     # Non-substantive casting for linter
-    state_eth1_data: Eth1Data = state.sil1_data
+    state_sil1_data: Sil1Data = state.sil1_data
     default_vote = (
-        votes_to_consider[len(votes_to_consider) - 1] if any(votes_to_consider) else state_eth1_data
+        votes_to_consider[len(votes_to_consider) - 1] if any(votes_to_consider) else state_sil1_data
     )
 
     return max(

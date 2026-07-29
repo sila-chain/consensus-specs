@@ -154,25 +154,25 @@ def test_is_candidate_block(spec, state):
     period_start = distance_duration * 2 + 1000
     run_is_candidate_block(
         spec,
-        spec.Eth1Block(timestamp=period_start - distance_duration),
+        spec.Sil1Block(timestamp=period_start - distance_duration),
         period_start,
         success=True,
     )
     run_is_candidate_block(
         spec,
-        spec.Eth1Block(timestamp=period_start - distance_duration + 1),
+        spec.Sil1Block(timestamp=period_start - distance_duration + 1),
         period_start,
         success=False,
     )
     run_is_candidate_block(
         spec,
-        spec.Eth1Block(timestamp=period_start - distance_duration * 2),
+        spec.Sil1Block(timestamp=period_start - distance_duration * 2),
         period_start,
         success=True,
     )
     run_is_candidate_block(
         spec,
-        spec.Eth1Block(timestamp=period_start - distance_duration * 2 - 1),
+        spec.Sil1Block(timestamp=period_start - distance_duration * 2 - 1),
         period_start,
         success=False,
     )
@@ -180,20 +180,20 @@ def test_is_candidate_block(spec, state):
 
 @with_all_phases
 @spec_state_test
-def test_get_eth1_vote_default_vote(spec, state):
+def test_get_sil1_vote_default_vote(spec, state):
     min_new_period_epochs = get_min_new_period_epochs(spec)
     for _ in range(min_new_period_epochs):
         next_epoch(spec, state)
 
     state.sil1_data_votes = ()
     sil1_chain = []
-    sil1_data = spec.get_eth1_vote(state, sil1_chain)
+    sil1_data = spec.get_sil1_vote(state, sil1_chain)
     assert sil1_data == state.sil1_data
 
 
 @with_all_phases
 @spec_state_test
-def test_get_eth1_vote_consensus_vote(spec, state):
+def test_get_sil1_vote_consensus_vote(spec, state):
     min_new_period_epochs = get_min_new_period_epochs(spec)
     for _ in range(min_new_period_epochs + 2):
         next_epoch(spec, state)
@@ -203,14 +203,14 @@ def test_get_eth1_vote_consensus_vote(spec, state):
     assert votes_length >= 3  # We need to have the majority vote
     state.sil1_data_votes = ()
 
-    block_1 = spec.Eth1Block(
+    block_1 = spec.Sil1Block(
         timestamp=period_start
         - spec.config.SECONDS_PER_SIL1_BLOCK * spec.config.SIL1_FOLLOW_DISTANCE
         - 1,
         deposit_count=state.sil1_data.deposit_count,
         deposit_root=b"\x04" * 32,
     )
-    block_2 = spec.Eth1Block(
+    block_2 = spec.Sil1Block(
         timestamp=period_start
         - spec.config.SECONDS_PER_SIL1_BLOCK * spec.config.SIL1_FOLLOW_DISTANCE,
         deposit_count=state.sil1_data.deposit_count + 1,
@@ -220,19 +220,19 @@ def test_get_eth1_vote_consensus_vote(spec, state):
     sil1_data_votes = []
 
     # Only the first vote is for block_1
-    sil1_data_votes.append(spec.get_eth1_data(block_1))
+    sil1_data_votes.append(spec.get_sil1_data(block_1))
     # Other votes are for block_2
     for _ in range(votes_length - 1):
-        sil1_data_votes.append(spec.get_eth1_data(block_2))
+        sil1_data_votes.append(spec.get_sil1_data(block_2))
 
     state.sil1_data_votes = sil1_data_votes
-    sil1_data = spec.get_eth1_vote(state, sil1_chain)
+    sil1_data = spec.get_sil1_vote(state, sil1_chain)
     assert sil1_data.block_hash == block_2.hash_tree_root()
 
 
 @with_all_phases
 @spec_state_test
-def test_get_eth1_vote_tie(spec, state):
+def test_get_sil1_vote_tie(spec, state):
     min_new_period_epochs = get_min_new_period_epochs(spec)
     for _ in range(min_new_period_epochs + 1):
         next_epoch(spec, state)
@@ -242,14 +242,14 @@ def test_get_eth1_vote_tie(spec, state):
     assert votes_length > 0 and votes_length % 2 == 0
 
     state.sil1_data_votes = ()
-    block_1 = spec.Eth1Block(
+    block_1 = spec.Sil1Block(
         timestamp=period_start
         - spec.config.SECONDS_PER_SIL1_BLOCK * spec.config.SIL1_FOLLOW_DISTANCE
         - 1,
         deposit_count=state.sil1_data.deposit_count,
         deposit_root=b"\x04" * 32,
     )
-    block_2 = spec.Eth1Block(
+    block_2 = spec.Sil1Block(
         timestamp=period_start
         - spec.config.SECONDS_PER_SIL1_BLOCK * spec.config.SIL1_FOLLOW_DISTANCE,
         deposit_count=state.sil1_data.deposit_count + 1,
@@ -263,10 +263,10 @@ def test_get_eth1_vote_tie(spec, state):
             block = block_1
         else:
             block = block_2
-        sil1_data_votes.append(spec.get_eth1_data(block))
+        sil1_data_votes.append(spec.get_sil1_data(block))
 
     state.sil1_data_votes = sil1_data_votes
-    sil1_data = spec.get_eth1_vote(state, sil1_chain)
+    sil1_data = spec.get_sil1_vote(state, sil1_chain)
 
     # Tiebreak by smallest distance -> sil1_chain[0]
     assert sil1_data.block_hash == sil1_chain[0].hash_tree_root()
@@ -274,7 +274,7 @@ def test_get_eth1_vote_tie(spec, state):
 
 @with_all_phases
 @spec_state_test
-def test_get_eth1_vote_chain_in_past(spec, state):
+def test_get_sil1_vote_chain_in_past(spec, state):
     min_new_period_epochs = get_min_new_period_epochs(spec)
     for _ in range(min_new_period_epochs + 1):
         next_epoch(spec, state)
@@ -284,7 +284,7 @@ def test_get_eth1_vote_chain_in_past(spec, state):
     assert votes_length > 0 and votes_length % 2 == 0
 
     state.sil1_data_votes = ()
-    block_1 = spec.Eth1Block(
+    block_1 = spec.Sil1Block(
         timestamp=period_start
         - spec.config.SECONDS_PER_SIL1_BLOCK * spec.config.SIL1_FOLLOW_DISTANCE,
         deposit_count=state.sil1_data.deposit_count - 1,  # Chain prior to current sil1data
@@ -294,7 +294,7 @@ def test_get_eth1_vote_chain_in_past(spec, state):
     sil1_data_votes = []
 
     state.sil1_data_votes = sil1_data_votes
-    sil1_data = spec.get_eth1_vote(state, sil1_chain)
+    sil1_data = spec.get_sil1_vote(state, sil1_chain)
 
     # Should be default vote
     assert sil1_data == state.sil1_data

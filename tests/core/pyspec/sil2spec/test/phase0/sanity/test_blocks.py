@@ -109,7 +109,7 @@ def test_invalid_same_slot_block_transition(spec, state):
 @spec_state_test
 def test_empty_block_transition(spec, state):
     pre_slot = state.slot
-    pre_eth1_votes = len(state.sil1_data_votes)
+    pre_sil1_votes = len(state.sil1_data_votes)
     pre_mix = spec.get_randao_mix(state, spec.get_current_epoch(state))
 
     yield "pre", state
@@ -121,7 +121,7 @@ def test_empty_block_transition(spec, state):
     yield "blocks", [signed_block]
     yield "post", state
 
-    assert len(state.sil1_data_votes) == pre_eth1_votes + 1
+    assert len(state.sil1_data_votes) == pre_sil1_votes + 1
     assert spec.get_block_root_at_slot(state, pre_slot) == signed_block.message.parent_root
     assert spec.get_randao_mix(state, spec.get_current_epoch(state)) != pre_mix
 
@@ -138,7 +138,7 @@ def test_empty_block_transition(spec, state):
 @single_phase
 def test_empty_block_transition_large_validator_set(spec, state):
     pre_slot = state.slot
-    pre_eth1_votes = len(state.sil1_data_votes)
+    pre_sil1_votes = len(state.sil1_data_votes)
     pre_mix = spec.get_randao_mix(state, spec.get_current_epoch(state))
 
     yield "pre", state
@@ -150,7 +150,7 @@ def test_empty_block_transition_large_validator_set(spec, state):
     yield "blocks", [signed_block]
     yield "post", state
 
-    assert len(state.sil1_data_votes) == pre_eth1_votes + 1
+    assert len(state.sil1_data_votes) == pre_sil1_votes + 1
     assert spec.get_block_root_at_slot(state, pre_slot) == signed_block.message.parent_root
     assert spec.get_randao_mix(state, spec.get_current_epoch(state)) != pre_mix
 
@@ -176,7 +176,7 @@ def process_and_sign_block_without_header_validations(spec, state, block):
 
     # Perform rest of process_block transitions
     spec.process_randao(state, block.body)
-    spec.process_eth1_data(state, block.body)
+    spec.process_sil1_data(state, block.body)
     spec.process_operations(state, block.body)
     if is_post_altair(spec):
         spec.process_sync_aggregate(state, block.body.sync_aggregate)
@@ -1168,8 +1168,8 @@ def test_historical_batch(spec, state):
 @with_all_phases
 @with_presets([MINIMAL], reason="suffices to test sil1 data voting without long voting period")
 @spec_state_test
-def test_eth1_data_votes_consensus(spec, state):
-    voting_period_slots = spec.EPOCHS_PER_ETH1_VOTING_PERIOD * spec.SLOTS_PER_EPOCH
+def test_sil1_data_votes_consensus(spec, state):
+    voting_period_slots = spec.EPOCHS_PER_SIL1_VOTING_PERIOD * spec.SLOTS_PER_EPOCH
 
     offset_block = build_empty_block(spec, state, slot=voting_period_slots - 1)
     state_transition_and_sign_block(spec, state, offset_block)
@@ -1209,10 +1209,10 @@ def test_eth1_data_votes_consensus(spec, state):
 @with_all_phases
 @with_presets([MINIMAL], reason="suffices to test sil1 data voting without long voting period")
 @spec_state_test
-def test_eth1_data_votes_no_consensus(spec, state):
-    voting_period_slots = spec.EPOCHS_PER_ETH1_VOTING_PERIOD * spec.SLOTS_PER_EPOCH
+def test_sil1_data_votes_no_consensus(spec, state):
+    voting_period_slots = spec.EPOCHS_PER_SIL1_VOTING_PERIOD * spec.SLOTS_PER_EPOCH
 
-    pre_eth1_hash = state.sil1_data.block_hash
+    pre_sil1_hash = state.sil1_data.block_hash
 
     offset_block = build_empty_block(spec, state, slot=voting_period_slots - 1)
     state_transition_and_sign_block(spec, state, offset_block)
@@ -1231,7 +1231,7 @@ def test_eth1_data_votes_no_consensus(spec, state):
         blocks.append(signed_block)
 
     assert len(state.sil1_data_votes) == voting_period_slots
-    assert state.sil1_data.block_hash == pre_eth1_hash
+    assert state.sil1_data.block_hash == pre_sil1_hash
 
     yield "blocks", blocks
     yield "post", state
