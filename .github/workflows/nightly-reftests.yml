@@ -1,35 +1,33 @@
 name: Nightly Reference Tests
 
-# SIX_SHARD_CALIBRATION_MATRIX_ONLY
-# - GitHub-hosted ubuntu-latest matrix, 6 shards
-# - threads=2, 10-minute timebox per shard
-# - ONE pass only (no determinism run-2)
-# - NO full build, NO final archives, NO publication
-# Locked generation source: f37421391232170b69efeb90ace7a1bea34b03d5
+# PER_RUNNER_CALIBRATION_MATRIX (19 jobs)
+# - One official runner per job
+# - workflow_dispatch only (no push auto-start)
+# - GEN_REF / EXPECTED_HEAD locked to repair commit d12911dda
+# - NO full build, NO run-2, NO archives, NO publication
 
 on:
-  # Manual only: do not auto-start calibration on push after source fixes.
   workflow_dispatch:
     inputs:
       ref:
-        description: SHA/branch to generate from (use repair commit after S3/S6 fixes)
-        default: ""
+        description: Locked generation SHA
+        default: d12911ddab573ceb1468de56d1428fba539dd4ae
         type: string
-        required: false
+        required: true
       calibration_minutes:
-        description: Hard timebox minutes per shard
+        description: Hard timebox minutes per runner
         default: "10"
         type: string
         required: true
       threads:
-        description: Worker threads per shard
+        description: Worker threads per runner
         default: "2"
         type: string
         required: true
 
 jobs:
-  calibrate-shard:
-    name: calibrate-${{ matrix.shard_id }}
+  calibrate-runner:
+    name: calibrate-${{ matrix.runner }}
     runs-on: ubuntu-latest
     timeout-minutes: 30
     defaults:
@@ -38,28 +36,34 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - shard_id: S1
-            runners: bls,ssz_generic,ssz_static,shuffling
-          - shard_id: S2
-            runners: epoch_processing,finality,rewards,sanity
-          - shard_id: S3
-            runners: operations,networking
-          - shard_id: S4
-            runners: fork_choice,forks,transition
-          - shard_id: S5
-            runners: random,sync,genesis,merkle_proof
-          - shard_id: S6
-            runners: kzg,light_client
+        runner:
+          - bls
+          - epoch_processing
+          - finality
+          - fork_choice
+          - forks
+          - genesis
+          - kzg
+          - light_client
+          - merkle_proof
+          - networking
+          - operations
+          - random
+          - rewards
+          - sanity
+          - shuffling
+          - ssz_generic
+          - ssz_static
+          - sync
+          - transition
     env:
       GEN_REPO: sila-chain/consensus-specs
-      # Prefer explicit ref; otherwise the commit that contains this workflow file.
-      GEN_REF: ${{ inputs.ref || github.sha }}
-      CALIBRATION_MINUTES: ${{ inputs.calibration_minutes || '10' }}
-      GEN_THREADS: ${{ inputs.threads || '2' }}
-      SHARD_ID: ${{ matrix.shard_id }}
-      SHARD_RUNNERS: ${{ matrix.runners }}
-      MODE: SIX_SHARD_CALIBRATION_MATRIX_ONLY
+      GEN_REF: ${{ inputs.ref }}
+      EXPECTED_HEAD: d12911ddab573ceb1468de56d1428fba539dd4ae
+      CALIBRATION_MINUTES: ${{ inputs.calibration_minutes }}
+      GEN_THREADS: ${{ inputs.threads }}
+      RUNNER_NAME: ${{ matrix.runner }}
+      MODE: PER_RUNNER_CALIBRATION_MATRIX
       FULL_BUILD_AUTHORISED: "NO"
       DETERMINISM_RUN_2_AUTHORISED: "NO"
 
@@ -71,32 +75,29 @@ jobs:
           path: consensus-specs
           ref: ${{ env.GEN_REF }}
 
-      - name: Verify checkout SHA and runner names
+      - name: Verify checkout SHA and single runner
         working-directory: consensus-specs
         run: |
           set -euo pipefail
           HEAD=$(git rev-parse HEAD)
           {
             echo "MODE=${MODE}"
-            echo "SHARD_ID=${SHARD_ID}"
-            echo "SHARD_RUNNERS=${SHARD_RUNNERS}"
+            echo "RUNNER_NAME=${RUNNER_NAME}"
             echo "GEN_REPO=${GEN_REPO}"
             echo "GEN_REF=${GEN_REF}"
+            echo "EXPECTED_HEAD=${EXPECTED_HEAD}"
             echo "CHECKED_OUT_HEAD=${HEAD}"
             echo "THREADS=${GEN_THREADS}"
             echo "CALIBRATION_MINUTES=${CALIBRATION_MINUTES}"
             echo "WORKFLOW_SHA=${{ github.sha }}"
             echo "EVENT_NAME=${{ github.event_name }}"
-          } | tee ../shard-identity.txt
+          } | tee ../runner-identity.txt
 
-          # If GEN_REF is a full SHA, require exact checkout match.
-          if [[ "${GEN_REF}" =~ ^[0-9a-f]{40}$ ]] && [ "$HEAD" != "$GEN_REF" ]; then
-            echo "CHECKOUT_SHA_MISMATCH requested=${GEN_REF} actual=${HEAD}"
-            echo "FAIL_REASON=CHECKOUT_SHA_MISMATCH" | tee -a ../shard-metrics.txt
+          if [ "$HEAD" != "$EXPECTED_HEAD" ]; then
+            echo "FAIL_REASON=CHECKOUT_SHA_MISMATCH"
             exit 1
           fi
 
-          # Official top-level runners with get_test_cases at this commit
           mapfile -t OFFICIAL < <(
             for f in tests/generators/runners/*.py; do
               base=$(basename "$f" .py)
@@ -105,26 +106,18 @@ jobs:
               fi
             done | sort
           )
-          echo "OFFICIAL_RUNNER_COUNT=${#OFFICIAL[@]}" | tee -a ../shard-identity.txt
           printf '%s\n' "${OFFICIAL[@]}" | tee ../official-runners.txt
+          echo "OFFICIAL_RUNNER_COUNT=${#OFFICIAL[@]}" | tee -a ../runner-identity.txt
 
-          IFS=',' read -r -a WANT <<< "${SHARD_RUNNERS}"
-          UNKNOWN=0
-          for r in "${WANT[@]}"; do
-            found=0
-            for o in "${OFFICIAL[@]}"; do
-              if [ "$r" = "$o" ]; then found=1; break; fi
-            done
-            if [ "$found" -ne 1 ]; then
-              echo "UNKNOWN_RUNNER=$r"
-              UNKNOWN=$((UNKNOWN+1))
-            fi
+          found=0
+          for o in "${OFFICIAL[@]}"; do
+            if [ "$o" = "$RUNNER_NAME" ]; then found=1; break; fi
           done
-          if [ "$UNKNOWN" -ne 0 ]; then
-            echo "FAIL_REASON=UNKNOWN_RUNNER" | tee -a ../shard-metrics.txt
+          if [ "$found" -ne 1 ]; then
+            echo "FAIL_REASON=UNKNOWN_RUNNER"
             exit 1
           fi
-          echo "UNKNOWN_RUNNER_COUNT=0" | tee -a ../shard-identity.txt
+          echo "UNKNOWN_RUNNER_COUNT=0" | tee -a ../runner-identity.txt
 
       - name: Host baseline
         run: |
@@ -147,30 +140,29 @@ jobs:
           enable-cache: true
           version: ${{ vars.UV_VERSION }}
 
-      - name: Calibration generate (timeboxed)
-        id: calibrate
+      - name: Calibration generate (timeboxed single runner)
         run: |
           set -uo pipefail
           mkdir -p consensus-spec-tests/tests
           cd consensus-specs
 
           START_EPOCH=$(date +%s)
-          echo "CALIBRATION_START_UTC=$(date -u +%Y-%m-%dT%H:%M:%SZ)" | tee -a ../shard-metrics.txt
+          echo "CALIBRATION_START_UTC=$(date -u +%Y-%m-%dT%H:%M:%SZ)" | tee -a ../runner-metrics.txt
 
           set +e
           timeout --signal=TERM --kill-after=60s "${CALIBRATION_MINUTES}m" \
             make reftests verbose=true \
               threads="${GEN_THREADS}" \
-              runner="${SHARD_RUNNERS}" \
-            2>&1 | tee ../consensustestgen-shard.log
+              runner="${RUNNER_NAME}" \
+            2>&1 | tee ../consensustestgen-runner.log
           PIPE_RC=${PIPESTATUS[0]}
           set -e
 
           END_EPOCH=$(date +%s)
           ELAPSED=$((END_EPOCH-START_EPOCH))
-          GENERATED=$(grep -c '^Generated:' ../consensustestgen-shard.log || true)
-          SKIPPED=$(grep -c '^Skipped:' ../consensustestgen-shard.log || true)
-          PROGRESS=$(grep '^Progress:' ../consensustestgen-shard.log | tail -1 || true)
+          GENERATED=$(grep -c '^Generated:' ../consensustestgen-runner.log || true)
+          SKIPPED=$(grep -c '^Skipped:' ../consensustestgen-runner.log || true)
+          PROGRESS=$(grep '^Progress:' ../consensustestgen-runner.log | tail -1 || true)
           CPS=0
           if [ "$ELAPSED" -gt 0 ]; then
             CPS=$(awk -v g="${GENERATED:-0}" -v e="$ELAPSED" 'BEGIN{printf "%.4f", g/e}')
@@ -178,77 +170,108 @@ jobs:
 
           {
             echo "CALIBRATION_END_UTC=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            echo "RUNNER=${RUNNER_NAME}"
             echo "ELAPSED_SEC=$ELAPSED"
             echo "EXIT_CODE=$PIPE_RC"
             echo "GENERATED_LINES=$GENERATED"
             echo "SKIPPED_LINES=$SKIPPED"
             echo "CASES_PER_SECOND=$CPS"
             echo "LAST_PROGRESS=$PROGRESS"
-            echo "SHARD_ID=${SHARD_ID}"
-            echo "SHARD_RUNNERS=${SHARD_RUNNERS}"
             echo "THREADS=${GEN_THREADS}"
             echo "CHECKED_OUT_HEAD=$(git rev-parse HEAD)"
             echo "FULL_BUILD_AUTHORISED=NO"
             echo "DETERMINISM_RUN_2_AUTHORISED=NO"
-          } | tee -a ../shard-metrics.txt
+          } | tee -a ../runner-metrics.txt
 
           {
             echo "=== free -h (after) ==="; free -h
             echo "=== df -h (after) ==="; df -h
           } | tee ../host-after.txt
 
-          # Accept ONLY exit 0 (completed) or 124 (expected timebox).
-          # Any other RC is a hard failure (no false-green on generator errors).
           if [ "$PIPE_RC" -eq 124 ]; then
-            if [ "${GENERATED:-0}" -eq 0 ] && [ "${SKIPPED:-0}" -eq 0 ]; then
-              echo "FAIL_REASON=ZERO_PROGRESS" | tee -a ../shard-metrics.txt
+            if [ $((GENERATED + SKIPPED)) -le 0 ]; then
+              echo "RESULT=FAIL_ZERO_PROGRESS_ON_TIMEOUT" | tee -a ../runner-metrics.txt
               exit 1
             fi
-            echo "CALIBRATION_RESULT=TIMEBOX_WITH_PROGRESS" | tee -a ../shard-metrics.txt
+            echo "RESULT=TIMEBOX_WITH_PROGRESS" | tee -a ../runner-metrics.txt
             exit 0
           fi
           if [ "$PIPE_RC" -eq 0 ]; then
-            if [ "${GENERATED:-0}" -eq 0 ] && [ "${SKIPPED:-0}" -eq 0 ]; then
-              echo "FAIL_REASON=ZERO_PROGRESS" | tee -a ../shard-metrics.txt
+            if [ $((GENERATED + SKIPPED)) -le 0 ]; then
+              echo "RESULT=FAIL_ZERO_PROGRESS_ON_SUCCESS" | tee -a ../runner-metrics.txt
               exit 1
             fi
-            echo "CALIBRATION_RESULT=SUBSET_COMPLETED" | tee -a ../shard-metrics.txt
+            echo "RESULT=COMPLETED" | tee -a ../runner-metrics.txt
             exit 0
           fi
-          echo "FAIL_REASON=UNEXPECTED_EXIT_CODE_$PIPE_RC" | tee -a ../shard-metrics.txt
+          echo "RESULT=FAIL_UNEXPECTED_EXIT_CODE_$PIPE_RC" | tee -a ../runner-metrics.txt
           exit 1
 
-      - name: Upload shard calibration artifact
+      - name: Upload per-runner calibration artifact
         if: always()
         uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
-          name: calibration-${{ matrix.shard_id }}
+          name: calibration-runner-${{ matrix.runner }}
           path: |
-            shard-identity.txt
-            shard-metrics.txt
+            runner-identity.txt
+            runner-metrics.txt
             official-runners.txt
             host-baseline.txt
             host-after.txt
-            consensustestgen-shard.log
+            consensustestgen-runner.log
 
   calibration-summary:
-    name: calibration-summary (no full build)
+    name: calibration-summary (19 runners)
     runs-on: ubuntu-latest
-    needs: calibrate-shard
+    needs: calibrate-runner
     if: always()
     steps:
-      - name: Record matrix policy
+      - name: Download all runner artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: calibration-runner-*
+          path: artifacts
+          merge-multiple: false
+
+      - name: Build summary TSV
         run: |
-          cat <<'EOF' | tee calibration-policy.txt
-          MODE=SIX_SHARD_CALIBRATION_MATRIX_ONLY
-          FULL_BUILD_AUTHORISED=NO
-          DETERMINISM_RUN_2_AUTHORISED=NO
-          ARCHIVES_AUTHORISED=NO
-          PR_MERGE=NO
-          NEXT_STAGE=REVIEW_SIX_SHARD_METRICS_THEN_WEIGHTED_SHARD_PLAN
-          EOF
-      - name: Upload policy note
+          set -euo pipefail
+          {
+            echo -e "runner\texit_code\tgenerated\tskipped\telapsed\tcases_per_second\tlast_progress\tchecked_out_head\tresult"
+            for d in artifacts/calibration-runner-*; do
+              [ -d "$d" ] || continue
+              metrics="$d/runner-metrics.txt"
+              [ -f "$metrics" ] || continue
+              runner=$(awk -F= '/^RUNNER=/{print $2; exit}' "$metrics")
+              exit_code=$(awk -F= '/^EXIT_CODE=/{print $2; exit}' "$metrics")
+              generated=$(awk -F= '/^GENERATED_LINES=/{print $2; exit}' "$metrics")
+              skipped=$(awk -F= '/^SKIPPED_LINES=/{print $2; exit}' "$metrics")
+              elapsed=$(awk -F= '/^ELAPSED_SEC=/{print $2; exit}' "$metrics")
+              cps=$(awk -F= '/^CASES_PER_SECOND=/{print $2; exit}' "$metrics")
+              progress=$(awk -F= '/^LAST_PROGRESS=/{sub(/^LAST_PROGRESS=/,""); print; exit}' "$metrics")
+              head=$(awk -F= '/^CHECKED_OUT_HEAD=/{print $2; exit}' "$metrics")
+              result=$(awk -F= '/^RESULT=/{print $2; exit}' "$metrics")
+              printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+                "${runner}" "${exit_code}" "${generated}" "${skipped}" "${elapsed}" \
+                "${cps}" "${progress}" "${head}" "${result}"
+            done | sort
+          } | tee per-runner-calibration-summary.tsv
+
+          {
+            echo "MODE=PER_RUNNER_CALIBRATION_MATRIX"
+            echo "EXPECTED_HEAD=d12911ddab573ceb1468de56d1428fba539dd4ae"
+            echo "MATRIX_JOB_COUNT=19"
+            echo "FULL_BUILD_AUTHORISED=NO"
+            echo "DETERMINISM_RUN_2_AUTHORISED=NO"
+            echo "ARCHIVES_AUTHORISED=NO"
+            echo "PR_MERGE=NO"
+            echo "NEXT_STAGE=REVIEW_PER_RUNNER_SUMMARY_THEN_WEIGHTED_SHARD_PLAN"
+          } | tee calibration-policy.txt
+
+      - name: Upload summary
         uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
-          name: calibration-policy
-          path: calibration-policy.txt
+          name: per-runner-calibration-summary
+          path: |
+            per-runner-calibration-summary.tsv
+            calibration-policy.txt
