@@ -178,9 +178,10 @@ jobs:
 
           # Artifact layout: upload consensus-spec-tests so tests/ is preserved
           # as a child of the artifact root (single-path upload strips the leaf name).
-          # Build GHA template literals at runtime — never write ${{ ... }} contiguous
-          # inside this run script or Actions will expand them before Python runs.
-          gha_matrix_shard = "$" + "{{ matrix.shard }}"
+          # Build the matrix.shard GHA template from joined characters only — never
+          # place a dollar-brace expression or double-brace template literally in this
+          # run script (Actions expands or rejects it before Python executes).
+          gha_matrix_shard = "".join(["$", "{", "{", " matrix.shard ", "}", "}"])
           artifact_tests_name_line = f"name: fullbuild-shard-{gha_matrix_shard}-tests"
           artifact_meta_name_line = f"name: fullbuild-shard-{gha_matrix_shard}-meta"
           artifact_name_template_check = (
