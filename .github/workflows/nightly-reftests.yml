@@ -176,12 +176,13 @@ jobs:
               and len(set(fc_preset_values)) == 2
           )
 
-          # Artifact layout: dedicated tests artifact per shard
+          # Artifact layout: upload consensus-spec-tests so tests/ is preserved
+          # as a child of the artifact root (single-path upload strips the leaf name).
           artifact_layout_gate = (
               "name: fullbuild-shard-${{ matrix.shard }}-tests" in wf
-              and "path: consensus-spec-tests/tests" in wf
+              and bool(re.search(r"(?m)^\s+path:\s+consensus-spec-tests\s*$", wf))
               and "shards/fullbuild-shard-*-tests/tests" in wf
-              and "DOWNLOADED_SHARD_TEST_ROOT_COUNT" in wf
+              and "EXPECTED_DOWNLOADED_SHARD_TEST_ROOT_COUNT=10" in wf
           )
 
           # Action pins: full 40-char SHAs, no floating tags
@@ -235,7 +236,7 @@ jobs:
               "OUTPUT_PATH_COLLISION_COUNT": len(output_collisions),
               "MERGE_COLLISION_COUNT": len(output_collisions),
               "ARTIFACT_LAYOUT_GATE": "PASS" if artifact_layout_gate else "FAIL",
-              "DOWNLOADED_SHARD_TEST_ROOT_COUNT_PLAN": 10,
+              "EXPECTED_DOWNLOADED_SHARD_TEST_ROOT_COUNT": 10,
               "THREADS_EXACT": 2 if threads_exact else 0,
               "ALL_ACTIONS_LATEST_OFFICIAL_STABLE": "PASS" if pin_ok and not floating else "FAIL",
               "ALL_ACTIONS_PINNED_BY_FULL_SHA": "PASS" if pin_ok and not short_sha and not floating else "FAIL",
@@ -283,7 +284,7 @@ jobs:
               "OUTPUT_PATH_COLLISION_COUNT",
               "MERGE_COLLISION_COUNT",
               "ARTIFACT_LAYOUT_GATE",
-              "DOWNLOADED_SHARD_TEST_ROOT_COUNT_PLAN",
+              "EXPECTED_DOWNLOADED_SHARD_TEST_ROOT_COUNT",
               "THREADS_EXACT",
               "ALL_ACTIONS_LATEST_OFFICIAL_STABLE",
               "ALL_ACTIONS_PINNED_BY_FULL_SHA",
@@ -491,12 +492,13 @@ jobs:
             exit 1
           fi
 
-      # Dedicated tests artifact: root contains tests/ only (no meta co-paths).
+      # Upload parent consensus-spec-tests so leaf name tests/ is preserved inside
+      # the artifact (single-path upload uses the path itself as rootDirectory).
       - name: Upload shard tests artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: fullbuild-shard-${{ matrix.shard }}-tests
-          path: consensus-spec-tests/tests
+          path: consensus-spec-tests
           if-no-files-found: error
           retention-days: 14
 
@@ -556,6 +558,7 @@ jobs:
           DOWNLOADED_SHARD_TEST_ROOT_COUNT=${#ROOTS[@]}
           {
             echo "ARTIFACT_LAYOUT_EXPECTED=shards/fullbuild-shard-*-tests/tests"
+            echo "EXPECTED_DOWNLOADED_SHARD_TEST_ROOT_COUNT=10"
             echo "DOWNLOADED_SHARD_TEST_ROOT_COUNT=${DOWNLOADED_SHARD_TEST_ROOT_COUNT}"
             printf 'ROOT=%s\n' "${ROOTS[@]}"
           } | tee merge-layout.txt
