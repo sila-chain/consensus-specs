@@ -2,7 +2,7 @@ import random
 from collections.abc import Iterable
 
 from sil2spec.gen_helpers.gen_base.gen_typing import TestCase
-from sil2spec.phase0 import sila-mainnet as spec_sila-mainnet, minimal as spec_minimal
+from sil2spec.phase0 import sila_mainnet as spec_sila_mainnet, minimal as spec_minimal
 from sil2spec.test.helpers.constants import ALL_PRESETS, SILA_MAINNET, MINIMAL, PHASE0
 
 
@@ -42,7 +42,7 @@ def get_test_cases() -> Iterable[TestCase]:
     test_cases = []
 
     for preset in ALL_PRESETS:
-        spec = {SILA_MAINNET: spec_sila-mainnet, MINIMAL: spec_minimal}[preset]
+        spec = {SILA_MAINNET: spec_sila_mainnet, MINIMAL: spec_minimal}[preset]
         for case_name, case_fn in shuffling_test_cases(spec):
             test_cases.append(
                 TestCase(

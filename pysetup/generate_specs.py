@@ -47,6 +47,7 @@ from pysetup.helpers import (
     objects_to_spec,
     parse_config_vars,
 )
+from pysetup.identity import is_allowed_external_target_name, python_module_token
 from pysetup.md_doc_paths import get_md_doc_paths
 from pysetup.md_to_spec import MarkdownToSpec
 from pysetup.spec_builders import spec_builders
@@ -157,9 +158,15 @@ def parse_build_targets(targets_str: str) -> list[BuildTarget]:
 
         name, preset_dir_path, config_path = data
 
-        # Validate preset name
-        if not all(c.isalnum() or c == '-' for c in name):
-            raise ValueError(f"invalid target name (must be alphanumeric or hyphen): {name!r}")
+        # Validate preset/external identity name without broad hyphen acceptance.
+        # Python module tokens are derived separately via python_module_token().
+        if not is_allowed_external_target_name(name):
+            raise ValueError(
+                "invalid target name (must be alphanumeric or a locked mapped identity): "
+                f"{name!r}"
+            )
+        # Prove the mapped module token is a valid Python identifier.
+        python_module_token(name)
 
         # Validate preset directory
         preset_dir = Path(preset_dir_path)
@@ -223,9 +230,12 @@ def generate_fork_specs(
         print(f"  Output directory: {out_dir}")
 
     # Generate spec for each build target (minimal, sila-mainnet, etc.)
+    # External identity (target.name) stays sila-mainnet for PRESET_BASE/paths.
+    # Python module filename/import uses the identifier-safe token.
     for target in build_targets:
+        module_token = python_module_token(target.name)
         if verbose:
-            print(f"  Building target: {target.name}")
+            print(f"  Building target: {target.name} -> module {module_token}")
 
         spec_str = build_spec(
             spec_builders[fork].fork,
@@ -235,15 +245,18 @@ def generate_fork_specs(
             target.config_path,
         )
 
-        output_file = out_dir / f"{target.name}.py"
+        output_file = out_dir / f"{module_token}.py"
         output_file.write_text(spec_str)
 
         if verbose:
             print(f"    Wrote: {output_file} ({len(spec_str):,} bytes)")
 
-    # Create __init__.py that imports sila-mainnet as default
+    # Create __init__.py that imports sila_mainnet (Python token) as default.
+    # External identity remains sila-mainnet; only the import token is mapped.
     init_file = out_dir / "__init__.py"
-    init_file.write_text("from . import sila-mainnet as spec  # noqa:F401\n")
+    init_file.write_text(
+        f"from . import {python_module_token('sila-mainnet')} as spec  # noqa:F401\n"
+    )
 
     if verbose:
         print(f"  Wrote: {init_file}")

@@ -2,7 +2,7 @@ from random import randint
 import pytest
 import sil_utils
 
-from sil2spec.phase0.sila-mainnet import DepositData
+from sil2spec.phase0.sila_mainnet import DepositData
 from sil2spec.utils.ssz.ssz_typing import List
 from sil2spec.utils.ssz.ssz_impl import hash_tree_root
 

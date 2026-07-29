@@ -4,6 +4,7 @@ from functools import reduce
 from typing import TypeVar
 
 from .constants import CONSTANT_DEP_SUNDRY_CONSTANTS_FUNCTIONS
+from .identity import python_module_token
 from .md_doc_paths import PREVIOUS_FORK_OF
 from .spec_builders import spec_builders
 from .typing import (
@@ -131,6 +132,7 @@ def objects_to_spec(
         f"    {k}: {format_config_var_param(v)}" for k, v in spec_object.config_vars.items()
     )
     config_spec += "\n\n\nconfig = Configuration(\n"
+    # External identity string (e.g. sila-mainnet), not the Python module token.
     config_spec += f'    PRESET_BASE="{preset_name}",\n'
     config_spec += "\n".join(
         "    " + format_config_var(k, v) for k, v in spec_object.config_vars.items()
@@ -159,8 +161,11 @@ def objects_to_spec(
         {},
     )
     # Concatenate all strings
+    # Python import sites use the identifier-safe module token; PRESET_BASE keeps
+    # the external identity (e.g. sila-mainnet).
+    module_token = python_module_token(preset_name)
     imports = reduce(
-        lambda txt, builder: (txt + "\n\n" + builder.imports(preset_name)).strip("\n"), builders, ""
+        lambda txt, builder: (txt + "\n\n" + builder.imports(module_token)).strip("\n"), builders, ""
     )
     classes = reduce(
         lambda txt, builder: (txt + "\n\n" + builder.classes()).strip("\n"), builders, ""

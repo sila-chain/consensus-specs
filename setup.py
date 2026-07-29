@@ -23,6 +23,6 @@ setup(
         "specs": "specs",
         "sync": "sync",
     },
-    packages=find_packages(where="tests/core/pyspec", exclude=["eth2spec", "eth2spec.*"]) + ["configs", "presets", "specs", "sync"],
+    packages=find_packages(where="tests/core/pyspec") + ["configs", "presets", "specs", "sync"],
     py_modules=["sil2spec"],
 )

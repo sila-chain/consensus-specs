@@ -142,7 +142,7 @@ class BeaconState(Container):
     state_roots: Vector[Root, SLOTS_PER_HISTORICAL_ROOT]
     historical_roots: List[Root, HISTORICAL_ROOTS_LIMIT]
     sil1_data: Eth1Data
-    sil1_data_votes: List[Eth1Data, EPOCHS_PER_ETH1_VOTING_PERIOD * SLOTS_PER_EPOCH]
+    sil1_data_votes: List[Eth1Data, EPOCHS_PER_SIL1_VOTING_PERIOD * SLOTS_PER_EPOCH]
     sil1_deposit_index: uint64
     validators: List[Validator, VALIDATOR_REGISTRY_LIMIT]
     balances: List[Gwei, VALIDATOR_REGISTRY_LIMIT]
