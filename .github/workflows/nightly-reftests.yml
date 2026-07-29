@@ -178,8 +178,16 @@ jobs:
 
           # Artifact layout: upload consensus-spec-tests so tests/ is preserved
           # as a child of the artifact root (single-path upload strips the leaf name).
+          # Build GHA template literals at runtime — never write ${{ ... }} contiguous
+          # inside this run script or Actions will expand them before Python runs.
+          gha_matrix_shard = "$" + "{{ matrix.shard }}"
+          artifact_tests_name_line = f"name: fullbuild-shard-{gha_matrix_shard}-tests"
+          artifact_meta_name_line = f"name: fullbuild-shard-{gha_matrix_shard}-meta"
+          artifact_name_template_check = (
+              artifact_tests_name_line in wf and artifact_meta_name_line in wf
+          )
           artifact_layout_gate = (
-              "name: fullbuild-shard-${{ matrix.shard }}-tests" in wf
+              artifact_name_template_check
               and bool(re.search(r"(?m)^\s+path:\s+consensus-spec-tests\s*$", wf))
               and "shards/fullbuild-shard-*-tests/tests" in wf
               and "EXPECTED_DOWNLOADED_SHARD_TEST_ROOT_COUNT=10" in wf
@@ -235,6 +243,7 @@ jobs:
               "FORK_CHOICE_PARTITION_GATE": "PASS" if fork_choice_partition_gate else "FAIL",
               "OUTPUT_PATH_COLLISION_COUNT": len(output_collisions),
               "MERGE_COLLISION_COUNT": len(output_collisions),
+              "ARTIFACT_NAME_TEMPLATE_CHECK": "PASS" if artifact_name_template_check else "FAIL",
               "ARTIFACT_LAYOUT_GATE": "PASS" if artifact_layout_gate else "FAIL",
               "EXPECTED_DOWNLOADED_SHARD_TEST_ROOT_COUNT": 10,
               "THREADS_EXACT": 2 if threads_exact else 0,
@@ -260,6 +269,7 @@ jobs:
               report["UNKNOWN_RUNNER_COUNT"],
               report["OUTPUT_PATH_COLLISION_COUNT"],
               0 if fork_choice_partition_gate else 1,
+              0 if artifact_name_template_check else 1,
               0 if artifact_layout_gate else 1,
               0 if threads_exact else 1,
               0 if report["ALL_ACTIONS_LATEST_OFFICIAL_STABLE"] == "PASS" else 1,
@@ -283,6 +293,7 @@ jobs:
               "FORK_CHOICE_PARTITION_GATE",
               "OUTPUT_PATH_COLLISION_COUNT",
               "MERGE_COLLISION_COUNT",
+              "ARTIFACT_NAME_TEMPLATE_CHECK",
               "ARTIFACT_LAYOUT_GATE",
               "EXPECTED_DOWNLOADED_SHARD_TEST_ROOT_COUNT",
               "THREADS_EXACT",
