@@ -62,7 +62,8 @@ jobs:
       EXPECTED_HEAD: d12911ddab573ceb1468de56d1428fba539dd4ae
       CALIBRATION_MINUTES: ${{ inputs.calibration_minutes }}
       GEN_THREADS: ${{ inputs.threads }}
-      RUNNER_NAME: ${{ matrix.runner }}
+      # Do NOT use RUNNER_NAME — reserved by GitHub Actions hosted runners.
+      CALIBRATION_RUNNER: ${{ matrix.runner }}
       MODE: PER_RUNNER_CALIBRATION_MATRIX
       FULL_BUILD_AUTHORISED: "NO"
       DETERMINISM_RUN_2_AUTHORISED: "NO"
@@ -82,7 +83,7 @@ jobs:
           HEAD=$(git rev-parse HEAD)
           {
             echo "MODE=${MODE}"
-            echo "RUNNER_NAME=${RUNNER_NAME}"
+            echo "CALIBRATION_RUNNER=${CALIBRATION_RUNNER}"
             echo "GEN_REPO=${GEN_REPO}"
             echo "GEN_REF=${GEN_REF}"
             echo "EXPECTED_HEAD=${EXPECTED_HEAD}"
@@ -111,10 +112,10 @@ jobs:
 
           found=0
           for o in "${OFFICIAL[@]}"; do
-            if [ "$o" = "$RUNNER_NAME" ]; then found=1; break; fi
+            if [ "$o" = "$CALIBRATION_RUNNER" ]; then found=1; break; fi
           done
           if [ "$found" -ne 1 ]; then
-            echo "FAIL_REASON=UNKNOWN_RUNNER"
+            echo "FAIL_REASON=UNKNOWN_RUNNER actual=${CALIBRATION_RUNNER}"
             exit 1
           fi
           echo "UNKNOWN_RUNNER_COUNT=0" | tee -a ../runner-identity.txt
@@ -153,7 +154,7 @@ jobs:
           timeout --signal=TERM --kill-after=60s "${CALIBRATION_MINUTES}m" \
             make reftests verbose=true \
               threads="${GEN_THREADS}" \
-              runner="${RUNNER_NAME}" \
+              runner="${CALIBRATION_RUNNER}" \
             2>&1 | tee ../consensustestgen-runner.log
           PIPE_RC=${PIPESTATUS[0]}
           set -e
@@ -162,15 +163,17 @@ jobs:
           ELAPSED=$((END_EPOCH-START_EPOCH))
           GENERATED=$(grep -c '^Generated:' ../consensustestgen-runner.log || true)
           SKIPPED=$(grep -c '^Skipped:' ../consensustestgen-runner.log || true)
+          GENERATED=${GENERATED:-0}
+          SKIPPED=${SKIPPED:-0}
           PROGRESS=$(grep '^Progress:' ../consensustestgen-runner.log | tail -1 || true)
           CPS=0
           if [ "$ELAPSED" -gt 0 ]; then
-            CPS=$(awk -v g="${GENERATED:-0}" -v e="$ELAPSED" 'BEGIN{printf "%.4f", g/e}')
+            CPS=$(awk -v g="${GENERATED}" -v e="$ELAPSED" 'BEGIN{printf "%.4f", g/e}')
           fi
 
           {
             echo "CALIBRATION_END_UTC=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-            echo "RUNNER=${RUNNER_NAME}"
+            echo "RUNNER=${CALIBRATION_RUNNER}"
             echo "ELAPSED_SEC=$ELAPSED"
             echo "EXIT_CODE=$PIPE_RC"
             echo "GENERATED_LINES=$GENERATED"
