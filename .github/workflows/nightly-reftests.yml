@@ -1,12 +1,11 @@
 name: Nightly Reference Tests
 
-# Phase 1 (branch ci/github-hosted-reftests):
-#   GitHub-hosted CANARY / BENCHMARK only.
-#   Auto-starts on push to this branch (no Run workflow button required).
-#   Do NOT run full `make reftests` on a single ubuntu-latest job.
-#
-# Locked generation source:
-#   f37421391232170b69efeb90ace7a1bea34b03d5
+# SIX_SHARD_CALIBRATION_MATRIX_ONLY
+# - GitHub-hosted ubuntu-latest matrix, 6 shards
+# - threads=2, 10-minute timebox per shard
+# - ONE pass only (no determinism run-2)
+# - NO full build, NO final archives, NO publication
+# Locked generation source: f37421391232170b69efeb90ace7a1bea34b03d5
 
 on:
   push:
@@ -14,86 +13,129 @@ on:
       - ci/github-hosted-reftests
   workflow_dispatch:
     inputs:
-      repo:
-        description: The repository to checkout for generation (e.g. sila-chain/consensus-specs)
-        default: sila-chain/consensus-specs
-        type: string
-        required: true
       ref:
-        description: Branch, tag, or SHA to checkout and build from
+        description: SHA/branch to generate from (must remain locked for calibration)
         default: f37421391232170b69efeb90ace7a1bea34b03d5
         type: string
         required: true
-      canary_minutes:
-        description: Hard timebox for canary generation (minutes)
+      calibration_minutes:
+        description: Hard timebox minutes per shard
         default: "10"
         type: string
         required: true
       threads:
-        description: Generator worker threads for canary
+        description: Worker threads per shard
         default: "2"
-        type: string
-        required: true
-      runners:
-        description: Comma-separated generator runners for canary (small subset)
-        default: bls,ssz_generic
         type: string
         required: true
 
 jobs:
-  reftests-canary:
-    name: reftests-canary (github-hosted)
-    timeout-minutes: 30
+  calibrate-shard:
+    name: calibrate-${{ matrix.shard_id }}
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     defaults:
       run:
         shell: bash
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - shard_id: S1
+            runners: bls,ssz_generic,ssz_static,shuffling
+          - shard_id: S2
+            runners: epoch_processing,finality,rewards,sanity
+          - shard_id: S3
+            runners: operations,networking
+          - shard_id: S4
+            runners: fork_choice,forks,transition
+          - shard_id: S5
+            runners: random,sync,genesis,merkle_proof
+          - shard_id: S6
+            runners: kzg,light_client
     env:
-      # Defaults used on push; workflow_dispatch inputs override when present.
-      GEN_REPO: ${{ inputs.repo || 'sila-chain/consensus-specs' }}
+      GEN_REPO: sila-chain/consensus-specs
       GEN_REF: ${{ inputs.ref || 'f37421391232170b69efeb90ace7a1bea34b03d5' }}
-      CANARY_MINUTES: ${{ inputs.canary_minutes || '10' }}
+      EXPECTED_HEAD: f37421391232170b69efeb90ace7a1bea34b03d5
+      CALIBRATION_MINUTES: ${{ inputs.calibration_minutes || '10' }}
       GEN_THREADS: ${{ inputs.threads || '2' }}
-      GEN_RUNNERS: ${{ inputs.runners || 'bls,ssz_generic' }}
+      SHARD_ID: ${{ matrix.shard_id }}
+      SHARD_RUNNERS: ${{ matrix.runners }}
+      MODE: SIX_SHARD_CALIBRATION_MATRIX_ONLY
+      FULL_BUILD_AUTHORISED: "NO"
+      DETERMINISM_RUN_2_AUTHORISED: "NO"
 
     steps:
-      - name: Checkout repository
+      - name: Checkout locked source
         uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
           repository: ${{ env.GEN_REPO }}
           path: consensus-specs
           ref: ${{ env.GEN_REF }}
 
-      - name: Record checkout identity
+      - name: Verify checkout SHA and runner names
+        working-directory: consensus-specs
         run: |
           set -euo pipefail
-          cd consensus-specs
+          HEAD=$(git rev-parse HEAD)
           {
-            echo "EVENT_NAME=${{ github.event_name }}"
-            echo "WORKFLOW_SHA=${{ github.sha }}"
+            echo "MODE=${MODE}"
+            echo "SHARD_ID=${SHARD_ID}"
+            echo "SHARD_RUNNERS=${SHARD_RUNNERS}"
             echo "GEN_REPO=${GEN_REPO}"
             echo "GEN_REF=${GEN_REF}"
-            echo "CHECKED_OUT_HEAD=$(git rev-parse HEAD)"
-            echo "CHECKED_OUT_SHORT=$(git rev-parse --short HEAD)"
-            echo "RUNNER_OS=${RUNNER_OS}"
-            echo "RUNNER_ARCH=${RUNNER_ARCH}"
-            echo "CANARY_MINUTES=${CANARY_MINUTES}"
+            echo "EXPECTED_HEAD=${EXPECTED_HEAD}"
+            echo "CHECKED_OUT_HEAD=${HEAD}"
             echo "THREADS=${GEN_THREADS}"
-            echo "RUNNERS=${GEN_RUNNERS}"
-          } | tee ../canary-identity.txt
+            echo "CALIBRATION_MINUTES=${CALIBRATION_MINUTES}"
+            echo "WORKFLOW_SHA=${{ github.sha }}"
+            echo "EVENT_NAME=${{ github.event_name }}"
+          } | tee ../shard-identity.txt
 
-      - name: Host resource baseline
+          if [ "$HEAD" != "$EXPECTED_HEAD" ]; then
+            echo "CHECKOUT_SHA_MISMATCH"
+            echo "FAIL_REASON=CHECKOUT_SHA_MISMATCH" | tee -a ../shard-metrics.txt
+            exit 1
+          fi
+
+          # Official top-level runners with get_test_cases at this commit
+          mapfile -t OFFICIAL < <(
+            for f in tests/generators/runners/*.py; do
+              base=$(basename "$f" .py)
+              if grep -qE '^def get_test_cases\b' "$f"; then
+                echo "$base"
+              fi
+            done | sort
+          )
+          echo "OFFICIAL_RUNNER_COUNT=${#OFFICIAL[@]}" | tee -a ../shard-identity.txt
+          printf '%s\n' "${OFFICIAL[@]}" | tee ../official-runners.txt
+
+          IFS=',' read -r -a WANT <<< "${SHARD_RUNNERS}"
+          UNKNOWN=0
+          for r in "${WANT[@]}"; do
+            found=0
+            for o in "${OFFICIAL[@]}"; do
+              if [ "$r" = "$o" ]; then found=1; break; fi
+            done
+            if [ "$found" -ne 1 ]; then
+              echo "UNKNOWN_RUNNER=$r"
+              UNKNOWN=$((UNKNOWN+1))
+            fi
+          done
+          if [ "$UNKNOWN" -ne 0 ]; then
+            echo "FAIL_REASON=UNKNOWN_RUNNER" | tee -a ../shard-metrics.txt
+            exit 1
+          fi
+          echo "UNKNOWN_RUNNER_COUNT=0" | tee -a ../shard-identity.txt
+
+      - name: Host baseline
         run: |
           set -euo pipefail
           {
-            echo "=== free -h ==="
-            free -h
-            echo "=== nproc ==="
-            nproc
-            echo "=== df -h ==="
-            df -h
-            echo "=== lscpu (model) ==="
-            lscpu | sed -n '1,20p'
+            echo "=== free -h ==="; free -h
+            echo "=== nproc ==="; nproc
+            echo "=== df -h ==="; df -h
+            echo "=== lscpu ==="; lscpu | sed -n '1,20p'
           } | tee host-baseline.txt
 
       - name: Set up Python
@@ -107,91 +149,116 @@ jobs:
           enable-cache: true
           version: ${{ vars.UV_VERSION }}
 
-      - name: Canary generate (timeboxed subset)
-        id: canary
+      - name: Calibration generate (timeboxed)
+        id: calibrate
         run: |
           set -uo pipefail
           mkdir -p consensus-spec-tests/tests
           cd consensus-specs
 
           START_EPOCH=$(date +%s)
-          echo "CANARY_START_UTC=$(date -u +%Y-%m-%dT%H:%M:%SZ)" | tee -a ../canary-metrics.txt
+          echo "CALIBRATION_START_UTC=$(date -u +%Y-%m-%dT%H:%M:%SZ)" | tee -a ../shard-metrics.txt
 
           set +e
-          # Timebox: exit 124 on timeout is expected for canary.
-          timeout --signal=TERM --kill-after=60s "${CANARY_MINUTES}m" \
+          timeout --signal=TERM --kill-after=60s "${CALIBRATION_MINUTES}m" \
             make reftests verbose=true \
               threads="${GEN_THREADS}" \
-              runner="${GEN_RUNNERS}" \
-            2>&1 | tee ../consensustestgen-canary.log
+              runner="${SHARD_RUNNERS}" \
+            2>&1 | tee ../consensustestgen-shard.log
           PIPE_RC=${PIPESTATUS[0]}
           set -e
-          END_EPOCH=$(date +%s)
-          ELAPSED=$((END_EPOCH - START_EPOCH))
 
-          GENERATED=$(grep -c '^Generated:' ../consensustestgen-canary.log || true)
-          SKIPPED=$(grep -c '^Skipped:' ../consensustestgen-canary.log || true)
-          PROGRESS=$(grep '^Progress:' ../consensustestgen-canary.log | tail -1 || true)
+          END_EPOCH=$(date +%s)
+          ELAPSED=$((END_EPOCH-START_EPOCH))
+          GENERATED=$(grep -c '^Generated:' ../consensustestgen-shard.log || true)
+          SKIPPED=$(grep -c '^Skipped:' ../consensustestgen-shard.log || true)
+          PROGRESS=$(grep '^Progress:' ../consensustestgen-shard.log | tail -1 || true)
           CPS=0
           if [ "$ELAPSED" -gt 0 ]; then
             CPS=$(awk -v g="${GENERATED:-0}" -v e="$ELAPSED" 'BEGIN{printf "%.4f", g/e}')
           fi
 
           {
-            echo "CANARY_END_UTC=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-            echo "CANARY_ELAPSED_SEC=$ELAPSED"
-            echo "TIMEOUT_OR_MAKE_RC=$PIPE_RC"
+            echo "CALIBRATION_END_UTC=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            echo "ELAPSED_SEC=$ELAPSED"
+            echo "EXIT_CODE=$PIPE_RC"
             echo "GENERATED_LINES=$GENERATED"
             echo "SKIPPED_LINES=$SKIPPED"
             echo "CASES_PER_SECOND=$CPS"
             echo "LAST_PROGRESS=$PROGRESS"
-            echo "NOTE=RC 124 means canary timebox reached (expected). Full build not authorised by this job."
-          } | tee -a ../canary-metrics.txt
+            echo "SHARD_ID=${SHARD_ID}"
+            echo "SHARD_RUNNERS=${SHARD_RUNNERS}"
+            echo "THREADS=${GEN_THREADS}"
+            echo "CHECKED_OUT_HEAD=$(git rev-parse HEAD)"
+            echo "FULL_BUILD_AUTHORISED=NO"
+            echo "DETERMINISM_RUN_2_AUTHORISED=NO"
+          } | tee -a ../shard-metrics.txt
 
           {
-            echo "=== free -h (after) ==="
-            free -h
-            echo "=== df -h (after) ==="
-            df -h
-          } | tee host-after.txt
+            echo "=== free -h (after) ==="; free -h
+            echo "=== df -h (after) ==="; df -h
+          } | tee ../host-after.txt
 
+          # RC 124 (timeout) is success only with real progress.
           if [ "$PIPE_RC" -eq 124 ]; then
-            echo "CANARY_RESULT=TIMEBOX_REACHED"
             if [ "${GENERATED:-0}" -eq 0 ] && [ "${SKIPPED:-0}" -eq 0 ]; then
-              echo "CANARY_RESULT=FAIL_NO_PROGRESS_BEFORE_TIMEOUT"
+              echo "FAIL_REASON=ZERO_PROGRESS" | tee -a ../shard-metrics.txt
               exit 1
             fi
+            echo "CALIBRATION_RESULT=TIMEBOX_WITH_PROGRESS" | tee -a ../shard-metrics.txt
             exit 0
           fi
           if [ "$PIPE_RC" -eq 0 ]; then
-            echo "CANARY_RESULT=SUBSET_COMPLETED_BEFORE_TIMEOUT"
+            if [ "${GENERATED:-0}" -eq 0 ] && [ "${SKIPPED:-0}" -eq 0 ]; then
+              echo "FAIL_REASON=ZERO_PROGRESS" | tee -a ../shard-metrics.txt
+              exit 1
+            fi
+            echo "CALIBRATION_RESULT=SUBSET_COMPLETED" | tee -a ../shard-metrics.txt
             exit 0
           fi
-          if [ "${GENERATED:-0}" -gt 0 ] || [ "${SKIPPED:-0}" -gt 0 ]; then
-            echo "CANARY_RESULT=PARTIAL_WITH_NONZERO_RC_$PIPE_RC"
+          # SIGTERM via make sometimes surfaces as 143 after timeout kill path
+          if [ "$PIPE_RC" -eq 143 ] && { [ "${GENERATED:-0}" -gt 0 ] || [ "${SKIPPED:-0}" -gt 0 ]; }; then
+            echo "CALIBRATION_RESULT=SIGNAL_143_WITH_PROGRESS" | tee -a ../shard-metrics.txt
             exit 0
           fi
-          echo "CANARY_RESULT=FAIL_RC_$PIPE_RC"
-          exit "$PIPE_RC"
+          if [ "${GENERATED:-0}" -eq 0 ] && [ "${SKIPPED:-0}" -eq 0 ]; then
+            echo "FAIL_REASON=ZERO_PROGRESS" | tee -a ../shard-metrics.txt
+            exit 1
+          fi
+          echo "CALIBRATION_RESULT=NONZERO_RC_WITH_PROGRESS_$PIPE_RC" | tee -a ../shard-metrics.txt
+          exit 0
 
-      - name: Upload canary metrics
+      - name: Upload shard calibration artifact
         if: always()
         uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
-          name: canary-metrics
+          name: calibration-${{ matrix.shard_id }}
           path: |
-            canary-identity.txt
-            canary-metrics.txt
+            shard-identity.txt
+            shard-metrics.txt
+            official-runners.txt
             host-baseline.txt
             host-after.txt
-            consensustestgen-canary.log
+            consensustestgen-shard.log
 
-      - name: Shard planning note
-        if: always()
+  calibration-summary:
+    name: calibration-summary (no full build)
+    runs-on: ubuntu-latest
+    needs: calibrate-shard
+    if: always()
+    steps:
+      - name: Record matrix policy
         run: |
-          cat <<'EOF'
-          CANARY_ONLY=YES
-          FULL_REFTESTS_AUTHORISED=NO
-          NEXT_STAGE=REVIEW_CANARY_METRICS_THEN_DECIDE_SHARD_COUNT
-          Do not treat this workflow run as publication assets.
+          cat <<'EOF' | tee calibration-policy.txt
+          MODE=SIX_SHARD_CALIBRATION_MATRIX_ONLY
+          FULL_BUILD_AUTHORISED=NO
+          DETERMINISM_RUN_2_AUTHORISED=NO
+          ARCHIVES_AUTHORISED=NO
+          PR_MERGE=NO
+          NEXT_STAGE=REVIEW_SIX_SHARD_METRICS_THEN_WEIGHTED_SHARD_PLAN
           EOF
+      - name: Upload policy note
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        with:
+          name: calibration-policy
+          path: calibration-policy.txt
