@@ -1,8 +1,9 @@
 name: Nightly Reference Tests
 
-# PER_RUNNER_CALIBRATION_MATRIX (19 jobs)
-# - One official runner per job
-# - workflow_dispatch only (no push auto-start)
+# TARGETED_FORK_CALIBRATION
+# - Single CLI runner: fork (NOT file stem forks)
+# - Inventory uses TestCase.runner_name sources, not runners/*.py basenames
+# - workflow_dispatch only
 # - GEN_REF / EXPECTED_HEAD locked to repair commit d12911dda
 # - NO full build, NO run-2, NO archives, NO publication
 
@@ -37,25 +38,7 @@ jobs:
       fail-fast: false
       matrix:
         runner:
-          - bls
-          - epoch_processing
-          - finality
-          - fork_choice
-          - forks
-          - genesis
-          - kzg
-          - light_client
-          - merkle_proof
-          - networking
-          - operations
-          - random
-          - rewards
-          - sanity
-          - shuffling
-          - ssz_generic
-          - ssz_static
-          - sync
-          - transition
+          - fork
     env:
       GEN_REPO: sila-chain/consensus-specs
       GEN_REF: ${{ inputs.ref }}
@@ -64,7 +47,7 @@ jobs:
       GEN_THREADS: ${{ inputs.threads }}
       # Do NOT use RUNNER_NAME — reserved by GitHub Actions hosted runners.
       CALIBRATION_RUNNER: ${{ matrix.runner }}
-      MODE: PER_RUNNER_CALIBRATION_MATRIX
+      MODE: TARGETED_FORK_CALIBRATION
       FULL_BUILD_AUTHORISED: "NO"
       DETERMINISM_RUN_2_AUTHORISED: "NO"
 
@@ -76,7 +59,7 @@ jobs:
           path: consensus-specs
           ref: ${{ env.GEN_REF }}
 
-      - name: Verify checkout SHA and single runner
+      - name: Verify checkout SHA and CLI runner inventory
         working-directory: consensus-specs
         run: |
           set -euo pipefail
@@ -92,6 +75,7 @@ jobs:
             echo "CALIBRATION_MINUTES=${CALIBRATION_MINUTES}"
             echo "WORKFLOW_SHA=${{ github.sha }}"
             echo "EVENT_NAME=${{ github.event_name }}"
+            echo "INVENTORY_SOURCE=TestCase.runner_name_literals"
           } | tee ../runner-identity.txt
 
           if [ "$HEAD" != "$EXPECTED_HEAD" ]; then
@@ -99,16 +83,31 @@ jobs:
             exit 1
           fi
 
+          # Discover CLI runner names that become TestCase.runner_name.
+          # Do NOT use runners/*.py basenames (forks.py emits runner_name="fork").
           mapfile -t OFFICIAL < <(
-            for f in tests/generators/runners/*.py; do
-              base=$(basename "$f" .py)
-              if grep -qE '^def get_test_cases\b' "$f"; then
-                echo "$base"
-              fi
-            done | sort
+            python3 - <<'PY'
+          import re
+          from pathlib import Path
+
+          root = Path("tests/generators/runners")
+          names: set[str] = set()
+          for path in sorted(root.glob("*.py")):
+              if path.name.startswith("_"):
+                  continue
+              text = path.read_text(encoding="utf-8")
+              if not re.search(r"^def get_test_cases\b", text, re.M):
+                  continue
+              names.update(re.findall(r'runner_name\s*=\s*["\']([^"\']+)["\']', text))
+              names.update(re.findall(r'get_test_cases_for\s*\(\s*["\']([^"\']+)["\']', text))
+          for name in sorted(names):
+              print(name)
+          PY
           )
           printf '%s\n' "${OFFICIAL[@]}" | tee ../official-runners.txt
-          echo "OFFICIAL_RUNNER_COUNT=${#OFFICIAL[@]}" | tee -a ../runner-identity.txt
+          echo "OFFICIAL_CLI_RUNNER_COUNT=${#OFFICIAL[@]}" | tee -a ../runner-identity.txt
+          echo "FILE_STEM_forks_PRESENT=$(test -f tests/generators/runners/forks.py && echo YES || echo NO)" | tee -a ../runner-identity.txt
+          echo "CLI_NAME_fork_IN_INVENTORY=$(printf '%s\n' "${OFFICIAL[@]}" | grep -qx fork && echo YES || echo NO)" | tee -a ../runner-identity.txt
 
           found=0
           for o in "${OFFICIAL[@]}"; do
@@ -165,10 +164,14 @@ jobs:
           SKIPPED=$(grep -c '^Skipped:' ../consensustestgen-runner.log || true)
           GENERATED=${GENERATED:-0}
           SKIPPED=${SKIPPED:-0}
+          PROCESSED=$((GENERATED + SKIPPED))
+          SELECTED=$(grep -E 'Selected [0-9]+' ../consensustestgen-runner.log | tail -1 || true)
           PROGRESS=$(grep '^Progress:' ../consensustestgen-runner.log | tail -1 || true)
           CPS=0
+          PROCESSED_CPS=0
           if [ "$ELAPSED" -gt 0 ]; then
             CPS=$(awk -v g="${GENERATED}" -v e="$ELAPSED" 'BEGIN{printf "%.4f", g/e}')
+            PROCESSED_CPS=$(awk -v p="${PROCESSED}" -v e="$ELAPSED" 'BEGIN{printf "%.4f", p/e}')
           fi
 
           {
@@ -178,7 +181,10 @@ jobs:
             echo "EXIT_CODE=$PIPE_RC"
             echo "GENERATED_LINES=$GENERATED"
             echo "SKIPPED_LINES=$SKIPPED"
+            echo "PROCESSED_LINES=$PROCESSED"
             echo "CASES_PER_SECOND=$CPS"
+            echo "PROCESSED_PER_SECOND=$PROCESSED_CPS"
+            echo "LAST_SELECTED=$SELECTED"
             echo "LAST_PROGRESS=$PROGRESS"
             echo "THREADS=${GEN_THREADS}"
             echo "CHECKED_OUT_HEAD=$(git rev-parse HEAD)"
@@ -192,7 +198,7 @@ jobs:
           } | tee ../host-after.txt
 
           if [ "$PIPE_RC" -eq 124 ]; then
-            if [ $((GENERATED + SKIPPED)) -le 0 ]; then
+            if [ "$PROCESSED" -le 0 ]; then
               echo "RESULT=FAIL_ZERO_PROGRESS_ON_TIMEOUT" | tee -a ../runner-metrics.txt
               exit 1
             fi
@@ -200,7 +206,7 @@ jobs:
             exit 0
           fi
           if [ "$PIPE_RC" -eq 0 ]; then
-            if [ $((GENERATED + SKIPPED)) -le 0 ]; then
+            if [ "$PROCESSED" -le 0 ]; then
               echo "RESULT=FAIL_ZERO_PROGRESS_ON_SUCCESS" | tee -a ../runner-metrics.txt
               exit 1
             fi
@@ -224,7 +230,7 @@ jobs:
             consensustestgen-runner.log
 
   calibration-summary:
-    name: calibration-summary (19 runners)
+    name: calibration-summary (targeted fork)
     runs-on: ubuntu-latest
     needs: calibrate-runner
     if: always()
@@ -240,7 +246,7 @@ jobs:
         run: |
           set -euo pipefail
           {
-            echo -e "runner\texit_code\tgenerated\tskipped\telapsed\tcases_per_second\tlast_progress\tchecked_out_head\tresult"
+            echo -e "runner\texit_code\tgenerated\tskipped\tprocessed\telapsed\tgenerated_cps\tprocessed_cps\tlast_progress\tchecked_out_head\tresult"
             for d in artifacts/calibration-runner-*; do
               [ -d "$d" ] || continue
               metrics="$d/runner-metrics.txt"
@@ -249,32 +255,35 @@ jobs:
               exit_code=$(awk -F= '/^EXIT_CODE=/{print $2; exit}' "$metrics")
               generated=$(awk -F= '/^GENERATED_LINES=/{print $2; exit}' "$metrics")
               skipped=$(awk -F= '/^SKIPPED_LINES=/{print $2; exit}' "$metrics")
+              processed=$(awk -F= '/^PROCESSED_LINES=/{print $2; exit}' "$metrics")
               elapsed=$(awk -F= '/^ELAPSED_SEC=/{print $2; exit}' "$metrics")
               cps=$(awk -F= '/^CASES_PER_SECOND=/{print $2; exit}' "$metrics")
+              pcps=$(awk -F= '/^PROCESSED_PER_SECOND=/{print $2; exit}' "$metrics")
               progress=$(awk -F= '/^LAST_PROGRESS=/{sub(/^LAST_PROGRESS=/,""); print; exit}' "$metrics")
               head=$(awk -F= '/^CHECKED_OUT_HEAD=/{print $2; exit}' "$metrics")
               result=$(awk -F= '/^RESULT=/{print $2; exit}' "$metrics")
-              printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
-                "${runner}" "${exit_code}" "${generated}" "${skipped}" "${elapsed}" \
-                "${cps}" "${progress}" "${head}" "${result}"
+              printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+                "${runner}" "${exit_code}" "${generated}" "${skipped}" "${processed}" \
+                "${elapsed}" "${cps}" "${pcps}" "${progress}" "${head}" "${result}"
             done | sort
-          } | tee per-runner-calibration-summary.tsv
+          } | tee targeted-fork-calibration-summary.tsv
 
           {
-            echo "MODE=PER_RUNNER_CALIBRATION_MATRIX"
+            echo "MODE=TARGETED_FORK_CALIBRATION"
             echo "EXPECTED_HEAD=d12911ddab573ceb1468de56d1428fba539dd4ae"
-            echo "MATRIX_JOB_COUNT=19"
+            echo "MATRIX_JOB_COUNT=1"
+            echo "CALIBRATION_RUNNER=fork"
             echo "FULL_BUILD_AUTHORISED=NO"
             echo "DETERMINISM_RUN_2_AUTHORISED=NO"
             echo "ARCHIVES_AUTHORISED=NO"
             echo "PR_MERGE=NO"
-            echo "NEXT_STAGE=REVIEW_PER_RUNNER_SUMMARY_THEN_WEIGHTED_SHARD_PLAN"
+            echo "NEXT_STAGE=REVIEW_FORK_CALIBRATION_THEN_WEIGHTED_SHARD_PLAN"
           } | tee calibration-policy.txt
 
       - name: Upload summary
         uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
-          name: per-runner-calibration-summary
+          name: targeted-fork-calibration-summary
           path: |
-            per-runner-calibration-summary.tsv
+            targeted-fork-calibration-summary.tsv
             calibration-policy.txt
