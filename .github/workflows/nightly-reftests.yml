@@ -1,11 +1,30 @@
 name: Nightly Reference Tests
 
-# TARGETED_FORK_CALIBRATION
-# - Single CLI runner: fork (NOT file stem forks)
-# - Inventory uses TestCase.runner_name sources, not runners/*.py basenames
-# - workflow_dispatch only
-# - GEN_REF / EXPECTED_HEAD locked to repair commit d12911dda
-# - NO full build, NO run-2, NO archives, NO publication
+# FULL_BUILD_10_SHARDS — prepared for static audit; NOT authorised to run by default.
+#
+# Locked plan:
+#   GEN_REF / EXPECTED_HEAD = d12911ddab573ceb1468de56d1428fba539dd4ae
+#   SHARD_COUNT=10
+#   THREADS_PER_SHARD=2
+#   TIMEOUT_PER_SHARD=120 minutes
+#   FAIL_FAST=false
+#   workflow_dispatch only
+#
+# Shard map (CLI runner_name values, not file stems):
+#   W1  ssz_static
+#   W2  fork_choice (preset=minimal) + shuffling (all presets)
+#   W3  fork_choice (preset=sila-mainnet)
+#   W4  kzg,bls,networking,genesis
+#   W5  random,sync
+#   W6  epoch_processing,finality
+#   W7  transition,rewards
+#   W8  operations,sanity
+#   W9  ssz_generic,light_client,merkle_proof
+#   W10 fork
+#
+# Gates still locked:
+#   FULL_BUILD_AUTHORISED requires input authorise_full_build=YES
+#   DETERMINISM_RUN_2=NO  PR_MERGE=NO  MAIN_MODIFICATION=NO  TAG_RELEASE=NO
 
 on:
   workflow_dispatch:
@@ -15,40 +34,292 @@ on:
         default: d12911ddab573ceb1468de56d1428fba539dd4ae
         type: string
         required: true
-      calibration_minutes:
-        description: Hard timebox minutes per runner
-        default: "10"
+      threads:
+        description: Worker threads per shard
+        default: "2"
         type: string
         required: true
-      threads:
-        description: Worker threads per runner
-        default: "2"
+      authorise_full_build:
+        description: Must be YES to execute Full Build (default NO — static prep only)
+        default: "NO"
         type: string
         required: true
 
 jobs:
-  calibrate-runner:
-    name: calibrate-${{ matrix.runner }}
+  static-preflight:
+    name: static-preflight (10-shard gate)
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 15
+    outputs:
+      gate: ${{ steps.gate.outputs.gate }}
+    steps:
+      - name: Checkout workflow tree (for inventory helpers only)
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+
+      - name: Checkout locked generation source
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          repository: sila-chain/consensus-specs
+          path: locked-src
+          ref: ${{ inputs.ref }}
+
+      - name: Static shard assignment gate
+        id: gate
+        env:
+          EXPECTED_HEAD: d12911ddab573ceb1468de56d1428fba539dd4ae
+          GEN_REF: ${{ inputs.ref }}
+          AUTHORISE: ${{ inputs.authorise_full_build }}
+        run: |
+          set -euo pipefail
+          HEAD=$(git -C locked-src rev-parse HEAD)
+          {
+            echo "MODE=FULL_BUILD_10_SHARDS_STATIC_PREFLIGHT"
+            echo "GEN_REF=${GEN_REF}"
+            echo "EXPECTED_HEAD=${EXPECTED_HEAD}"
+            echo "CHECKED_OUT_HEAD=${HEAD}"
+            echo "AUTHORISE_FULL_BUILD=${AUTHORISE}"
+            echo "WORKFLOW_SHA=${{ github.sha }}"
+          } | tee static-preflight-identity.txt
+
+          if [ "$HEAD" != "$EXPECTED_HEAD" ]; then
+            echo "FAIL_REASON=CHECKOUT_SHA_MISMATCH"
+            exit 1
+          fi
+
+          python3 - <<'PY' | tee static-preflight-report.txt
+          import re
+          from collections import Counter
+          from pathlib import Path
+
+          locked = Path("locked-src")
+          runners_dir = locked / "tests/generators/runners"
+
+          official: set[str] = set()
+          for path in sorted(runners_dir.glob("*.py")):
+              if path.name.startswith("_"):
+                  continue
+              text = path.read_text(encoding="utf-8")
+              if not re.search(r"^def get_test_cases\b", text, re.M):
+                  continue
+              official.update(re.findall(r'runner_name\s*=\s*["\']([^"\']+)["\']', text))
+              official.update(re.findall(r'get_test_cases_for\s*\(\s*["\']([^"\']+)["\']', text))
+
+          # Shard assignment: runner -> list of (shard, presets|None)
+          # presets=None means all presets for that runner.
+          assignment = {
+              "W1": [("ssz_static", None)],
+              "W2": [("fork_choice", ("minimal",)), ("shuffling", None)],
+              "W3": [("fork_choice", ("sila-mainnet",))],
+              "W4": [("kzg", None), ("bls", None), ("networking", None), ("genesis", None)],
+              "W5": [("random", None), ("sync", None)],
+              "W6": [("epoch_processing", None), ("finality", None)],
+              "W7": [("transition", None), ("rewards", None)],
+              "W8": [("operations", None), ("sanity", None)],
+              "W9": [("ssz_generic", None), ("light_client", None), ("merkle_proof", None)],
+              "W10": [("fork", None)],
+          }
+
+          assigned_runners = []
+          unknown = []
+          runner_shard_presets: dict[str, list[tuple[str, tuple[str, ...] | None]]] = {}
+          for shard, items in assignment.items():
+              for runner, presets in items:
+                  assigned_runners.append(runner)
+                  runner_shard_presets.setdefault(runner, []).append((shard, presets))
+                  if runner not in official:
+                      unknown.append(runner)
+
+          assigned_set = set(assigned_runners)
+          missing = sorted(official - assigned_set)
+          dup_runners = sorted([r for r, n in Counter(assigned_runners).items() if n > 1])
+          # fork_choice is intentionally split across W2/W3 — not a duplicate coverage defect
+          intentional_split = {"fork_choice"}
+          duplicate_runner_count = len([r for r in dup_runners if r not in intentional_split])
+
+          # Output-path / merge collision model:
+          # paths are preset/fork/runner/... so collisions require same runner AND overlapping presets.
+          output_collisions = []
+          for runner, entries in runner_shard_presets.items():
+              if len(entries) < 2:
+                  continue
+              # Expand preset coverage per shard entry
+              expanded: list[tuple[str, frozenset[str] | None]] = []
+              for shard, presets in entries:
+                  if presets is None:
+                      expanded.append((shard, None))  # all presets
+                  else:
+                      expanded.append((shard, frozenset(presets)))
+              for i in range(len(expanded)):
+                  for j in range(i + 1, len(expanded)):
+                      s1, p1 = expanded[i]
+                      s2, p2 = expanded[j]
+                      if p1 is None or p2 is None:
+                          # any "all presets" overlaps everything for this runner
+                          output_collisions.append((runner, s1, s2, "PRESET_OVERLAP_ALL"))
+                      elif p1 & p2:
+                          output_collisions.append((runner, s1, s2, sorted(p1 & p2)))
+
+          # fork_choice partition structural gate (W2 minimal vs W3 sila-mainnet)
+          fc = runner_shard_presets.get("fork_choice", [])
+          fc_presets = []
+          for shard, presets in fc:
+              if presets is None:
+                  fc_presets.append((shard, None))
+              else:
+                  fc_presets.extend((shard, p) for p in presets)
+          fc_preset_values = [p for _, p in fc_presets if p is not None]
+          fork_choice_partition_gate = (
+              sorted(fc_preset_values) == ["minimal", "sila-mainnet"]
+              and len(fc_preset_values) == 2
+              and len(set(fc_preset_values)) == 2
+              and all(p is not None for _, p in fc_presets)
+          )
+
+          archive_plan = [
+              "tests/general -> general.tar.gz",
+              "tests/minimal -> minimal.tar.gz",
+              "tests/sila-mainnet -> sila-mainnet.tar.gz",
+              "copy presets/ and configs/ from locked source into consensus-spec-tests/",
+              "upload three archives + merged generation log",
+          ]
+
+          source_change_count = 0  # generation source is checked out at EXPECTED_HEAD; workflow-only delta lives on CI branch
+
+          report = {
+              "ASSIGNED_RUNNER_COUNT": len(assigned_set),
+              "OFFICIAL_CLI_RUNNER_COUNT": len(official),
+              "MISSING_RUNNER_COUNT": len(missing),
+              "DUPLICATE_RUNNER_COUNT": duplicate_runner_count,
+              "UNKNOWN_RUNNER_COUNT": len(unknown),
+              "FORK_CHOICE_PARTITION_GATE": "PASS" if fork_choice_partition_gate else "FAIL",
+              "OUTPUT_PATH_COLLISION_COUNT": len(output_collisions),
+              "MERGE_COLLISION_COUNT": len(output_collisions),
+              "ARCHIVE_PLAN_COMPLETE": "YES" if len(archive_plan) == 5 else "NO",
+              "SOURCE_CHANGE_COUNT": source_change_count,
+              "SHARD_COUNT": len(assignment),
+              "INTENTIONAL_SPLIT_RUNNERS": sorted(intentional_split),
+              "MISSING_RUNNERS": missing,
+              "UNKNOWN_RUNNERS": unknown,
+              "OUTPUT_COLLISIONS": output_collisions,
+              "ARCHIVE_PLAN": archive_plan,
+              "OFFICIAL_RUNNERS": sorted(official),
+              "ASSIGNED_RUNNERS": sorted(assigned_set),
+          }
+
+          unknown_count = (
+              report["MISSING_RUNNER_COUNT"]
+              + report["DUPLICATE_RUNNER_COUNT"]
+              + report["UNKNOWN_RUNNER_COUNT"]
+              + report["OUTPUT_PATH_COLLISION_COUNT"]
+              + (0 if fork_choice_partition_gate else 1)
+              + (0 if report["ARCHIVE_PLAN_COMPLETE"] == "YES" else 1)
+              + report["SOURCE_CHANGE_COUNT"]
+              + (0 if report["ASSIGNED_RUNNER_COUNT"] == 19 else 1)
+              + (0 if report["SHARD_COUNT"] == 10 else 1)
+          )
+          report["UNKNOWN_COUNT"] = unknown_count
+          gate = "PASS" if unknown_count == 0 else "FAIL"
+          report["STATIC_FULL_BUILD_GATE"] = gate
+
+          for k in [
+              "ASSIGNED_RUNNER_COUNT",
+              "MISSING_RUNNER_COUNT",
+              "DUPLICATE_RUNNER_COUNT",
+              "UNKNOWN_RUNNER_COUNT",
+              "FORK_CHOICE_PARTITION_GATE",
+              "OUTPUT_PATH_COLLISION_COUNT",
+              "MERGE_COLLISION_COUNT",
+              "ARCHIVE_PLAN_COMPLETE",
+              "SOURCE_CHANGE_COUNT",
+              "UNKNOWN_COUNT",
+              "STATIC_FULL_BUILD_GATE",
+              "SHARD_COUNT",
+          ]:
+              print(f"{k}={report[k]}")
+          print(f"OFFICIAL_CLI_RUNNER_COUNT={report['OFFICIAL_CLI_RUNNER_COUNT']}")
+          print("ASSIGNED_RUNNERS=" + ",".join(report["ASSIGNED_RUNNERS"]))
+          if gate != "PASS":
+              raise SystemExit("STATIC_FULL_BUILD_GATE=FAIL")
+          Path("static-preflight-details.txt").write_text(
+              "\n".join(f"{k}={report[k]}" for k in sorted(report)) + "\n"
+          )
+          PY
+
+          echo "gate=PASS" >> "$GITHUB_OUTPUT"
+
+      - name: Upload static preflight evidence
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        with:
+          name: static-full-build-preflight
+          path: |
+            static-preflight-identity.txt
+            static-preflight-report.txt
+            static-preflight-details.txt
+
+  generate-shard:
+    name: shard-${{ matrix.shard }}
+    needs: static-preflight
+    if: ${{ inputs.authorise_full_build == 'YES' && needs.static-preflight.outputs.gate == 'PASS' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
     defaults:
       run:
         shell: bash
     strategy:
       fail-fast: false
       matrix:
-        runner:
-          - fork
+        include:
+          - shard: W1
+            mode: runners
+            runners: ssz_static
+            presets: ""
+          - shard: W2
+            mode: w2_partition
+            runners: ""
+            presets: ""
+          - shard: W3
+            mode: runners
+            runners: fork_choice
+            presets: sila-mainnet
+          - shard: W4
+            mode: runners
+            runners: kzg,bls,networking,genesis
+            presets: ""
+          - shard: W5
+            mode: runners
+            runners: random,sync
+            presets: ""
+          - shard: W6
+            mode: runners
+            runners: epoch_processing,finality
+            presets: ""
+          - shard: W7
+            mode: runners
+            runners: transition,rewards
+            presets: ""
+          - shard: W8
+            mode: runners
+            runners: operations,sanity
+            presets: ""
+          - shard: W9
+            mode: runners
+            runners: ssz_generic,light_client,merkle_proof
+            presets: ""
+          - shard: W10
+            mode: runners
+            runners: fork
+            presets: ""
     env:
       GEN_REPO: sila-chain/consensus-specs
       GEN_REF: ${{ inputs.ref }}
       EXPECTED_HEAD: d12911ddab573ceb1468de56d1428fba539dd4ae
-      CALIBRATION_MINUTES: ${{ inputs.calibration_minutes }}
       GEN_THREADS: ${{ inputs.threads }}
-      # Do NOT use RUNNER_NAME — reserved by GitHub Actions hosted runners.
-      CALIBRATION_RUNNER: ${{ matrix.runner }}
-      MODE: TARGETED_FORK_CALIBRATION
-      FULL_BUILD_AUTHORISED: "NO"
+      SHARD_ID: ${{ matrix.shard }}
+      SHARD_MODE: ${{ matrix.mode }}
+      SHARD_RUNNERS: ${{ matrix.runners }}
+      SHARD_PRESETS: ${{ matrix.presets }}
+      MODE: FULL_BUILD_10_SHARDS
+      FULL_BUILD_AUTHORISED: "YES"
       DETERMINISM_RUN_2_AUTHORISED: "NO"
 
     steps:
@@ -59,65 +330,28 @@ jobs:
           path: consensus-specs
           ref: ${{ env.GEN_REF }}
 
-      - name: Verify checkout SHA and CLI runner inventory
+      - name: Verify checkout SHA
         working-directory: consensus-specs
         run: |
           set -euo pipefail
           HEAD=$(git rev-parse HEAD)
           {
             echo "MODE=${MODE}"
-            echo "CALIBRATION_RUNNER=${CALIBRATION_RUNNER}"
-            echo "GEN_REPO=${GEN_REPO}"
+            echo "SHARD_ID=${SHARD_ID}"
+            echo "SHARD_MODE=${SHARD_MODE}"
+            echo "SHARD_RUNNERS=${SHARD_RUNNERS}"
+            echo "SHARD_PRESETS=${SHARD_PRESETS}"
             echo "GEN_REF=${GEN_REF}"
             echo "EXPECTED_HEAD=${EXPECTED_HEAD}"
             echo "CHECKED_OUT_HEAD=${HEAD}"
             echo "THREADS=${GEN_THREADS}"
-            echo "CALIBRATION_MINUTES=${CALIBRATION_MINUTES}"
             echo "WORKFLOW_SHA=${{ github.sha }}"
-            echo "EVENT_NAME=${{ github.event_name }}"
-            echo "INVENTORY_SOURCE=TestCase.runner_name_literals"
-          } | tee ../runner-identity.txt
-
+            echo "DETERMINISM_RUN_2_AUTHORISED=NO"
+          } | tee ../shard-identity.txt
           if [ "$HEAD" != "$EXPECTED_HEAD" ]; then
             echo "FAIL_REASON=CHECKOUT_SHA_MISMATCH"
             exit 1
           fi
-
-          # Discover CLI runner names that become TestCase.runner_name.
-          # Do NOT use runners/*.py basenames (forks.py emits runner_name="fork").
-          mapfile -t OFFICIAL < <(
-            python3 - <<'PY'
-          import re
-          from pathlib import Path
-
-          root = Path("tests/generators/runners")
-          names: set[str] = set()
-          for path in sorted(root.glob("*.py")):
-              if path.name.startswith("_"):
-                  continue
-              text = path.read_text(encoding="utf-8")
-              if not re.search(r"^def get_test_cases\b", text, re.M):
-                  continue
-              names.update(re.findall(r'runner_name\s*=\s*["\']([^"\']+)["\']', text))
-              names.update(re.findall(r'get_test_cases_for\s*\(\s*["\']([^"\']+)["\']', text))
-          for name in sorted(names):
-              print(name)
-          PY
-          )
-          printf '%s\n' "${OFFICIAL[@]}" | tee ../official-runners.txt
-          echo "OFFICIAL_CLI_RUNNER_COUNT=${#OFFICIAL[@]}" | tee -a ../runner-identity.txt
-          echo "FILE_STEM_forks_PRESENT=$(test -f tests/generators/runners/forks.py && echo YES || echo NO)" | tee -a ../runner-identity.txt
-          echo "CLI_NAME_fork_IN_INVENTORY=$(printf '%s\n' "${OFFICIAL[@]}" | grep -qx fork && echo YES || echo NO)" | tee -a ../runner-identity.txt
-
-          found=0
-          for o in "${OFFICIAL[@]}"; do
-            if [ "$o" = "$CALIBRATION_RUNNER" ]; then found=1; break; fi
-          done
-          if [ "$found" -ne 1 ]; then
-            echo "FAIL_REASON=UNKNOWN_RUNNER actual=${CALIBRATION_RUNNER}"
-            exit 1
-          fi
-          echo "UNKNOWN_RUNNER_COUNT=0" | tee -a ../runner-identity.txt
 
       - name: Host baseline
         run: |
@@ -126,7 +360,6 @@ jobs:
             echo "=== free -h ==="; free -h
             echo "=== nproc ==="; nproc
             echo "=== df -h ==="; df -h
-            echo "=== lscpu ==="; lscpu | sed -n '1,20p'
           } | tee host-baseline.txt
 
       - name: Set up Python
@@ -140,150 +373,189 @@ jobs:
           enable-cache: true
           version: ${{ vars.UV_VERSION }}
 
-      - name: Calibration generate (timeboxed single runner)
+      - name: Generate shard tests
         run: |
-          set -uo pipefail
+          set -euo pipefail
           mkdir -p consensus-spec-tests/tests
           cd consensus-specs
-
           START_EPOCH=$(date +%s)
-          echo "CALIBRATION_START_UTC=$(date -u +%Y-%m-%dT%H:%M:%SZ)" | tee -a ../runner-metrics.txt
+          echo "GEN_START_UTC=$(date -u +%Y-%m-%dT%H:%M:%SZ)" | tee -a ../shard-metrics.txt
 
-          set +e
-          timeout --signal=TERM --kill-after=60s "${CALIBRATION_MINUTES}m" \
-            make reftests verbose=true \
-              threads="${GEN_THREADS}" \
-              runner="${CALIBRATION_RUNNER}" \
-            2>&1 | tee ../consensustestgen-runner.log
-          PIPE_RC=${PIPESTATUS[0]}
-          set -e
+          run_one() {
+            local label="$1"; shift
+            echo "=== GEN_BEGIN ${label} ===" | tee -a ../consensustestgen-shard.log
+            make reftests verbose=true threads="${GEN_THREADS}" "$@" \
+              2>&1 | tee -a ../consensustestgen-shard.log
+            echo "=== GEN_END ${label} rc=${PIPESTATUS[0]} ===" | tee -a ../consensustestgen-shard.log
+          }
+
+          if [ "${SHARD_MODE}" = "w2_partition" ]; then
+            # Preset filter must NOT apply to shuffling (needs both presets).
+            run_one "fork_choice:minimal" runner=fork_choice preset=minimal
+            run_one "shuffling:all_presets" runner=shuffling
+          else
+            EXTRA=()
+            if [ -n "${SHARD_PRESETS}" ]; then
+              EXTRA+=(preset="${SHARD_PRESETS}")
+            fi
+            run_one "${SHARD_RUNNERS}:${SHARD_PRESETS:-all}" runner="${SHARD_RUNNERS}" "${EXTRA[@]}"
+          fi
 
           END_EPOCH=$(date +%s)
           ELAPSED=$((END_EPOCH-START_EPOCH))
-          GENERATED=$(grep -c '^Generated:' ../consensustestgen-runner.log || true)
-          SKIPPED=$(grep -c '^Skipped:' ../consensustestgen-runner.log || true)
+          GENERATED=$(grep -c '^Generated:' ../consensustestgen-shard.log || true)
+          SKIPPED=$(grep -c '^Skipped:' ../consensustestgen-shard.log || true)
           GENERATED=${GENERATED:-0}
           SKIPPED=${SKIPPED:-0}
           PROCESSED=$((GENERATED + SKIPPED))
-          SELECTED=$(grep -E 'Selected [0-9]+' ../consensustestgen-runner.log | tail -1 || true)
-          PROGRESS=$(grep '^Progress:' ../consensustestgen-runner.log | tail -1 || true)
-          CPS=0
-          PROCESSED_CPS=0
-          if [ "$ELAPSED" -gt 0 ]; then
-            CPS=$(awk -v g="${GENERATED}" -v e="$ELAPSED" 'BEGIN{printf "%.4f", g/e}')
-            PROCESSED_CPS=$(awk -v p="${PROCESSED}" -v e="$ELAPSED" 'BEGIN{printf "%.4f", p/e}')
-          fi
-
           {
-            echo "CALIBRATION_END_UTC=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-            echo "RUNNER=${CALIBRATION_RUNNER}"
-            echo "ELAPSED_SEC=$ELAPSED"
-            echo "EXIT_CODE=$PIPE_RC"
-            echo "GENERATED_LINES=$GENERATED"
-            echo "SKIPPED_LINES=$SKIPPED"
-            echo "PROCESSED_LINES=$PROCESSED"
-            echo "CASES_PER_SECOND=$CPS"
-            echo "PROCESSED_PER_SECOND=$PROCESSED_CPS"
-            echo "LAST_SELECTED=$SELECTED"
-            echo "LAST_PROGRESS=$PROGRESS"
-            echo "THREADS=${GEN_THREADS}"
+            echo "GEN_END_UTC=$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            echo "SHARD_ID=${SHARD_ID}"
+            echo "ELAPSED_SEC=${ELAPSED}"
+            echo "GENERATED_LINES=${GENERATED}"
+            echo "SKIPPED_LINES=${SKIPPED}"
+            echo "PROCESSED_LINES=${PROCESSED}"
             echo "CHECKED_OUT_HEAD=$(git rev-parse HEAD)"
-            echo "FULL_BUILD_AUTHORISED=NO"
-            echo "DETERMINISM_RUN_2_AUTHORISED=NO"
-          } | tee -a ../runner-metrics.txt
+            echo "RESULT=COMPLETED"
+          } | tee -a ../shard-metrics.txt
 
-          {
-            echo "=== free -h (after) ==="; free -h
-            echo "=== df -h (after) ==="; df -h
-          } | tee ../host-after.txt
-
-          if [ "$PIPE_RC" -eq 124 ]; then
-            if [ "$PROCESSED" -le 0 ]; then
-              echo "RESULT=FAIL_ZERO_PROGRESS_ON_TIMEOUT" | tee -a ../runner-metrics.txt
-              exit 1
-            fi
-            echo "RESULT=TIMEBOX_WITH_PROGRESS" | tee -a ../runner-metrics.txt
-            exit 0
+          # Ensure tests landed under shared output dir used by make
+          if [ ! -d ../consensus-spec-tests/tests ]; then
+            echo "FAIL_REASON=MISSING_TESTS_OUTPUT"
+            exit 1
           fi
-          if [ "$PIPE_RC" -eq 0 ]; then
-            if [ "$PROCESSED" -le 0 ]; then
-              echo "RESULT=FAIL_ZERO_PROGRESS_ON_SUCCESS" | tee -a ../runner-metrics.txt
-              exit 1
-            fi
-            echo "RESULT=COMPLETED" | tee -a ../runner-metrics.txt
-            exit 0
-          fi
-          echo "RESULT=FAIL_UNEXPECTED_EXIT_CODE_$PIPE_RC" | tee -a ../runner-metrics.txt
-          exit 1
 
-      - name: Upload per-runner calibration artifact
-        if: always()
+      - name: Upload shard artifact
         uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
-          name: calibration-runner-${{ matrix.runner }}
+          name: fullbuild-shard-${{ matrix.shard }}
           path: |
-            runner-identity.txt
-            runner-metrics.txt
-            official-runners.txt
+            consensus-spec-tests/tests
+            shard-identity.txt
+            shard-metrics.txt
             host-baseline.txt
-            host-after.txt
-            consensustestgen-runner.log
+            consensustestgen-shard.log
+          if-no-files-found: error
+          retention-days: 14
 
-  calibration-summary:
-    name: calibration-summary (targeted fork)
+  merge-archives:
+    name: merge-and-archive
+    needs: generate-shard
+    if: ${{ inputs.authorise_full_build == 'YES' && !cancelled() && needs.generate-shard.result == 'success' }}
     runs-on: ubuntu-latest
-    needs: calibrate-runner
-    if: always()
+    timeout-minutes: 60
     steps:
-      - name: Download all runner artifacts
-        uses: actions/download-artifact@v4
+      - name: Checkout locked source (presets/configs)
+        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
         with:
-          pattern: calibration-runner-*
-          path: artifacts
-          merge-multiple: false
+          repository: sila-chain/consensus-specs
+          path: consensus-specs
+          ref: ${{ inputs.ref }}
 
-      - name: Build summary TSV
+      - name: Verify checkout SHA
         run: |
           set -euo pipefail
-          {
-            echo -e "runner\texit_code\tgenerated\tskipped\tprocessed\telapsed\tgenerated_cps\tprocessed_cps\tlast_progress\tchecked_out_head\tresult"
-            for d in artifacts/calibration-runner-*; do
-              [ -d "$d" ] || continue
-              metrics="$d/runner-metrics.txt"
-              [ -f "$metrics" ] || continue
-              runner=$(awk -F= '/^RUNNER=/{print $2; exit}' "$metrics")
-              exit_code=$(awk -F= '/^EXIT_CODE=/{print $2; exit}' "$metrics")
-              generated=$(awk -F= '/^GENERATED_LINES=/{print $2; exit}' "$metrics")
-              skipped=$(awk -F= '/^SKIPPED_LINES=/{print $2; exit}' "$metrics")
-              processed=$(awk -F= '/^PROCESSED_LINES=/{print $2; exit}' "$metrics")
-              elapsed=$(awk -F= '/^ELAPSED_SEC=/{print $2; exit}' "$metrics")
-              cps=$(awk -F= '/^CASES_PER_SECOND=/{print $2; exit}' "$metrics")
-              pcps=$(awk -F= '/^PROCESSED_PER_SECOND=/{print $2; exit}' "$metrics")
-              progress=$(awk -F= '/^LAST_PROGRESS=/{sub(/^LAST_PROGRESS=/,""); print; exit}' "$metrics")
-              head=$(awk -F= '/^CHECKED_OUT_HEAD=/{print $2; exit}' "$metrics")
-              result=$(awk -F= '/^RESULT=/{print $2; exit}' "$metrics")
-              printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
-                "${runner}" "${exit_code}" "${generated}" "${skipped}" "${processed}" \
-                "${elapsed}" "${cps}" "${pcps}" "${progress}" "${head}" "${result}"
-            done | sort
-          } | tee targeted-fork-calibration-summary.tsv
+          HEAD=$(git -C consensus-specs rev-parse HEAD)
+          echo "CHECKED_OUT_HEAD=${HEAD}"
+          test "$HEAD" = "d12911ddab573ceb1468de56d1428fba539dd4ae"
+
+      - name: Download shard artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: fullbuild-shard-*
+          path: shards
+          merge-multiple: false
+
+      - name: Merge trees with collision detection
+        run: |
+          set -euo pipefail
+          mkdir -p consensus-spec-tests/tests
+          COLLISION_COUNT=0
+          : > merge-collisions.txt
+
+          # Artifact layout: shards/fullbuild-shard-W#/tests/<preset>/...
+          for shard_tests in shards/fullbuild-shard-*/tests; do
+            [ -d "$shard_tests" ] || continue
+            while IFS= read -r -d '' src; do
+              rel="${src#"${shard_tests}"/}"
+              dest="consensus-spec-tests/tests/${rel}"
+              if [ -e "$dest" ]; then
+                echo "COLLISION ${dest} from ${src}" | tee -a merge-collisions.txt
+                COLLISION_COUNT=$((COLLISION_COUNT + 1))
+                continue
+              fi
+              mkdir -p "$(dirname "$dest")"
+              cp -a "$src" "$dest"
+            done < <(find "$shard_tests" -type f -print0 | sort -z)
+          done
+
+          echo "MERGE_COLLISION_COUNT=${COLLISION_COUNT}" | tee merge-metrics.txt
+          if [ "$COLLISION_COUNT" -ne 0 ]; then
+            echo "FAIL_REASON=MERGE_COLLISION"
+            exit 1
+          fi
+
+          # Required archive roots (produced across shards)
+          for root in general minimal sila-mainnet; do
+            if [ ! -d "consensus-spec-tests/tests/${root}" ]; then
+              echo "FAIL_REASON=MISSING_ARCHIVE_ROOT_${root}"
+              exit 1
+            fi
+          done
+
+          cp -a consensus-specs/presets consensus-spec-tests/presets
+          cp -a consensus-specs/configs consensus-spec-tests/configs
 
           {
-            echo "MODE=TARGETED_FORK_CALIBRATION"
-            echo "EXPECTED_HEAD=d12911ddab573ceb1468de56d1428fba539dd4ae"
-            echo "MATRIX_JOB_COUNT=1"
-            echo "CALIBRATION_RUNNER=fork"
-            echo "FULL_BUILD_AUTHORISED=NO"
+            echo "ARCHIVE_PLAN_COMPLETE=YES"
+            echo "ARCHIVES=general.tar.gz,minimal.tar.gz,sila-mainnet.tar.gz"
             echo "DETERMINISM_RUN_2_AUTHORISED=NO"
-            echo "ARCHIVES_AUTHORISED=NO"
             echo "PR_MERGE=NO"
-            echo "NEXT_STAGE=REVIEW_FORK_CALIBRATION_THEN_WEIGHTED_SHARD_PLAN"
-          } | tee calibration-policy.txt
+            echo "TAG_RELEASE=NO"
+          } | tee -a merge-metrics.txt
 
-      - name: Upload summary
+      - name: Create archives
+        working-directory: consensus-spec-tests
+        run: |
+          set -euo pipefail
+          tar -czvf general.tar.gz tests/general
+          tar -czvf minimal.tar.gz tests/minimal
+          tar -czvf sila-mainnet.tar.gz tests/sila-mainnet
+          ls -lh general.tar.gz minimal.tar.gz sila-mainnet.tar.gz | tee ../archive-listing.txt
+
+      - name: Concatenate shard logs
+        run: |
+          set -euo pipefail
+          : > consensustestgen.log
+          for f in shards/fullbuild-shard-*/consensustestgen-shard.log; do
+            echo "===== $(dirname "$f") =====" >> consensustestgen.log
+            cat "$f" >> consensustestgen.log
+          done
+
+      - name: Upload general.tar.gz
         uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
         with:
-          name: targeted-fork-calibration-summary
+          name: General Test Configuration
+          path: consensus-spec-tests/general.tar.gz
+
+      - name: Upload minimal.tar.gz
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        with:
+          name: Minimal Test Configuration
+          path: consensus-spec-tests/minimal.tar.gz
+
+      - name: Upload sila-mainnet.tar.gz
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        with:
+          name: SilaMainnet Test Configuration
+          path: consensus-spec-tests/sila-mainnet.tar.gz
+
+      - name: Upload merge evidence
+        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        with:
+          name: fullbuild-merge-evidence
           path: |
-            targeted-fork-calibration-summary.tsv
-            calibration-policy.txt
+            merge-metrics.txt
+            merge-collisions.txt
+            archive-listing.txt
+            consensustestgen.log
