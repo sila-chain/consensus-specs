@@ -5,7 +5,7 @@ name: Nightly Reference Tests
 # Locked plan:
 #   GEN_REF / EXPECTED_HEAD = d12911ddab573ceb1468de56d1428fba539dd4ae
 #   SHARD_COUNT=10
-#   THREADS_PER_SHARD=2
+#   THREADS_PER_SHARD=2 (hard-locked; any other dispatch value fails preflight)
 #   TIMEOUT_PER_SHARD=120 minutes
 #   FAIL_FAST=false
 #   workflow_dispatch only
@@ -22,6 +22,11 @@ name: Nightly Reference Tests
 #   W9  ssz_generic,light_client,merkle_proof
 #   W10 fork
 #
+# Determinism policy:
+#   DETERMINISM_COMPARE_TARGET=UNPACKED_TREE_MANIFEST
+#   tar.gz archives are distribution artifacts only; Run1/Run2 compare
+#   sorted path+size+sha256 manifests (not archive bytes).
+#
 # Gates still locked:
 #   FULL_BUILD_AUTHORISED requires input authorise_full_build=YES
 #   DETERMINISM_RUN_2=NO  PR_MERGE=NO  MAIN_MODIFICATION=NO  TAG_RELEASE=NO
@@ -35,7 +40,7 @@ on:
         type: string
         required: true
       threads:
-        description: Worker threads per shard
+        description: Must be exactly 2 (hard-locked)
         default: "2"
         type: string
         required: true
@@ -54,10 +59,10 @@ jobs:
       gate: ${{ steps.gate.outputs.gate }}
     steps:
       - name: Checkout workflow tree (for inventory helpers only)
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Checkout locked generation source
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: sila-chain/consensus-specs
           path: locked-src
@@ -69,6 +74,7 @@ jobs:
           EXPECTED_HEAD: d12911ddab573ceb1468de56d1428fba539dd4ae
           GEN_REF: ${{ inputs.ref }}
           AUTHORISE: ${{ inputs.authorise_full_build }}
+          THREADS_INPUT: ${{ inputs.threads }}
         run: |
           set -euo pipefail
           HEAD=$(git -C locked-src rev-parse HEAD)
@@ -78,6 +84,7 @@ jobs:
             echo "EXPECTED_HEAD=${EXPECTED_HEAD}"
             echo "CHECKED_OUT_HEAD=${HEAD}"
             echo "AUTHORISE_FULL_BUILD=${AUTHORISE}"
+            echo "THREADS_INPUT=${THREADS_INPUT}"
             echo "WORKFLOW_SHA=${{ github.sha }}"
           } | tee static-preflight-identity.txt
 
@@ -86,6 +93,12 @@ jobs:
             exit 1
           fi
 
+          if [ "${THREADS_INPUT}" != "2" ]; then
+            echo "FAIL_REASON=THREADS_NOT_LOCKED_TO_2 actual=${THREADS_INPUT}"
+            exit 1
+          fi
+          echo "THREADS_EXACT=2" | tee -a static-preflight-identity.txt
+
           python3 - <<'PY' | tee static-preflight-report.txt
           import re
           from collections import Counter
@@ -93,6 +106,7 @@ jobs:
 
           locked = Path("locked-src")
           runners_dir = locked / "tests/generators/runners"
+          wf = Path(".github/workflows/nightly-reftests.yml").read_text(encoding="utf-8")
 
           official: set[str] = set()
           for path in sorted(runners_dir.glob("*.py")):
@@ -104,8 +118,6 @@ jobs:
               official.update(re.findall(r'runner_name\s*=\s*["\']([^"\']+)["\']', text))
               official.update(re.findall(r'get_test_cases_for\s*\(\s*["\']([^"\']+)["\']', text))
 
-          # Shard assignment: runner -> list of (shard, presets|None)
-          # presets=None means all presets for that runner.
           assignment = {
               "W1": [("ssz_static", None)],
               "W2": [("fork_choice", ("minimal",)), ("shuffling", None)],
@@ -132,58 +144,86 @@ jobs:
           assigned_set = set(assigned_runners)
           missing = sorted(official - assigned_set)
           dup_runners = sorted([r for r, n in Counter(assigned_runners).items() if n > 1])
-          # fork_choice is intentionally split across W2/W3 — not a duplicate coverage defect
           intentional_split = {"fork_choice"}
           duplicate_runner_count = len([r for r in dup_runners if r not in intentional_split])
 
-          # Output-path / merge collision model:
-          # paths are preset/fork/runner/... so collisions require same runner AND overlapping presets.
           output_collisions = []
           for runner, entries in runner_shard_presets.items():
               if len(entries) < 2:
                   continue
-              # Expand preset coverage per shard entry
-              expanded: list[tuple[str, frozenset[str] | None]] = []
+              expanded = []
               for shard, presets in entries:
-                  if presets is None:
-                      expanded.append((shard, None))  # all presets
-                  else:
-                      expanded.append((shard, frozenset(presets)))
+                  expanded.append((shard, None if presets is None else frozenset(presets)))
               for i in range(len(expanded)):
                   for j in range(i + 1, len(expanded)):
                       s1, p1 = expanded[i]
                       s2, p2 = expanded[j]
                       if p1 is None or p2 is None:
-                          # any "all presets" overlaps everything for this runner
                           output_collisions.append((runner, s1, s2, "PRESET_OVERLAP_ALL"))
                       elif p1 & p2:
                           output_collisions.append((runner, s1, s2, sorted(p1 & p2)))
 
-          # fork_choice partition structural gate (W2 minimal vs W3 sila-mainnet)
           fc = runner_shard_presets.get("fork_choice", [])
-          fc_presets = []
-          for shard, presets in fc:
+          fc_preset_values = []
+          for _shard, presets in fc:
               if presets is None:
-                  fc_presets.append((shard, None))
+                  fc_preset_values.append(None)
               else:
-                  fc_presets.extend((shard, p) for p in presets)
-          fc_preset_values = [p for _, p in fc_presets if p is not None]
+                  fc_preset_values.extend(presets)
           fork_choice_partition_gate = (
-              sorted(fc_preset_values) == ["minimal", "sila-mainnet"]
-              and len(fc_preset_values) == 2
+              sorted(p for p in fc_preset_values if p is not None) == ["minimal", "sila-mainnet"]
+              and None not in fc_preset_values
               and len(set(fc_preset_values)) == 2
-              and all(p is not None for _, p in fc_presets)
           )
 
-          archive_plan = [
-              "tests/general -> general.tar.gz",
-              "tests/minimal -> minimal.tar.gz",
-              "tests/sila-mainnet -> sila-mainnet.tar.gz",
-              "copy presets/ and configs/ from locked source into consensus-spec-tests/",
-              "upload three archives + merged generation log",
-          ]
+          # Artifact layout: dedicated tests artifact per shard
+          artifact_layout_gate = (
+              "name: fullbuild-shard-${{ matrix.shard }}-tests" in wf
+              and "path: consensus-spec-tests/tests" in wf
+              and "shards/fullbuild-shard-*-tests/tests" in wf
+              and "DOWNLOADED_SHARD_TEST_ROOT_COUNT" in wf
+          )
 
-          source_change_count = 0  # generation source is checked out at EXPECTED_HEAD; workflow-only delta lives on CI branch
+          # Action pins: full 40-char SHAs, no floating tags
+          required_pins = {
+              "actions/checkout": "3d3c42e5aac5ba805825da76410c181273ba90b1",
+              "actions/setup-python": "5fda3b95a4ea91299a34e894583c3862153e4b97",
+              "actions/upload-artifact": "043fb46d1a93c77aae656e7c1c64a875d1fc6a0a",
+              "actions/download-artifact": "3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c",
+              "astral-sh/setup-uv": "c771a70e6277c0a99b617c7a806ffedaca235ff9",
+          }
+          pin_ok = True
+          for action, sha in required_pins.items():
+              if f"{action}@{sha}" not in wf:
+                  pin_ok = False
+          floating = bool(re.search(r"uses:\s*actions/(checkout|setup-python|upload-artifact|download-artifact)@v\d", wf))
+          floating = floating or bool(re.search(r"uses:\s*astral-sh/setup-uv@v\d", wf))
+          short_sha = bool(re.search(r"uses:\s*(actions|astral-sh)/[^@\s]+@[0-9a-f]{7,39}(?![0-9a-f])", wf))
+
+          threads_exact = (
+              'if [ "${THREADS_INPUT}" != "2" ]' in wf
+              and "GEN_THREADS: \"2\"" in wf
+          )
+
+          tree_manifest_plan = (
+              "tree-manifest.tsv" in wf
+              and "SHA256SUMS" in wf
+              and "DETERMINISM_COMPARE_TARGET=UNPACKED_TREE_MANIFEST" in wf
+          )
+
+          archive_plan = all(
+              x in wf
+              for x in [
+                  "general.tar.gz",
+                  "minimal.tar.gz",
+                  "sila-mainnet.tar.gz",
+                  "consensus-specs/presets",
+                  "consensus-specs/configs",
+                  "DETERMINISM_COMPARE_TARGET=UNPACKED_TREE_MANIFEST",
+              ]
+          )
+
+          source_change_count = 0
 
           report = {
               "ASSIGNED_RUNNER_COUNT": len(assigned_set),
@@ -194,32 +234,45 @@ jobs:
               "FORK_CHOICE_PARTITION_GATE": "PASS" if fork_choice_partition_gate else "FAIL",
               "OUTPUT_PATH_COLLISION_COUNT": len(output_collisions),
               "MERGE_COLLISION_COUNT": len(output_collisions),
-              "ARCHIVE_PLAN_COMPLETE": "YES" if len(archive_plan) == 5 else "NO",
+              "ARTIFACT_LAYOUT_GATE": "PASS" if artifact_layout_gate else "FAIL",
+              "DOWNLOADED_SHARD_TEST_ROOT_COUNT_PLAN": 10,
+              "THREADS_EXACT": 2 if threads_exact else 0,
+              "ALL_ACTIONS_LATEST_OFFICIAL_STABLE": "PASS" if pin_ok and not floating else "FAIL",
+              "ALL_ACTIONS_PINNED_BY_FULL_SHA": "PASS" if pin_ok and not short_sha and not floating else "FAIL",
+              "TREE_MANIFEST_PLAN": "PASS" if tree_manifest_plan else "FAIL",
+              "SHA256SUMS_PLAN": "PASS" if "SHA256SUMS" in wf else "FAIL",
+              "DETERMINISM_EVIDENCE_GATE": "PASS" if tree_manifest_plan and archive_plan else "FAIL",
+              "ARCHIVE_PLAN_COMPLETE": "YES" if archive_plan else "NO",
               "SOURCE_CHANGE_COUNT": source_change_count,
               "SHARD_COUNT": len(assignment),
-              "INTENTIONAL_SPLIT_RUNNERS": sorted(intentional_split),
               "MISSING_RUNNERS": missing,
               "UNKNOWN_RUNNERS": unknown,
               "OUTPUT_COLLISIONS": output_collisions,
-              "ARCHIVE_PLAN": archive_plan,
+              "ACTION_PINS": required_pins,
               "OFFICIAL_RUNNERS": sorted(official),
               "ASSIGNED_RUNNERS": sorted(assigned_set),
           }
 
-          unknown_count = (
-              report["MISSING_RUNNER_COUNT"]
-              + report["DUPLICATE_RUNNER_COUNT"]
-              + report["UNKNOWN_RUNNER_COUNT"]
-              + report["OUTPUT_PATH_COLLISION_COUNT"]
-              + (0 if fork_choice_partition_gate else 1)
-              + (0 if report["ARCHIVE_PLAN_COMPLETE"] == "YES" else 1)
-              + report["SOURCE_CHANGE_COUNT"]
-              + (0 if report["ASSIGNED_RUNNER_COUNT"] == 19 else 1)
-              + (0 if report["SHARD_COUNT"] == 10 else 1)
-          )
-          report["UNKNOWN_COUNT"] = unknown_count
-          gate = "PASS" if unknown_count == 0 else "FAIL"
-          report["STATIC_FULL_BUILD_GATE"] = gate
+          fail_bits = [
+              report["MISSING_RUNNER_COUNT"],
+              report["DUPLICATE_RUNNER_COUNT"],
+              report["UNKNOWN_RUNNER_COUNT"],
+              report["OUTPUT_PATH_COLLISION_COUNT"],
+              0 if fork_choice_partition_gate else 1,
+              0 if artifact_layout_gate else 1,
+              0 if threads_exact else 1,
+              0 if report["ALL_ACTIONS_LATEST_OFFICIAL_STABLE"] == "PASS" else 1,
+              0 if report["ALL_ACTIONS_PINNED_BY_FULL_SHA"] == "PASS" else 1,
+              0 if report["TREE_MANIFEST_PLAN"] == "PASS" else 1,
+              0 if report["SHA256SUMS_PLAN"] == "PASS" else 1,
+              0 if report["DETERMINISM_EVIDENCE_GATE"] == "PASS" else 1,
+              0 if report["ARCHIVE_PLAN_COMPLETE"] == "YES" else 1,
+              report["SOURCE_CHANGE_COUNT"],
+              0 if report["ASSIGNED_RUNNER_COUNT"] == 19 else 1,
+              0 if report["SHARD_COUNT"] == 10 else 1,
+          ]
+          report["UNKNOWN_COUNT"] = sum(fail_bits)
+          report["STATIC_FULL_BUILD_GATE"] = "PASS" if report["UNKNOWN_COUNT"] == 0 else "FAIL"
 
           for k in [
               "ASSIGNED_RUNNER_COUNT",
@@ -229,6 +282,14 @@ jobs:
               "FORK_CHOICE_PARTITION_GATE",
               "OUTPUT_PATH_COLLISION_COUNT",
               "MERGE_COLLISION_COUNT",
+              "ARTIFACT_LAYOUT_GATE",
+              "DOWNLOADED_SHARD_TEST_ROOT_COUNT_PLAN",
+              "THREADS_EXACT",
+              "ALL_ACTIONS_LATEST_OFFICIAL_STABLE",
+              "ALL_ACTIONS_PINNED_BY_FULL_SHA",
+              "TREE_MANIFEST_PLAN",
+              "SHA256SUMS_PLAN",
+              "DETERMINISM_EVIDENCE_GATE",
               "ARCHIVE_PLAN_COMPLETE",
               "SOURCE_CHANGE_COUNT",
               "UNKNOWN_COUNT",
@@ -236,19 +297,19 @@ jobs:
               "SHARD_COUNT",
           ]:
               print(f"{k}={report[k]}")
-          print(f"OFFICIAL_CLI_RUNNER_COUNT={report['OFFICIAL_CLI_RUNNER_COUNT']}")
-          print("ASSIGNED_RUNNERS=" + ",".join(report["ASSIGNED_RUNNERS"]))
-          if gate != "PASS":
-              raise SystemExit("STATIC_FULL_BUILD_GATE=FAIL")
+
           Path("static-preflight-details.txt").write_text(
-              "\n".join(f"{k}={report[k]}" for k in sorted(report)) + "\n"
+              "\n".join(f"{k}={report[k]}" for k in sorted(report, key=str)) + "\n",
+              encoding="utf-8",
           )
+          if report["STATIC_FULL_BUILD_GATE"] != "PASS":
+              raise SystemExit("STATIC_FULL_BUILD_GATE=FAIL")
           PY
 
           echo "gate=PASS" >> "$GITHUB_OUTPUT"
 
       - name: Upload static preflight evidence
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: static-full-build-preflight
           path: |
@@ -313,7 +374,8 @@ jobs:
       GEN_REPO: sila-chain/consensus-specs
       GEN_REF: ${{ inputs.ref }}
       EXPECTED_HEAD: d12911ddab573ceb1468de56d1428fba539dd4ae
-      GEN_THREADS: ${{ inputs.threads }}
+      # Hard-locked — do not read inputs.threads here.
+      GEN_THREADS: "2"
       SHARD_ID: ${{ matrix.shard }}
       SHARD_MODE: ${{ matrix.mode }}
       SHARD_RUNNERS: ${{ matrix.runners }}
@@ -324,13 +386,13 @@ jobs:
 
     steps:
       - name: Checkout locked source
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: ${{ env.GEN_REPO }}
           path: consensus-specs
           ref: ${{ env.GEN_REF }}
 
-      - name: Verify checkout SHA
+      - name: Verify checkout SHA and thread lock
         working-directory: consensus-specs
         run: |
           set -euo pipefail
@@ -345,11 +407,16 @@ jobs:
             echo "EXPECTED_HEAD=${EXPECTED_HEAD}"
             echo "CHECKED_OUT_HEAD=${HEAD}"
             echo "THREADS=${GEN_THREADS}"
+            echo "THREADS_EXACT=2"
             echo "WORKFLOW_SHA=${{ github.sha }}"
             echo "DETERMINISM_RUN_2_AUTHORISED=NO"
           } | tee ../shard-identity.txt
           if [ "$HEAD" != "$EXPECTED_HEAD" ]; then
             echo "FAIL_REASON=CHECKOUT_SHA_MISMATCH"
+            exit 1
+          fi
+          if [ "${GEN_THREADS}" != "2" ]; then
+            echo "FAIL_REASON=THREADS_NOT_LOCKED_TO_2"
             exit 1
           fi
 
@@ -363,12 +430,12 @@ jobs:
           } | tee host-baseline.txt
 
       - name: Set up Python
-        uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version-file: consensus-specs/pyproject.toml
 
       - name: Install uv ${{ vars.UV_VERSION }}
-        uses: astral-sh/setup-uv@5a7eac68fb9809dea845d802897dc5c723910fa3 # v7.1.3
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
         with:
           enable-cache: true
           version: ${{ vars.UV_VERSION }}
@@ -419,18 +486,25 @@ jobs:
             echo "RESULT=COMPLETED"
           } | tee -a ../shard-metrics.txt
 
-          # Ensure tests landed under shared output dir used by make
           if [ ! -d ../consensus-spec-tests/tests ]; then
             echo "FAIL_REASON=MISSING_TESTS_OUTPUT"
             exit 1
           fi
 
-      - name: Upload shard artifact
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+      # Dedicated tests artifact: root contains tests/ only (no meta co-paths).
+      - name: Upload shard tests artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: fullbuild-shard-${{ matrix.shard }}
+          name: fullbuild-shard-${{ matrix.shard }}-tests
+          path: consensus-spec-tests/tests
+          if-no-files-found: error
+          retention-days: 14
+
+      - name: Upload shard meta artifact
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: fullbuild-shard-${{ matrix.shard }}-meta
           path: |
-            consensus-spec-tests/tests
             shard-identity.txt
             shard-metrics.txt
             host-baseline.txt
@@ -446,7 +520,7 @@ jobs:
     timeout-minutes: 60
     steps:
       - name: Checkout locked source (presets/configs)
-        uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: sila-chain/consensus-specs
           path: consensus-specs
@@ -459,12 +533,39 @@ jobs:
           echo "CHECKED_OUT_HEAD=${HEAD}"
           test "$HEAD" = "d12911ddab573ceb1468de56d1428fba539dd4ae"
 
-      - name: Download shard artifacts
-        uses: actions/download-artifact@v4
+      - name: Download shard test artifacts
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:
-          pattern: fullbuild-shard-*
+          pattern: fullbuild-shard-*-tests
           path: shards
           merge-multiple: false
+
+      - name: Download shard meta artifacts
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          pattern: fullbuild-shard-*-meta
+          path: shard-meta
+          merge-multiple: false
+
+      - name: Verify downloaded shard test roots
+        run: |
+          set -euo pipefail
+          # Expected layout after dedicated tests upload + merge-multiple:false:
+          #   shards/fullbuild-shard-W*-tests/tests/...
+          mapfile -t ROOTS < <(compgen -G 'shards/fullbuild-shard-*-tests/tests' | sort || true)
+          DOWNLOADED_SHARD_TEST_ROOT_COUNT=${#ROOTS[@]}
+          {
+            echo "ARTIFACT_LAYOUT_EXPECTED=shards/fullbuild-shard-*-tests/tests"
+            echo "DOWNLOADED_SHARD_TEST_ROOT_COUNT=${DOWNLOADED_SHARD_TEST_ROOT_COUNT}"
+            printf 'ROOT=%s\n' "${ROOTS[@]}"
+          } | tee merge-layout.txt
+
+          if [ "${DOWNLOADED_SHARD_TEST_ROOT_COUNT}" -ne 10 ]; then
+            echo "FAIL_REASON=DOWNLOADED_SHARD_TEST_ROOT_COUNT_MISMATCH"
+            find shards -maxdepth 3 -type d | sort | tee -a merge-layout.txt || true
+            exit 1
+          fi
+          echo "ARTIFACT_LAYOUT_GATE=PASS" | tee -a merge-layout.txt
 
       - name: Merge trees with collision detection
         run: |
@@ -473,8 +574,7 @@ jobs:
           COLLISION_COUNT=0
           : > merge-collisions.txt
 
-          # Artifact layout: shards/fullbuild-shard-W#/tests/<preset>/...
-          for shard_tests in shards/fullbuild-shard-*/tests; do
+          for shard_tests in shards/fullbuild-shard-*-tests/tests; do
             [ -d "$shard_tests" ] || continue
             while IFS= read -r -d '' src; do
               rel="${src#"${shard_tests}"/}"
@@ -495,7 +595,6 @@ jobs:
             exit 1
           fi
 
-          # Required archive roots (produced across shards)
           for root in general minimal sila-mainnet; do
             if [ ! -d "consensus-spec-tests/tests/${root}" ]; then
               echo "FAIL_REASON=MISSING_ARCHIVE_ROOT_${root}"
@@ -509,53 +608,103 @@ jobs:
           {
             echo "ARCHIVE_PLAN_COMPLETE=YES"
             echo "ARCHIVES=general.tar.gz,minimal.tar.gz,sila-mainnet.tar.gz"
+            echo "DETERMINISM_COMPARE_TARGET=UNPACKED_TREE_MANIFEST"
+            echo "TAR_GZ_BYTEWISE_COMPARE=NO"
             echo "DETERMINISM_RUN_2_AUTHORISED=NO"
             echo "PR_MERGE=NO"
             echo "TAG_RELEASE=NO"
           } | tee -a merge-metrics.txt
 
-      - name: Create archives
+      - name: Build deterministic tree manifest and SHA256SUMS
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import hashlib
+          from pathlib import Path
+
+          root = Path("consensus-spec-tests/tests")
+          rows = []
+          for path in sorted(p for p in root.rglob("*") if p.is_file()):
+              rel = path.as_posix()
+              data = path.read_bytes()
+              digest = hashlib.sha256(data).hexdigest()
+              rows.append(f"{rel}\t{path.stat().st_size}\t{digest}")
+
+          manifest = Path("tree-manifest.tsv")
+          manifest.write_text(
+              "path\tsize\tsha256\n" + "\n".join(rows) + ("\n" if rows else ""),
+              encoding="utf-8",
+          )
+
+          # SHA256SUMS over every file in the unpacked tests tree (relative paths),
+          # plus the manifest itself for integrity of the evidence package.
+          lines = []
+          for path in sorted(p for p in root.rglob("*") if p.is_file()):
+              digest = hashlib.sha256(path.read_bytes()).hexdigest()
+              lines.append(f"{digest}  {path.as_posix()}")
+          manifest_digest = hashlib.sha256(manifest.read_bytes()).hexdigest()
+          lines.append(f"{manifest_digest}  tree-manifest.tsv")
+          Path("SHA256SUMS").write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+          print(f"TREE_MANIFEST_FILE_COUNT={len(rows)}")
+          print(f"TREE_MANIFEST_SHA256={manifest_digest}")
+          print("DETERMINISM_COMPARE_TARGET=UNPACKED_TREE_MANIFEST")
+          print("TREE_MANIFEST_PLAN=PASS")
+          print("SHA256SUMS_PLAN=PASS")
+          PY
+
+      - name: Create distribution archives (not bytewise-compared)
         working-directory: consensus-spec-tests
         run: |
           set -euo pipefail
+          # Archives are for distribution/consumption only.
+          # Run1/Run2 determinism compares tree-manifest.tsv / SHA256SUMS.
           tar -czvf general.tar.gz tests/general
           tar -czvf minimal.tar.gz tests/minimal
           tar -czvf sila-mainnet.tar.gz tests/sila-mainnet
-          ls -lh general.tar.gz minimal.tar.gz sila-mainnet.tar.gz | tee ../archive-listing.txt
+          {
+            echo "TAR_GZ_BYTEWISE_COMPARE=NO"
+            echo "DETERMINISM_COMPARE_TARGET=UNPACKED_TREE_MANIFEST"
+            ls -lh general.tar.gz minimal.tar.gz sila-mainnet.tar.gz
+          } | tee ../archive-listing.txt
 
       - name: Concatenate shard logs
         run: |
           set -euo pipefail
           : > consensustestgen.log
-          for f in shards/fullbuild-shard-*/consensustestgen-shard.log; do
+          for f in shard-meta/fullbuild-shard-*-meta/consensustestgen-shard.log; do
+            [ -f "$f" ] || continue
             echo "===== $(dirname "$f") =====" >> consensustestgen.log
             cat "$f" >> consensustestgen.log
           done
 
       - name: Upload general.tar.gz
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: General Test Configuration
           path: consensus-spec-tests/general.tar.gz
 
       - name: Upload minimal.tar.gz
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: Minimal Test Configuration
           path: consensus-spec-tests/minimal.tar.gz
 
       - name: Upload sila-mainnet.tar.gz
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: SilaMainnet Test Configuration
           path: consensus-spec-tests/sila-mainnet.tar.gz
 
-      - name: Upload merge evidence
-        uses: actions/upload-artifact@330a01c490aca151604b8cf639adc76d48f6c5d4 # v5.0.0
+      - name: Upload determinism evidence
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: fullbuild-merge-evidence
+          name: fullbuild-determinism-evidence
           path: |
+            tree-manifest.tsv
+            SHA256SUMS
             merge-metrics.txt
+            merge-layout.txt
             merge-collisions.txt
             archive-listing.txt
             consensustestgen.log
