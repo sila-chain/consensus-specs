@@ -8,16 +8,14 @@ name: Nightly Reference Tests
 # Locked generation source: f37421391232170b69efeb90ace7a1bea34b03d5
 
 on:
-  push:
-    branches:
-      - ci/github-hosted-reftests
+  # Manual only: do not auto-start calibration on push after source fixes.
   workflow_dispatch:
     inputs:
       ref:
-        description: SHA/branch to generate from (must remain locked for calibration)
-        default: f37421391232170b69efeb90ace7a1bea34b03d5
+        description: SHA/branch to generate from (use repair commit after S3/S6 fixes)
+        default: ""
         type: string
-        required: true
+        required: false
       calibration_minutes:
         description: Hard timebox minutes per shard
         default: "10"
@@ -55,8 +53,8 @@ jobs:
             runners: kzg,light_client
     env:
       GEN_REPO: sila-chain/consensus-specs
-      GEN_REF: ${{ inputs.ref || 'f37421391232170b69efeb90ace7a1bea34b03d5' }}
-      EXPECTED_HEAD: f37421391232170b69efeb90ace7a1bea34b03d5
+      # Prefer explicit ref; otherwise the commit that contains this workflow file.
+      GEN_REF: ${{ inputs.ref || github.sha }}
       CALIBRATION_MINUTES: ${{ inputs.calibration_minutes || '10' }}
       GEN_THREADS: ${{ inputs.threads || '2' }}
       SHARD_ID: ${{ matrix.shard_id }}
@@ -84,7 +82,6 @@ jobs:
             echo "SHARD_RUNNERS=${SHARD_RUNNERS}"
             echo "GEN_REPO=${GEN_REPO}"
             echo "GEN_REF=${GEN_REF}"
-            echo "EXPECTED_HEAD=${EXPECTED_HEAD}"
             echo "CHECKED_OUT_HEAD=${HEAD}"
             echo "THREADS=${GEN_THREADS}"
             echo "CALIBRATION_MINUTES=${CALIBRATION_MINUTES}"
@@ -92,8 +89,9 @@ jobs:
             echo "EVENT_NAME=${{ github.event_name }}"
           } | tee ../shard-identity.txt
 
-          if [ "$HEAD" != "$EXPECTED_HEAD" ]; then
-            echo "CHECKOUT_SHA_MISMATCH"
+          # If GEN_REF is a full SHA, require exact checkout match.
+          if [[ "${GEN_REF}" =~ ^[0-9a-f]{40}$ ]] && [ "$HEAD" != "$GEN_REF" ]; then
+            echo "CHECKOUT_SHA_MISMATCH requested=${GEN_REF} actual=${HEAD}"
             echo "FAIL_REASON=CHECKOUT_SHA_MISMATCH" | tee -a ../shard-metrics.txt
             exit 1
           fi
@@ -199,7 +197,8 @@ jobs:
             echo "=== df -h (after) ==="; df -h
           } | tee ../host-after.txt
 
-          # RC 124 (timeout) is success only with real progress.
+          # Accept ONLY exit 0 (completed) or 124 (expected timebox).
+          # Any other RC is a hard failure (no false-green on generator errors).
           if [ "$PIPE_RC" -eq 124 ]; then
             if [ "${GENERATED:-0}" -eq 0 ] && [ "${SKIPPED:-0}" -eq 0 ]; then
               echo "FAIL_REASON=ZERO_PROGRESS" | tee -a ../shard-metrics.txt
@@ -216,17 +215,8 @@ jobs:
             echo "CALIBRATION_RESULT=SUBSET_COMPLETED" | tee -a ../shard-metrics.txt
             exit 0
           fi
-          # SIGTERM via make sometimes surfaces as 143 after timeout kill path
-          if [ "$PIPE_RC" -eq 143 ] && { [ "${GENERATED:-0}" -gt 0 ] || [ "${SKIPPED:-0}" -gt 0 ]; }; then
-            echo "CALIBRATION_RESULT=SIGNAL_143_WITH_PROGRESS" | tee -a ../shard-metrics.txt
-            exit 0
-          fi
-          if [ "${GENERATED:-0}" -eq 0 ] && [ "${SKIPPED:-0}" -eq 0 ]; then
-            echo "FAIL_REASON=ZERO_PROGRESS" | tee -a ../shard-metrics.txt
-            exit 1
-          fi
-          echo "CALIBRATION_RESULT=NONZERO_RC_WITH_PROGRESS_$PIPE_RC" | tee -a ../shard-metrics.txt
-          exit 0
+          echo "FAIL_REASON=UNEXPECTED_EXIT_CODE_$PIPE_RC" | tee -a ../shard-metrics.txt
+          exit 1
 
       - name: Upload shard calibration artifact
         if: always()
