@@ -399,149 +399,48 @@ wheels = [
 ]
 
 [[package]]
-name = "sil-hash"
-version = "0.7.1"
+name = "eth-hash"
+version = "0.8.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/ee/38/577b7bc9380ef9dff0f1dffefe0c9a1ded2385e7a06c306fd95afb6f9451/sil_hash-0.7.1.tar.gz", hash = "sha256:d2411a403a0b0a62e8247b4117932d900ffb4c8c64b15f92620547ca5ce46be5", size = 12227, upload-time = "2025-01-13T21:29:21.765Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/3c/f5/c67fc24f2f676aa9b7ab29679d44f113f314c817207cd4319353356f62da/eth_hash-0.8.0.tar.gz", hash = "sha256:b009752b620da2e9c7668014849d1f5fadbe4f138603f1871cc5d4ca706896b1", size = 12225, upload-time = "2026-03-25T16:36:55.099Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/eb/db/f8775490669d28aca24871c67dd56b3e72105cb3bcae9a4ec65dd70859b3/sil_hash-0.7.1-py3-none-any.whl", hash = "sha256:0fb1add2adf99ef28883fd6228eb447ef519ea72933535ad1a0b28c6f65f868a", size = 8028, upload-time = "2025-01-13T21:29:19.365Z" },
+    { url = "https://files.pythonhosted.org/packages/87/87/b36792150ca0b28e4df683a34be15a61461ca0e349e5b5cf3ec8f694edb9/eth_hash-0.8.0-py3-none-any.whl", hash = "sha256:523718a51b369ab89866b929a5c93c52978cd866ea309192ad980dd8271f9fac", size = 7965, upload-time = "2026-03-25T16:36:54.205Z" },
 ]
 
 [[package]]
-name = "sil-typing"
-version = "5.2.1"
+name = "eth-typing"
+version = "6.0.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "typing-extensions" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/60/54/62aa24b9cc708f06316167ee71c362779c8ed21fc8234a5cd94a8f53b623/sil_typing-5.2.1.tar.gz", hash = "sha256:7557300dbf02a93c70fa44af352b5c4a58f94e997a0fd6797fb7d1c29d9538ee", size = 21806, upload-time = "2025-04-14T20:39:28.217Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/37/e7/06c5af99ad40494f6d10126a9030ff4eb14c5b773f2a4076017efb0a163a/eth_typing-6.0.0.tar.gz", hash = "sha256:315dd460dc0b71c15a6cd51e3c0b70d237eec8771beb844144f3a1fb4adb2392", size = 21852, upload-time = "2026-03-25T16:41:57.444Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/30/72/c370bbe4c53da7bf998d3523f5a0f38867654923a82192df88d0705013d3/sil_typing-5.2.1-py3-none-any.whl", hash = "sha256:b0c2812ff978267563b80e9d701f487dd926f1d376d674f3b535cfe28b665d3d", size = 19163, upload-time = "2025-04-14T20:39:26.571Z" },
+    { url = "https://files.pythonhosted.org/packages/aa/0d/e756622fab29f404d846d7464f929d642a7ee6eff5b38bcc79e7c64ac630/eth_typing-6.0.0-py3-none-any.whl", hash = "sha256:ee74fb641eb36dd885e1c42c2a3055314efa532b3e71480816df70a94d35cfb9", size = 19191, upload-time = "2026-03-25T16:41:55.544Z" },
 ]
 
 [[package]]
-name = "sil-utils"
-version = "5.3.1"
+name = "eth-utils"
+version = "6.0.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "cytoolz", marker = "implementation_name == 'cpython'" },
-    { name = "sil-hash" },
-    { name = "sil-typing" },
+    { name = "eth-hash" },
+    { name = "eth-typing" },
     { name = "pydantic" },
     { name = "toolz", marker = "implementation_name == 'pypy'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/e6/e1/ee3a8728227c3558853e63ff35bd4c449abdf5022a19601369400deacd39/sil_utils-5.3.1.tar.gz", hash = "sha256:c94e2d2abd024a9a42023b4ddc1c645814ff3d6a737b33d5cfd890ebf159c2d1", size = 123506, upload-time = "2025-08-27T16:37:17.378Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/e9/1b/0b8548da7b31eba87ed58bca1d0de5dcb13a6c113e02c09019ec5a6716ed/eth_utils-6.0.0.tar.gz", hash = "sha256:eb54b2f82dd300d3142c49a89da195e823f5e5284d43203593f87c67bad92a96", size = 123457, upload-time = "2026-03-25T17:11:51.433Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/bf/4d/257cdc01ada430b8e84b9f2385c2553f33218f5b47da9adf0a616308d4b7/sil_utils-5.3.1-py3-none-any.whl", hash = "sha256:1f5476d8f29588d25b8ae4987e1ffdfae6d4c09026e476c4aad13b32dda3ead0", size = 102529, upload-time = "2025-08-27T16:37:15.449Z" },
+    { url = "https://files.pythonhosted.org/packages/53/45/a20b907227b9d1aea2e36f7b12818d055629ca9bc65fc282b45738f28ca3/eth_utils-6.0.0-py3-none-any.whl", hash = "sha256:63cf48ee32c45541cb5748751909a8345c470432fb6f0fed4bd7c53fd6400469", size = 102473, upload-time = "2026-03-25T17:11:49.953Z" },
 ]
-
-[[package]]
-name = "sil2spec"
-source = { editable = "." }
-dependencies = [
-    { name = "curdleproofs" },
-    { name = "sil-typing" },
-    { name = "sil-utils" },
-    { name = "frozendict" },
-    { name = "lru-dict" },
-    { name = "marko" },
-    { name = "milagro-bls-binding" },
-    { name = "py-arkworks-bls12381" },
-    { name = "py-ecc" },
-    { name = "pycryptodome" },
-    { name = "remerkleable" },
-    { name = "ruamel-yaml" },
-    { name = "setuptools" },
-    { name = "trie" },
-]
-
-[package.optional-dependencies]
-docs = [
-    { name = "mdx-truly-sane-lists" },
-    { name = "mkdocs" },
-    { name = "mkdocs-awesome-pages-plugin" },
-    { name = "mkdocs-gen-files" },
-    { name = "mkdocs-material" },
-]
-generator = [
-    { name = "filelock" },
-    { name = "minizinc" },
-    { name = "pathos" },
-    { name = "psutil" },
-    { name = "pytest" },
-    { name = "python-snappy" },
-    { name = "rich" },
-    { name = "tqdm" },
-]
-lint = [
-    { name = "codespell" },
-    { name = "mdformat" },
-    { name = "mdformat-gfm" },
-    { name = "mdformat-gfm-alerts" },
-    { name = "mdformat-ruff" },
-    { name = "mdformat-toc" },
-    { name = "mypy" },
-    { name = "ruff" },
-]
-test = [
-    { name = "deepdiff" },
-    { name = "pytest" },
-    { name = "pytest-cov" },
-    { name = "pytest-html" },
-    { name = "pytest-xdist" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "codespell", marker = "extra == 'lint'", specifier = "==2.4.1" },
-    { name = "curdleproofs", specifier = "==0.1.2" },
-    { name = "deepdiff", marker = "extra == 'test'", specifier = "==8.6.1" },
-    { name = "sil-typing", specifier = "==5.2.1" },
-    { name = "sil-utils", specifier = "==5.3.1" },
-    { name = "filelock", marker = "extra == 'generator'", specifier = "==3.19.1" },
-    { name = "frozendict", specifier = "==2.4.6" },
-    { name = "lru-dict", specifier = "==1.3.0" },
-    { name = "marko", specifier = "==2.2.0" },
-    { name = "mdformat", marker = "extra == 'lint'", specifier = "==0.7.22" },
-    { name = "mdformat-gfm", marker = "extra == 'lint'", specifier = "==0.4.1" },
-    { name = "mdformat-gfm-alerts", marker = "extra == 'lint'", specifier = "==2.0.0" },
-    { name = "mdformat-ruff", marker = "extra == 'lint'", specifier = "==0.1.3" },
-    { name = "mdformat-toc", marker = "extra == 'lint'", specifier = "==0.3.0" },
-    { name = "mdx-truly-sane-lists", marker = "extra == 'docs'", specifier = "==1.3" },
-    { name = "milagro-bls-binding", specifier = "==1.9.0" },
-    { name = "minizinc", marker = "extra == 'generator'", specifier = "==0.10.0" },
-    { name = "mkdocs", marker = "extra == 'docs'", specifier = "==1.6.1" },
-    { name = "mkdocs-awesome-pages-plugin", marker = "extra == 'docs'", specifier = "==2.10.1" },
-    { name = "mkdocs-gen-files", marker = "extra == 'docs'", specifier = "==0.5.0" },
-    { name = "mkdocs-material", marker = "extra == 'docs'", specifier = "==9.6.20" },
-    { name = "mypy", marker = "extra == 'lint'", specifier = "==1.18.2" },
-    { name = "pathos", marker = "extra == 'generator'", specifier = "==0.3.4" },
-    { name = "psutil", marker = "extra == 'generator'", specifier = "==7.1.0" },
-    { name = "py-arkworks-bls12381", specifier = "==0.3.8" },
-    { name = "py-ecc", specifier = "==8.0.0" },
-    { name = "pycryptodome", specifier = "==3.23.0" },
-    { name = "pytest", marker = "extra == 'generator'", specifier = "==8.4.2" },
-    { name = "pytest", marker = "extra == 'test'", specifier = "==8.4.2" },
-    { name = "pytest-cov", marker = "extra == 'test'", specifier = "==7.0.0" },
-    { name = "pytest-html", marker = "extra == 'test'", specifier = "==4.1.1" },
-    { name = "pytest-xdist", marker = "extra == 'test'", specifier = "==3.8.0" },
-    { name = "python-snappy", marker = "extra == 'generator'", specifier = "==0.7.3" },
-    { name = "remerkleable", git = "https://github.com/sila/remerkleable?rev=667eab00ecc3c25682c754dd72ad164fa8c1750e" },
-    { name = "rich", marker = "extra == 'generator'", specifier = "==14.1.0" },
-    { name = "ruamel-yaml", specifier = "==0.18.15" },
-    { name = "ruff", marker = "extra == 'lint'", specifier = "==0.13.2" },
-    { name = "setuptools", specifier = "==80.9.0" },
-    { name = "tqdm", marker = "extra == 'generator'", specifier = "==4.67.1" },
-    { name = "trie", specifier = "==3.1.0" },
-]
-provides-extras = ["test", "lint", "generator", "docs"]
 
 [[package]]
 name = "exceptiongroup"
 version = "1.3.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "typing-extensions", marker = "python_full_version < '3.13'" },
+    { name = "typing-extensions" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/0b/9f/a65090624ecf468cdca03533906e7c69ed7588582240cfe7cc9e770b50eb/exceptiongroup-1.3.0.tar.gz", hash = "sha256:b241f5885f560bc56a59ee63ca4c6a8bfa46ae4ad651af316d4e81817bb9fd88", size = 29749, upload-time = "2025-05-10T17:42:51.123Z" }
 wheels = [
@@ -1288,8 +1187,8 @@ name = "py-ecc"
 version = "8.0.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "sil-typing" },
-    { name = "sil-utils" },
+    { name = "eth-typing" },
+    { name = "eth-utils" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/1c/96/e73075d5c885274efada2fbc5db6377022036c2f5b4b470dbcf4106e07d5/py_ecc-8.0.0.tar.gz", hash = "sha256:56aca19e5dc37294f60c1cc76666c03c2276e7666412b9a559fa0145d099933d", size = 51193, upload-time = "2025-04-14T16:14:03.29Z" }
 wheels = [
@@ -1609,11 +1508,6 @@ wheels = [
 ]
 
 [[package]]
-name = "remerkleable"
-version = "0.1.28"
-source = { git = "https://github.com/sila/remerkleable?rev=71a94389375aa9afbe39145dcd26d4cddafa140d#71a94389375aa9afbe39145dcd26d4cddafa140d" }
-
-[[package]]
 name = "requests"
 version = "2.32.5"
 source = { registry = "https://pypi.org/simple" }
@@ -1646,7 +1540,7 @@ name = "rlp"
 version = "4.1.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "sil-utils" },
+    { name = "eth-utils" },
 ]
 sdist = { url = "https://files.pythonhosted.org/packages/1b/2d/439b0728a92964a04d9c88ea1ca9ebb128893fbbd5834faa31f987f2fd4c/rlp-4.1.0.tar.gz", hash = "sha256:be07564270a96f3e225e2c107db263de96b5bc1f27722d2855bd3459a08e95a9", size = 33429, upload-time = "2025-02-04T22:05:59.089Z" }
 wheels = [
@@ -1749,6 +1643,142 @@ wheels = [
 ]
 
 [[package]]
+name = "sil-hash"
+version = "0.8.0"
+source = { git = "https://github.com/sila-chain/sil-hash.git?rev=v0.8.0-sila.1#a01f6769d9f69d8872c61926fd4c9c459cdeb5aa" }
+
+[package.optional-dependencies]
+pycryptodome = [
+    { name = "pycryptodome" },
+]
+
+[[package]]
+name = "sil-remerkleable"
+version = "0.1.31"
+source = { git = "https://github.com/sila-chain/remerkleable.git?rev=b43ad33376c4a19377bfa2144d0e529715bcd47a#b43ad33376c4a19377bfa2144d0e529715bcd47a" }
+
+[[package]]
+name = "sil-typing"
+version = "6.0.0"
+source = { git = "https://github.com/sila-chain/sil-typing.git?rev=v6.0.0-sila.1#0737e57b60f6b67b70cfcffc59fe206bb0333f91" }
+dependencies = [
+    { name = "typing-extensions" },
+]
+
+[[package]]
+name = "sil-utils"
+version = "6.0.0"
+source = { git = "https://github.com/sila-chain/sil-utils.git?rev=a3fa24862e17f3815e665ca5fafef5d66c3ff42c#a3fa24862e17f3815e665ca5fafef5d66c3ff42c" }
+dependencies = [
+    { name = "cytoolz", marker = "implementation_name == 'cpython'" },
+    { name = "pydantic" },
+    { name = "sil-hash", extra = ["pycryptodome"] },
+    { name = "sil-typing" },
+    { name = "toolz", marker = "implementation_name == 'pypy'" },
+]
+
+[[package]]
+name = "sil2spec"
+source = { editable = "." }
+dependencies = [
+    { name = "curdleproofs" },
+    { name = "frozendict" },
+    { name = "lru-dict" },
+    { name = "marko" },
+    { name = "milagro-bls-binding" },
+    { name = "py-arkworks-bls12381" },
+    { name = "py-ecc" },
+    { name = "pycryptodome" },
+    { name = "ruamel-yaml" },
+    { name = "setuptools" },
+    { name = "sil-remerkleable" },
+    { name = "sil-typing" },
+    { name = "sil-utils" },
+    { name = "trie" },
+]
+
+[package.optional-dependencies]
+docs = [
+    { name = "mdx-truly-sane-lists" },
+    { name = "mkdocs" },
+    { name = "mkdocs-awesome-pages-plugin" },
+    { name = "mkdocs-gen-files" },
+    { name = "mkdocs-material" },
+]
+generator = [
+    { name = "filelock" },
+    { name = "minizinc" },
+    { name = "pathos" },
+    { name = "psutil" },
+    { name = "pytest" },
+    { name = "python-snappy" },
+    { name = "rich" },
+    { name = "tqdm" },
+]
+lint = [
+    { name = "codespell" },
+    { name = "mdformat" },
+    { name = "mdformat-gfm" },
+    { name = "mdformat-gfm-alerts" },
+    { name = "mdformat-ruff" },
+    { name = "mdformat-toc" },
+    { name = "mypy" },
+    { name = "ruff" },
+]
+test = [
+    { name = "deepdiff" },
+    { name = "pytest" },
+    { name = "pytest-cov" },
+    { name = "pytest-html" },
+    { name = "pytest-xdist" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "codespell", marker = "extra == 'lint'", specifier = "==2.4.1" },
+    { name = "curdleproofs", specifier = "==0.1.2" },
+    { name = "deepdiff", marker = "extra == 'test'", specifier = "==8.6.1" },
+    { name = "filelock", marker = "extra == 'generator'", specifier = "==3.19.1" },
+    { name = "frozendict", specifier = "==2.4.6" },
+    { name = "lru-dict", specifier = "==1.3.0" },
+    { name = "marko", specifier = "==2.2.0" },
+    { name = "mdformat", marker = "extra == 'lint'", specifier = "==0.7.22" },
+    { name = "mdformat-gfm", marker = "extra == 'lint'", specifier = "==0.4.1" },
+    { name = "mdformat-gfm-alerts", marker = "extra == 'lint'", specifier = "==2.0.0" },
+    { name = "mdformat-ruff", marker = "extra == 'lint'", specifier = "==0.1.3" },
+    { name = "mdformat-toc", marker = "extra == 'lint'", specifier = "==0.3.0" },
+    { name = "mdx-truly-sane-lists", marker = "extra == 'docs'", specifier = "==1.3" },
+    { name = "milagro-bls-binding", specifier = "==1.9.0" },
+    { name = "minizinc", marker = "extra == 'generator'", specifier = "==0.10.0" },
+    { name = "mkdocs", marker = "extra == 'docs'", specifier = "==1.6.1" },
+    { name = "mkdocs-awesome-pages-plugin", marker = "extra == 'docs'", specifier = "==2.10.1" },
+    { name = "mkdocs-gen-files", marker = "extra == 'docs'", specifier = "==0.5.0" },
+    { name = "mkdocs-material", marker = "extra == 'docs'", specifier = "==9.6.20" },
+    { name = "mypy", marker = "extra == 'lint'", specifier = "==1.18.2" },
+    { name = "pathos", marker = "extra == 'generator'", specifier = "==0.3.4" },
+    { name = "psutil", marker = "extra == 'generator'", specifier = "==7.1.0" },
+    { name = "py-arkworks-bls12381", specifier = "==0.3.8" },
+    { name = "py-ecc", specifier = "==8.0.0" },
+    { name = "pycryptodome", specifier = "==3.23.0" },
+    { name = "pytest", marker = "extra == 'generator'", specifier = "==8.4.2" },
+    { name = "pytest", marker = "extra == 'test'", specifier = "==8.4.2" },
+    { name = "pytest-cov", marker = "extra == 'test'", specifier = "==7.0.0" },
+    { name = "pytest-html", marker = "extra == 'test'", specifier = "==4.1.1" },
+    { name = "pytest-xdist", marker = "extra == 'test'", specifier = "==3.8.0" },
+    { name = "python-snappy", marker = "extra == 'generator'", specifier = "==0.7.3" },
+    { name = "rich", marker = "extra == 'generator'", specifier = "==14.1.0" },
+    { name = "ruamel-yaml", specifier = "==0.18.15" },
+    { name = "ruff", marker = "extra == 'lint'", specifier = "==0.13.2" },
+    { name = "setuptools", specifier = "==80.9.0" },
+    { name = "sil-remerkleable", git = "https://github.com/sila-chain/remerkleable.git?rev=b43ad33376c4a19377bfa2144d0e529715bcd47a" },
+    { name = "sil-typing", git = "https://github.com/sila-chain/sil-typing.git?rev=0737e57b60f6b67b70cfcffc59fe206bb0333f91" },
+    { name = "sil-utils", git = "https://github.com/sila-chain/sil-utils.git?rev=a3fa24862e17f3815e665ca5fafef5d66c3ff42c" },
+    { name = "tqdm", marker = "extra == 'generator'", specifier = "==4.67.1" },
+    { name = "trie", specifier = "==3.1.0" },
+]
+provides-extras = ["test", "lint", "generator", "docs"]
+
+[[package]]
 name = "six"
 version = "1.17.0"
 source = { registry = "https://pypi.org/simple" }
@@ -1831,8 +1861,8 @@ name = "trie"
 version = "3.1.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "sil-hash" },
-    { name = "sil-utils" },
+    { name = "eth-hash" },
+    { name = "eth-utils" },
     { name = "hexbytes" },
     { name = "rlp" },
     { name = "sortedcontainers" },

@@ -141,7 +141,7 @@ def parse_build_targets(targets_str: str) -> list[BuildTarget]:
 
     Example:
         minimal:presets/minimal:configs/minimal.yaml
-        sila-mainnet:presets/sila-mainnet:configs/sila-sila-mainnet.yaml
+        sila-mainnet:presets/sila-mainnet:configs/sila-mainnet.yaml
     """
     build_targets = []
     for target in targets_str.strip().split():
@@ -158,8 +158,8 @@ def parse_build_targets(targets_str: str) -> list[BuildTarget]:
         name, preset_dir_path, config_path = data
 
         # Validate preset name
-        if not name.isalnum():
-            raise ValueError(f"invalid target name (must be alphanumeric): {name!r}")
+        if not all(c.isalnum() or c == '-' for c in name):
+            raise ValueError(f"invalid target name (must be alphanumeric or hyphen): {name!r}")
 
         # Validate preset directory
         preset_dir = Path(preset_dir_path)
@@ -294,7 +294,7 @@ Examples:
     parser.add_argument(
         "--build-targets",
         type=str,
-        default="minimal:presets/minimal:configs/minimal.yaml sila-mainnet:presets/sila-mainnet:configs/sila-sila-mainnet.yaml",
+        default="minimal:presets/minimal:configs/minimal.yaml sila-mainnet:presets/sila-mainnet:configs/sila-mainnet.yaml",
         help="Space-separated build targets in format 'name:preset_dir:config_file'",
     )
 
