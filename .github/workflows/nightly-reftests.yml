@@ -3,7 +3,7 @@ name: Nightly Reference Tests
 # FULL_BUILD_11_SHARDS — prepared for static audit; NOT authorised to run by default.
 #
 # Locked plan:
-#   GEN_REF / EXPECTED_HEAD = d12911ddab573ceb1468de56d1428fba539dd4ae
+#   GEN_REF / EXPECTED_HEAD = e939311b482fe6cf2a2ed7deab4237c5fd2c9891
 #   SHARD_COUNT=11
 #   THREADS_PER_SHARD=2 (hard-locked; any other dispatch value fails preflight)
 #   TIMEOUT_PER_SHARD=180 minutes
@@ -37,7 +37,7 @@ on:
     inputs:
       ref:
         description: Locked generation SHA
-        default: d12911ddab573ceb1468de56d1428fba539dd4ae
+        default: e939311b482fe6cf2a2ed7deab4237c5fd2c9891
         type: string
         required: true
       threads:
@@ -72,7 +72,7 @@ jobs:
       - name: Static shard assignment gate
         id: gate
         env:
-          EXPECTED_HEAD: d12911ddab573ceb1468de56d1428fba539dd4ae
+          EXPECTED_HEAD: e939311b482fe6cf2a2ed7deab4237c5fd2c9891
           GEN_REF: ${{ inputs.ref }}
           AUTHORISE: ${{ inputs.authorise_full_build }}
           THREADS_INPUT: ${{ inputs.threads }}
@@ -442,7 +442,7 @@ jobs:
     env:
       GEN_REPO: sila-chain/consensus-specs
       GEN_REF: ${{ inputs.ref }}
-      EXPECTED_HEAD: d12911ddab573ceb1468de56d1428fba539dd4ae
+      EXPECTED_HEAD: e939311b482fe6cf2a2ed7deab4237c5fd2c9891
       # Hard-locked — do not read inputs.threads here.
       GEN_THREADS: "2"
       SHARD_ID: ${{ matrix.shard }}
@@ -601,7 +601,7 @@ jobs:
           set -euo pipefail
           HEAD=$(git -C consensus-specs rev-parse HEAD)
           echo "CHECKED_OUT_HEAD=${HEAD}"
-          test "$HEAD" = "d12911ddab573ceb1468de56d1428fba539dd4ae"
+          test "$HEAD" = "e939311b482fe6cf2a2ed7deab4237c5fd2c9891"
 
       - name: Download shard test artifacts
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
