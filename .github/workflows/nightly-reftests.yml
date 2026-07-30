@@ -1,10 +1,10 @@
 name: Nightly Reference Tests
 
-# FULL_BUILD_10_SHARDS — prepared for static audit; NOT authorised to run by default.
+# FULL_BUILD_11_SHARDS — prepared for static audit; NOT authorised to run by default.
 #
 # Locked plan:
 #   GEN_REF / EXPECTED_HEAD = d12911ddab573ceb1468de56d1428fba539dd4ae
-#   SHARD_COUNT=10
+#   SHARD_COUNT=11
 #   THREADS_PER_SHARD=2 (hard-locked; any other dispatch value fails preflight)
 #   TIMEOUT_PER_SHARD=180 minutes
 #   FAIL_FAST=false
@@ -18,7 +18,8 @@ name: Nightly Reference Tests
 #   W5  random,sync
 #   W6  epoch_processing,finality
 #   W7  transition,rewards
-#   W8  operations,sanity
+#   W8A operations
+#   W8B sanity
 #   W9  ssz_generic,light_client,merkle_proof
 #   W10 fork
 #
@@ -52,7 +53,7 @@ on:
 
 jobs:
   static-preflight:
-    name: static-preflight (10-shard gate)
+    name: static-preflight (11-shard gate)
     runs-on: ubuntu-latest
     timeout-minutes: 15
     outputs:
@@ -79,7 +80,7 @@ jobs:
           set -euo pipefail
           HEAD=$(git -C locked-src rev-parse HEAD)
           {
-            echo "MODE=FULL_BUILD_10_SHARDS_STATIC_PREFLIGHT"
+            echo "MODE=FULL_BUILD_11_SHARDS_STATIC_PREFLIGHT"
             echo "GEN_REF=${GEN_REF}"
             echo "EXPECTED_HEAD=${EXPECTED_HEAD}"
             echo "CHECKED_OUT_HEAD=${HEAD}"
@@ -126,7 +127,8 @@ jobs:
               "W5": [("random", None), ("sync", None)],
               "W6": [("epoch_processing", None), ("finality", None)],
               "W7": [("transition", None), ("rewards", None)],
-              "W8": [("operations", None), ("sanity", None)],
+              "W8A": [("operations", None)],
+              "W8B": [("sanity", None)],
               "W9": [("ssz_generic", None), ("light_client", None), ("merkle_proof", None)],
               "W10": [("fork", None)],
           }
@@ -176,6 +178,24 @@ jobs:
               and len(set(fc_preset_values)) == 2
           )
 
+          # W8 split gate: former W8={operations,sanity} → W8A=operations, W8B=sanity
+          w8a_runners = {r for r, _ in assignment["W8A"]}
+          w8b_runners = {r for r, _ in assignment["W8B"]}
+          w8_legacy = {"operations", "sanity"}
+          w8_split_union = w8a_runners | w8b_runners
+          w8_split_overlap = sorted(w8a_runners & w8b_runners)
+          w8_split_missing = sorted(w8_legacy - w8_split_union)
+          w8_split_extra = sorted(w8_split_union - w8_legacy)
+          w8a_runners_str = ",".join(sorted(w8a_runners))
+          w8b_runners_str = ",".join(sorted(w8b_runners))
+          w8_split_gate = (
+              w8a_runners == {"operations"}
+              and w8b_runners == {"sanity"}
+              and len(w8_split_overlap) == 0
+              and len(w8_split_missing) == 0
+              and len(w8_split_extra) == 0
+          )
+
           # Artifact layout: upload consensus-spec-tests so tests/ is preserved
           # as a child of the artifact root (single-path upload strips the leaf name).
           # Build the matrix.shard GHA template from joined characters only — never
@@ -191,7 +211,7 @@ jobs:
               artifact_name_template_check
               and bool(re.search(r"(?m)^\s+path:\s+consensus-spec-tests\s*$", wf))
               and "shards/fullbuild-shard-*-tests/tests" in wf
-              and "EXPECTED_DOWNLOADED_SHARD_TEST_ROOT_COUNT=10" in wf
+              and "EXPECTED_DOWNLOADED_SHARD_TEST_ROOT_COUNT=11" in wf
           )
 
           # Action pins: full 40-char SHAs, no floating tags
@@ -248,6 +268,7 @@ jobs:
 
           report = {
               "ASSIGNED_RUNNER_COUNT": len(assigned_set),
+              "OFFICIAL_RUNNER_COUNT": len(official),
               "OFFICIAL_CLI_RUNNER_COUNT": len(official),
               "MISSING_RUNNER_COUNT": len(missing),
               "DUPLICATE_RUNNER_COUNT": duplicate_runner_count,
@@ -257,7 +278,7 @@ jobs:
               "MERGE_COLLISION_COUNT": len(output_collisions),
               "ARTIFACT_NAME_TEMPLATE_CHECK": "PASS" if artifact_name_template_check else "FAIL",
               "ARTIFACT_LAYOUT_GATE": "PASS" if artifact_layout_gate else "FAIL",
-              "EXPECTED_DOWNLOADED_SHARD_TEST_ROOT_COUNT": 10,
+              "EXPECTED_DOWNLOADED_SHARD_TEST_ROOT_COUNT": 11,
               "THREADS_EXACT": 2 if threads_exact else 0,
               "SHARD_TIMEOUT_MINUTES": shard_timeout_minutes,
               "TIMEOUT_LOCK_GATE": "PASS" if timeout_lock_gate else "FAIL",
@@ -269,6 +290,12 @@ jobs:
               "ARCHIVE_PLAN_COMPLETE": "YES" if archive_plan else "NO",
               "SOURCE_CHANGE_COUNT": source_change_count,
               "SHARD_COUNT": len(assignment),
+              "W8A_RUNNERS": w8a_runners_str,
+              "W8B_RUNNERS": w8b_runners_str,
+              "W8_SPLIT_OVERLAP_COUNT": len(w8_split_overlap),
+              "W8_SPLIT_MISSING_COUNT": len(w8_split_missing),
+              "W8_SPLIT_EXTRA_COUNT": len(w8_split_extra),
+              "W8_SPLIT_GATE": "PASS" if w8_split_gate else "FAIL",
               "MISSING_RUNNERS": missing,
               "UNKNOWN_RUNNERS": unknown,
               "OUTPUT_COLLISIONS": output_collisions,
@@ -295,13 +322,16 @@ jobs:
               0 if report["ARCHIVE_PLAN_COMPLETE"] == "YES" else 1,
               report["SOURCE_CHANGE_COUNT"],
               0 if report["ASSIGNED_RUNNER_COUNT"] == 19 else 1,
-              0 if report["SHARD_COUNT"] == 10 else 1,
+              0 if report["OFFICIAL_RUNNER_COUNT"] == 19 else 1,
+              0 if report["SHARD_COUNT"] == 11 else 1,
+              0 if w8_split_gate else 1,
           ]
           report["UNKNOWN_COUNT"] = sum(fail_bits)
           report["STATIC_FULL_BUILD_GATE"] = "PASS" if report["UNKNOWN_COUNT"] == 0 else "FAIL"
 
           for k in [
               "ASSIGNED_RUNNER_COUNT",
+              "OFFICIAL_RUNNER_COUNT",
               "MISSING_RUNNER_COUNT",
               "DUPLICATE_RUNNER_COUNT",
               "UNKNOWN_RUNNER_COUNT",
@@ -324,6 +354,12 @@ jobs:
               "UNKNOWN_COUNT",
               "STATIC_FULL_BUILD_GATE",
               "SHARD_COUNT",
+              "W8A_RUNNERS",
+              "W8B_RUNNERS",
+              "W8_SPLIT_OVERLAP_COUNT",
+              "W8_SPLIT_MISSING_COUNT",
+              "W8_SPLIT_EXTRA_COUNT",
+              "W8_SPLIT_GATE",
           ]:
               print(f"{k}={report[k]}")
 
@@ -387,9 +423,13 @@ jobs:
             mode: runners
             runners: transition,rewards
             presets: ""
-          - shard: W8
+          - shard: W8A
             mode: runners
-            runners: operations,sanity
+            runners: operations
+            presets: ""
+          - shard: W8B
+            mode: runners
+            runners: sanity
             presets: ""
           - shard: W9
             mode: runners
@@ -409,7 +449,7 @@ jobs:
       SHARD_MODE: ${{ matrix.mode }}
       SHARD_RUNNERS: ${{ matrix.runners }}
       SHARD_PRESETS: ${{ matrix.presets }}
-      MODE: FULL_BUILD_10_SHARDS
+      MODE: FULL_BUILD_11_SHARDS
       FULL_BUILD_AUTHORISED: "YES"
       DETERMINISM_RUN_2_AUTHORISED: "NO"
 
@@ -586,12 +626,12 @@ jobs:
           DOWNLOADED_SHARD_TEST_ROOT_COUNT=${#ROOTS[@]}
           {
             echo "ARTIFACT_LAYOUT_EXPECTED=shards/fullbuild-shard-*-tests/tests"
-            echo "EXPECTED_DOWNLOADED_SHARD_TEST_ROOT_COUNT=10"
+            echo "EXPECTED_DOWNLOADED_SHARD_TEST_ROOT_COUNT=11"
             echo "DOWNLOADED_SHARD_TEST_ROOT_COUNT=${DOWNLOADED_SHARD_TEST_ROOT_COUNT}"
             printf 'ROOT=%s\n' "${ROOTS[@]}"
           } | tee merge-layout.txt
 
-          if [ "${DOWNLOADED_SHARD_TEST_ROOT_COUNT}" -ne 10 ]; then
+          if [ "${DOWNLOADED_SHARD_TEST_ROOT_COUNT}" -ne 11 ]; then
             echo "FAIL_REASON=DOWNLOADED_SHARD_TEST_ROOT_COUNT_MISMATCH"
             find shards -maxdepth 3 -type d | sort | tee -a merge-layout.txt || true
             exit 1
