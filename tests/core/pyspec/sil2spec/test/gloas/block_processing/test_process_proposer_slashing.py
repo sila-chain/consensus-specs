@@ -23,7 +23,7 @@ def test_builder_payment_deletion_current_epoch(spec, state):
     # Advance past genesis epochs
     next_epoch(spec, state)
     next_epoch(spec, state)
-    slashed_slot = state.slot + random.randrange(spec.SLOTS_PER_EPOCH)
+    slashed_slot = state.slot + random.Random(1001).randrange(spec.SLOTS_PER_EPOCH)
 
     # Create a proposer slashing for the current slot
     proposer_slashing = get_valid_proposer_slashing(
@@ -58,7 +58,7 @@ def test_builder_payment_deletion_previous_epoch(spec, state):
     # Advance past genesis epochs
     next_epoch(spec, state)
     next_epoch(spec, state)
-    slashed_slot = state.slot + random.randrange(spec.SLOTS_PER_EPOCH)
+    slashed_slot = state.slot + random.Random(1002).randrange(spec.SLOTS_PER_EPOCH)
     next_epoch(spec, state)
 
     proposer_slashing = get_valid_proposer_slashing(
@@ -94,7 +94,7 @@ def test_builder_payment_deletion_too_late(spec, state):
     # Advance past genesis epochs
     next_epoch(spec, state)
     next_epoch(spec, state)
-    slashed_slot = state.slot + random.randrange(spec.SLOTS_PER_EPOCH)
+    slashed_slot = state.slot + random.Random(1003).randrange(spec.SLOTS_PER_EPOCH)
     next_epoch(spec, state)
     next_epoch(spec, state)
 
