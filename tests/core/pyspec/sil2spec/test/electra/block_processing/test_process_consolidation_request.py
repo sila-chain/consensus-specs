@@ -1229,7 +1229,7 @@ def test_switch_to_compounding_source_bls_withdrawal_credential(spec, state):
     )
 
     # Check the return condition
-    assert not spec.has_eth1_withdrawal_credential(state.validators[source_index])
+    assert not spec.has_sil1_withdrawal_credential(state.validators[source_index])
 
     yield from run_switch_to_compounding_processing(spec, state, consolidation, success=False)
 
@@ -1251,7 +1251,7 @@ def test_switch_to_compounding_source_compounding_withdrawal_credential(spec, st
     state.balances[source_index] = spec.MIN_ACTIVATION_BALANCE + spec.EFFECTIVE_BALANCE_INCREMENT
 
     # Check the return condition
-    assert not spec.has_eth1_withdrawal_credential(state.validators[source_index])
+    assert not spec.has_sil1_withdrawal_credential(state.validators[source_index])
 
     yield from run_switch_to_compounding_processing(spec, state, consolidation, success=False)
 

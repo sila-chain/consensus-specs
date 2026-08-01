@@ -11,6 +11,7 @@ from lru import LRU
 
 from sil2spec.utils import bls
 from tests.infra.yield_generator import vector_test
+from pysetup.identity import python_module_token
 
 from .exceptions import SkippedTest
 from .helpers.constants import (
@@ -683,9 +684,16 @@ def _get_basic_value(v: Any) -> Any:
 
 def get_copy_of_spec(spec):
     fork = spec.fork
-    preset = spec.config.PRESET_BASE
-    module_path = f"sil2spec.{fork}.{preset}"
+    # PRESET_BASE keeps external identity (e.g. sila-mainnet); Python modules use
+    # the identifier-safe token (sila_mainnet) via the locked mapping.
+    preset_module = python_module_token(str(spec.config.PRESET_BASE))
+    module_path = f"sil2spec.{fork}.{preset_module}"
     module_spec = importlib.util.find_spec(module_path)
+    if module_spec is None or module_spec.loader is None:
+        raise ModuleNotFoundError(
+            f"spec module not found for fork={fork!r} preset_module={preset_module!r} "
+            f"(PRESET_BASE={spec.config.PRESET_BASE!r})"
+        )
     module = importlib.util.module_from_spec(module_spec)
     module_spec.loader.exec_module(module)
 
