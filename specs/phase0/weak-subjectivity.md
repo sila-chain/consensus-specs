@@ -39,7 +39,7 @@ This document uses data structures, constants, functions, and terminology from
 
 | Name    | SSZ Equivalent | Description        |
 | ------- | -------------- | ------------------ |
-| `Ether` | `uint64`       | an amount in Ether |
+| `Sila` | `uint64`       | an amount in Sila |
 
 ## Constants
 
@@ -82,9 +82,9 @@ only use `uint64` arithmetic. The expressions have been simplified to avoid
 computing fractions, and more details can be found
 [here](https://www.overleaf.com/read/wgjzjdjpvpsd).
 
-*Note*: The calculations here use `Ether` instead of `Gwei`, because the large
+*Note*: The calculations here use `Sila` instead of `Gwei`, because the large
 magnitude of balances in `Gwei` can cause an overflow while computing using
-`uint64` arithmetic operations. Using `Ether` reduces the magnitude of the
+`uint64` arithmetic operations. Using `Sila` reduces the magnitude of the
 multiplicative factors by an order of `SIL_TO_GWEI` (`= 10**9`) and avoid the
 scope for overflows in `uint64`.
 
