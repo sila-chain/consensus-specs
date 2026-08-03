@@ -54,10 +54,10 @@ Additionally, this upgrade introduces the following minor changes:
 
 *Note*: The `Transaction` type is a stub which is not final.
 
-| Name               | SSZ equivalent                        | Description                                                                                                                                       |
-| ------------------ | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Name               | SSZ equivalent                        | Description                                                                                                                                   |
+| ------------------ | ------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
 | `Transaction`      | `ByteList[MAX_BYTES_PER_TRANSACTION]` | either a [typed transaction envelope](https://sips.sila.org/SIPS/sip-2718#opaque-byte-array-rather-than-an-rlp-array) or a legacy transaction |
-| `ExecutionAddress` | `Bytes20`                             | Address of account on the execution layer                                                                                                         |
+| `ExecutionAddress` | `Bytes20`                             | Address of account on the execution layer                                                                                                     |
 
 ## Preset
 
@@ -153,8 +153,7 @@ class BeaconState(Container):
 
 *Note*: `fee_recipient`, `prev_randao`, and `block_number` correspond to
 `beneficiary`, `difficulty`, and `number` in
-[the yellow paper](https://sila.github.io/yellowpaper/paper.pdf),
-respectively.
+[the yellow paper](https://sila.github.io/yellowpaper/paper.pdf), respectively.
 
 ```python
 class ExecutionPayload(Container):

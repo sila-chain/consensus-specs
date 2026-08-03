@@ -4,7 +4,7 @@
 
 - [Introduction](#introduction)
 - [Configuration](#configuration)
-- [Fork to SilaDeneb](#fork-to-deneb)
+- [Fork to SilaDeneb](#fork-to-siladeneb)
   - [Fork trigger](#fork-trigger)
   - [Upgrading the state](#upgrading-the-state)
 
@@ -29,8 +29,8 @@ Warning: this configuration is not definitive.
 
 The fork is triggered at epoch `DENEB_FORK_EPOCH`.
 
-*Note*: For the pure SilaDeneb networks, the `upgrade_to_deneb` function is applied
-to transition the genesis state to this fork.
+*Note*: For the pure SilaDeneb networks, the `upgrade_to_deneb` function is
+applied to transition the genesis state to this fork.
 
 ### Upgrading the state
 

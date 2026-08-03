@@ -2,8 +2,8 @@ from curdleproofs import WhiskTracker
 
 from sil2spec.test.context import spec_state_test, with_sip7441_and_later
 from sil2spec.test.helpers.block import build_empty_block
-from sil2spec.test.helpers.sip7441 import compute_whisk_tracker_and_commitment
 from sil2spec.test.helpers.keys import whisk_ks_initial
+from sil2spec.test.helpers.sip7441 import compute_whisk_tracker_and_commitment
 from sil2spec.test.helpers.state import state_transition_and_sign_block
 
 known_whisk_trackers = {}

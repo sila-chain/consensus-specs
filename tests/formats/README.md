@@ -219,10 +219,10 @@ The runtime-configurables may be different for specific tests. When present,
 this replaces the default runtime-config that comes with the otherwise
 compile-time preset settings.
 
-The format matches that of the `sila-mainnet_config.yaml` and `minimal_config.yaml`,
-see the [`/configs`](../../configs/README.md#format) documentation. Config
-values that are introduced at a later fork may be omitted from tests of previous
-forks.
+The format matches that of the `sila-mainnet_config.yaml` and
+`minimal_config.yaml`, see the [`/configs`](../../configs/README.md#format)
+documentation. Config values that are introduced at a later fork may be omitted
+from tests of previous forks.
 
 ## Config sourcing
 

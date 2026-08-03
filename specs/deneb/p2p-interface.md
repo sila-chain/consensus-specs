@@ -3,7 +3,7 @@
 <!-- mdformat-toc start --slug=github --no-anchors --maxlevel=6 --minlevel=2 -->
 
 - [Introduction](#introduction)
-- [Modifications in SilaDeneb](#modifications-in-deneb)
+- [Modifications in SilaDeneb](#modifications-in-siladeneb)
   - [Helper functions](#helper-functions)
     - [Modified `compute_fork_version`](#modified-compute_fork_version)
   - [Constant](#constant)
@@ -38,7 +38,8 @@
 
 ## Introduction
 
-This document contains the consensus-layer networking specification for SilaDeneb.
+This document contains the consensus-layer networking specification for
+SilaDeneb.
 
 The specification of these changes continues in the same format as the network
 specifications of previous upgrades, and assumes them as pre-requisite.
@@ -136,14 +137,15 @@ def verify_blob_sidecar_inclusion_proof(blob_sidecar: BlobSidecar) -> bool:
 
 ### The gossip domain: gossipsub
 
-Some gossip meshes are upgraded in the fork of SilaDeneb to support upgraded types.
+Some gossip meshes are upgraded in the fork of SilaDeneb to support upgraded
+types.
 
 #### Topics and messages
 
 Topics follow the same specification as in prior upgrades.
 
-The `beacon_block` topic is modified to also support SilaDeneb blocks and new topics
-are added per table below.
+The `beacon_block` topic is modified to also support SilaDeneb blocks and new
+topics are added per table below.
 
 The `voluntary_exit` topic is implicitly modified despite the lock-in use of
 `CAPELLA_FORK_VERSION` for this message signature validation for SIP-7044.
@@ -161,8 +163,8 @@ The derivation of the `message-id` remains stable.
 The new topics along with the type of the `data` field of a gossipsub message
 are given in this table:
 
-| Name                       | Message Type                         |
-| -------------------------- | ------------------------------------ |
+| Name                       | Message Type                             |
+| -------------------------- | ---------------------------------------- |
 | `blob_sidecar_{subnet_id}` | `BlobSidecar` [New in SilaDeneb:SIP4844] |
 
 ##### Global topics
@@ -319,8 +321,8 @@ details on how to handle transitioning gossip topics for this upgrade.
 
 **Protocol ID:** `/sila/beacon_chain/req/beacon_blocks_by_range/2/`
 
-The SilaDeneb fork-digest is introduced to the `context` enum to specify SilaDeneb
-beacon block type.
+The SilaDeneb fork-digest is introduced to the `context` enum to specify
+SilaDeneb beacon block type.
 
 <!-- sil2spec: skip -->
 
@@ -350,9 +352,9 @@ No more than `MAX_REQUEST_BLOCKS_DENEB` may be requested at a time.
 
 No more than `MAX_REQUEST_BLOCKS_DENEB` may be requested at a time.
 
-*[Modified in SilaDeneb:SIP4844]* Clients SHOULD include a block in the response as
-soon as it passes the gossip validation rules. Clients SHOULD NOT respond with
-blocks that fail the beacon chain state transition.
+*[Modified in SilaDeneb:SIP4844]* Clients SHOULD include a block in the response
+as soon as it passes the gossip validation rules. Clients SHOULD NOT respond
+with blocks that fail the beacon chain state transition.
 
 ##### BlobSidecarsByRange v1
 

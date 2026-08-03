@@ -48,11 +48,11 @@ actions of a "validator" participating in the Sila proof-of-stake protocol.
 ## Introduction
 
 This document represents the expected behavior of an "honest validator" with
-respect to the Altair upgrade of the Sila proof-of-stake protocol. It builds
-on the
+respect to the Altair upgrade of the Sila proof-of-stake protocol. It builds on
+the
 [previous document for the behavior of an "honest validator" from Phase 0](../phase0/validator.md)
-of the Sila proof-of-stake protocol. This previous document is referred to
-below as the "Phase 0 document".
+of the Sila proof-of-stake protocol. This previous document is referred to below
+as the "Phase 0 document".
 
 Altair introduces a new type of committee: the sync committee. Sync committees
 are responsible for signing each block of the canonical chain and there exists

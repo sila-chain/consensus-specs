@@ -1,17 +1,17 @@
 from hashlib import sha256
 
-from sil_hash.auto import keccak
 from rlp import encode
 from rlp.sedes import big_endian_int, Binary, List
+from sil_hash.auto import keccak
 from trie import HexaryTrie
 
 from sil2spec.debug.random_value import get_random_bytes_list
 from sil2spec.test.helpers.forks import (
     is_post_capella,
     is_post_deneb,
-    is_post_sip7928,
     is_post_electra,
     is_post_gloas,
+    is_post_sip7928,
 )
 from sil2spec.test.helpers.keys import privkeys
 from sil2spec.test.helpers.withdrawals import get_expected_withdrawals

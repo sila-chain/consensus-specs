@@ -3,14 +3,14 @@ from .constants import (
     BELLATRIX,
     CAPELLA,
     DENEB,
-    SIP7441,
-    SIP7805,
-    SIP7928,
     ELECTRA,
     FULU,
     GLOAS,
     PHASE0,
     PREVIOUS_FORK_OF,
+    SIP7441,
+    SIP7805,
+    SIP7928,
 )
 
 

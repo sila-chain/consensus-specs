@@ -15,8 +15,8 @@ from sil2spec.test.helpers.block import (
     build_empty_block_for_next_slot,
 )
 from sil2spec.test.helpers.constants import (
-    SILA_MAINNET,
     MINIMAL,
+    SILA_MAINNET,
 )
 from sil2spec.test.helpers.state import (
     next_epoch_via_block,

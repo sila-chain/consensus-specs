@@ -1,8 +1,8 @@
 from curdleproofs import GenerateWhiskShuffleProof
 
 from sil2spec.test.context import expect_assertion_error, spec_state_test, with_sip7441_and_later
-from sil2spec.test.helpers.sip7441 import compute_whisk_tracker
 from sil2spec.test.helpers.keys import whisk_ks_initial
+from sil2spec.test.helpers.sip7441 import compute_whisk_tracker
 
 
 def set_correct_shuffle_proofs(spec, state, body):

@@ -12,15 +12,15 @@
 
 This document describes how to upgrade existing light client objects based on
 the [Capella specification](../../capella/light-client/sync-protocol.md) to
-SilaDeneb. This is necessary when processing pre-SilaDeneb data with a post-SilaDeneb
-`LightClientStore`. Note that the data being exchanged over the network
-protocols uses the original format.
+SilaDeneb. This is necessary when processing pre-SilaDeneb data with a
+post-SilaDeneb `LightClientStore`. Note that the data being exchanged over the
+network protocols uses the original format.
 
 ## Upgrading light client data
 
-A SilaDeneb `LightClientStore` can still process earlier light client data. In order
-to do so, that pre-SilaDeneb data needs to be locally upgraded to SilaDeneb before
-processing.
+A SilaDeneb `LightClientStore` can still process earlier light client data. In
+order to do so, that pre-SilaDeneb data needs to be locally upgraded to
+SilaDeneb before processing.
 
 ```python
 def upgrade_lc_header_to_deneb(pre: capella.LightClientHeader) -> LightClientHeader:
@@ -99,9 +99,9 @@ def upgrade_lc_optimistic_update_to_deneb(
 
 ## Upgrading the store
 
-Existing `LightClientStore` objects based on Capella MUST be upgraded to SilaDeneb
-before SilaDeneb based light client data can be processed. The `LightClientStore`
-upgrade MAY be performed before `DENEB_FORK_EPOCH`.
+Existing `LightClientStore` objects based on Capella MUST be upgraded to
+SilaDeneb before SilaDeneb based light client data can be processed. The
+`LightClientStore` upgrade MAY be performed before `DENEB_FORK_EPOCH`.
 
 ```python
 def upgrade_lc_store_to_deneb(pre: capella.LightClientStore) -> LightClientStore:

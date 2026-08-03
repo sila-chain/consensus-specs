@@ -447,8 +447,8 @@ example, `BeaconBlockHeader` objects uniquely expand to `BeaconBlock` objects.
 
 ## Implementations
 
-See https://github.com/sila/consensus-specs/issues/2138 for a list of
-current known implementations.
+See https://github.com/sila/consensus-specs/issues/2138 for a list of current
+known implementations.
 
 ## JSON mapping
 

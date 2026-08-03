@@ -1,6 +1,6 @@
 from curdleproofs import GenerateWhiskTrackerProof, WhiskTracker
-from sil_typing import BLSPubkey
 from py_arkworks_bls12381 import G1Point, Scalar
+from sil_typing import BLSPubkey
 
 from sil2spec.test.helpers.keys import whisk_ks_initial
 

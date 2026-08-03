@@ -9,8 +9,8 @@ from sil2spec.test.context import (
 from sil2spec.test.helpers.constants import (
     CAPELLA,
     GLOAS,
-    SILA_MAINNET,
     MINIMAL,
+    SILA_MAINNET,
 )
 from sil2spec.test.helpers.execution_payload import (
     build_empty_execution_payload,

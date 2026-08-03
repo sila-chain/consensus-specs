@@ -44,12 +44,12 @@
 
 ## Introduction
 
-SilaDeneb is a consensus-layer upgrade containing a number of features. Including:
+SilaDeneb is a consensus-layer upgrade containing a number of features.
+Including:
 
-- [SIP-4788](https://sips.sila.org/SIPS/sip-4788): Beacon block root in the
-  EVM
-- [SIP-4844](https://sips.sila.org/SIPS/sip-4844): Shard Blob Transactions
-  scale data-availability of Sila in a simple, forwards-compatible manner
+- [SIP-4788](https://sips.sila.org/SIPS/sip-4788): Beacon block root in the EVM
+- [SIP-4844](https://sips.sila.org/SIPS/sip-4844): Shard Blob Transactions scale
+  data-availability of Sila in a simple, forwards-compatible manner
 - [SIP-7044](https://sips.sila.org/SIPS/sip-7044): Perpetually Valid Signed
   Voluntary Exits
 - [SIP-7045](https://sips.sila.org/SIPS/sip-7045): Increase Max Attestation
@@ -58,8 +58,8 @@ SilaDeneb is a consensus-layer upgrade containing a number of features. Includin
 
 ## Custom types
 
-| Name            | SSZ equivalent | Description              |
-| --------------- | -------------- | ------------------------ |
+| Name            | SSZ equivalent | Description                  |
+| --------------- | -------------- | ---------------------------- |
 | `VersionedHash` | `Bytes32`      | *[New in SilaDeneb:SIP4844]* |
 | `BlobIndex`     | `uint64`       | *[New in SilaDeneb:SIP4844]* |
 
@@ -75,16 +75,16 @@ SilaDeneb is a consensus-layer upgrade containing a number of features. Includin
 
 ### Execution
 
-| Name                             | Value                    | Description                                                                                                              |
-| -------------------------------- | ------------------------ | ------------------------------------------------------------------------------------------------------------------------ |
+| Name                             | Value                    | Description                                                                                                                  |
+| -------------------------------- | ------------------------ | ---------------------------------------------------------------------------------------------------------------------------- |
 | `MAX_BLOB_COMMITMENTS_PER_BLOCK` | `uint64(2**12)` (= 4096) | *[New in SilaDeneb:SIP4844]* hardfork independent fixed theoretical limit same as `TARGET_BLOB_GAS_PER_BLOCK` (see SIP 4844) |
 
 ## Configuration
 
 ### Execution
 
-| Name                  | Value       | Description                                                                                                    |
-| --------------------- | ----------- | -------------------------------------------------------------------------------------------------------------- |
+| Name                  | Value       | Description                                                                                                        |
+| --------------------- | ----------- | ------------------------------------------------------------------------------------------------------------------ |
 | `MAX_BLOBS_PER_BLOCK` | `uint64(6)` | *[New in SilaDeneb:SIP4844]* maximum number of blobs in a single block limited by `MAX_BLOB_COMMITMENTS_PER_BLOCK` |
 
 *Note*: The blob transactions are packed into the execution payload by the

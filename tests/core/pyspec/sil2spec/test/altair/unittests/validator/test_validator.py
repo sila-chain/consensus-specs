@@ -9,8 +9,8 @@ from sil2spec.test.context import (
 )
 from sil2spec.test.helpers.block import build_empty_block
 from sil2spec.test.helpers.constants import (
-    SILA_MAINNET,
     MINIMAL,
+    SILA_MAINNET,
 )
 from sil2spec.test.helpers.forks import is_post_sip7805
 from sil2spec.test.helpers.keys import privkeys, pubkey_to_privkey, pubkeys

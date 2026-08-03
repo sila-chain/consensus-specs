@@ -10,8 +10,7 @@ recommend using the
 
 **Please do not file a public ticket** mentioning the vulnerability.
 
-To find out how to disclose a vulnerability in the Sila Consensus Layer
-visit [https://bounty.sila.org](https://bounty.sila.org) or email
-bounty@sila.org. Please read the
-[disclosure page](https://bounty.sila.org) for more information about
-publicly disclosed security vulnerabilities.
+To find out how to disclose a vulnerability in the Sila Consensus Layer visit
+[https://bounty.sila.org](https://bounty.sila.org) or email bounty@sila.org.
+Please read the [disclosure page](https://bounty.sila.org) for more information
+about publicly disclosed security vulnerabilities.

@@ -11,7 +11,7 @@ from sil2spec.test.context import (
     with_phases,
     with_presets,
 )
-from sil2spec.test.helpers.constants import SILA_MAINNET, MINIMAL, TESTGEN_FORKS
+from sil2spec.test.helpers.constants import MINIMAL, SILA_MAINNET, TESTGEN_FORKS
 from sil2spec.utils.ssz.ssz_impl import (
     hash_tree_root,
     serialize,

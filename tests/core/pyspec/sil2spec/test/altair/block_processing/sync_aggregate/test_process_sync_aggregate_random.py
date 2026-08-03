@@ -13,8 +13,8 @@ from sil2spec.test.context import (
     with_presets,
 )
 from sil2spec.test.helpers.constants import (
-    SILA_MAINNET,
     MINIMAL,
+    SILA_MAINNET,
 )
 from sil2spec.test.helpers.random import (
     randomize_state,

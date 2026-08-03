@@ -3,7 +3,7 @@
 <!-- mdformat-toc start --slug=github --no-anchors --maxlevel=6 --minlevel=2 -->
 
 - [Introduction](#introduction)
-- [Modifications in SilaFulu](#modifications-in-fulu)
+- [Modifications in SilaFulu](#modifications-in-silafulu)
   - [Helper functions](#helper-functions)
     - [Modified `compute_fork_version`](#modified-compute_fork_version)
   - [Preset](#preset)
@@ -44,7 +44,8 @@
 
 ## Introduction
 
-This document contains the consensus-layer networking specification for SilaFulu.
+This document contains the consensus-layer networking specification for
+SilaFulu.
 
 The specification of these changes continues in the same format as the network
 specifications of previous upgrades, and assumes them as pre-requisite.
@@ -662,5 +663,5 @@ least one supernode on the network. Due to
 is connected to validator(s) with a combined balance greater than or equal to
 4096 SIL must be a supernode. Moreover, any node with the necessary resources
 may altruistically be a supernode. Therefore, there are expected to be many
-(hundreds) of supernodes on sila-mainnet and it is likely (though not necessary) for
-a node to be connected to several of these by chance.
+(hundreds) of supernodes on sila-mainnet and it is likely (though not necessary)
+for a node to be connected to several of these by chance.

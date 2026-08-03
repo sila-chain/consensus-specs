@@ -19,8 +19,7 @@
 ## Introduction
 
 This is the beacon chain specification to assign new deposits to existing
-validator records. Refers to
-[SIP-6914](https://github.com/sila/SIPs/pull/6914).
+validator records. Refers to [SIP-6914](https://github.com/sila/SIPs/pull/6914).
 
 *Note*: This specification is built upon
 [Capella](../../capella/beacon-chain.md).

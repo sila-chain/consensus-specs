@@ -11,7 +11,7 @@ For compile-time presets, see
 
 ```python
 from sil2spec.config import config_util
-from sil2spec.phase0 import sila-mainnet as spec
+from sil2spec.phase0 import sila_mainnet as spec
 from pathlib import Path
 
 # To load the default configurations

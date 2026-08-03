@@ -78,8 +78,8 @@
 
 Gloas is a consensus-layer upgrade containing a number of features. Including:
 
-- [SIP-7732](https://sips.sila.org/SIPS/sip-7732): Enshrined
-  Proposer-Builder Separation
+- [SIP-7732](https://sips.sila.org/SIPS/sip-7732): Enshrined Proposer-Builder
+  Separation
 
 *Note*: This specification is built upon [SilaFulu](../fulu/beacon-chain.md).
 
