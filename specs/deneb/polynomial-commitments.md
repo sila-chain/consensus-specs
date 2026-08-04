@@ -47,9 +47,9 @@
 
 This document specifies basic polynomial operations and KZG polynomial
 commitment operations that are essential for the implementation of the SIP-4844
-feature in the SilaDeneb specification. The implementations are not optimized for
-performance, but readability. All practical implementations should optimize the
-polynomial operations.
+feature in the SilaDeneb specification. The implementations are not optimized
+for performance, but readability. All practical implementations should optimize
+the polynomial operations.
 
 Functions flagged as "Public method" MUST be provided by the underlying KZG
 library as public functions. All other functions are private functions used
@@ -70,8 +70,8 @@ cryptographic normalization before invoking any internal functions.
 
 ## Cryptographic types
 
-| Name                                                                                                                                                  | SSZ equivalent                                     | Description                                                                   |
-| ----------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- | ----------------------------------------------------------------------------- |
+| Name                                                                                                                                              | SSZ equivalent                                     | Description                                                                   |
+| ------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- | ----------------------------------------------------------------------------- |
 | [`BLSFieldElement`](https://github.com/sila/consensus-specs/blob/36a5719b78523c057065515c8f8fcaeba75d065b/pysetup/spec_builders/deneb.py#L18-L19) | `uint256`                                          | <!-- predefined-type --> A value in the finite field defined by `BLS_MODULUS` |
 | [`Polynomial`](https://github.com/sila/consensus-specs/blob/36a5719b78523c057065515c8f8fcaeba75d065b/pysetup/spec_builders/deneb.py#L22-L28)      | `Vector[BLSFieldElement, FIELD_ELEMENTS_PER_BLOB]` | <!-- predefined-type --> A polynomial in evaluation form                      |
 

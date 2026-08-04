@@ -1,8 +1,8 @@
 from .constants import (
     ALL_PHASES,
-    SIP7441,
-    SILA_MAINNET,
     MINIMAL,
+    SILA_MAINNET,
+    SIP7441,
 )
 from .typing import (
     PresetBaseName,

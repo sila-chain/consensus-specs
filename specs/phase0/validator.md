@@ -73,10 +73,10 @@ actions of a "validator" participating in the Sila proof-of-stake protocol.
 ## Introduction
 
 This document represents the expected behavior of an "honest validator" with
-respect to Phase 0 of the Sila proof-of-stake protocol. This document does
-not distinguish between a "node" (i.e. the functionality of following and
-reading the beacon chain) and a "validator client" (i.e. the functionality of
-actively participating in consensus). The separation of concerns between these
+respect to Phase 0 of the Sila proof-of-stake protocol. This document does not
+distinguish between a "node" (i.e. the functionality of following and reading
+the beacon chain) and a "validator client" (i.e. the functionality of actively
+participating in consensus). The separation of concerns between these
 (potentially) two pieces of software is left as a design decision that is out of
 scope.
 

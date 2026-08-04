@@ -37,8 +37,8 @@ This document uses data structures, constants, functions, and terminology from
 
 ## Custom Types
 
-| Name    | SSZ Equivalent | Description        |
-| ------- | -------------- | ------------------ |
+| Name   | SSZ Equivalent | Description       |
+| ------ | -------------- | ----------------- |
 | `Sila` | `uint64`       | an amount in Sila |
 
 ## Constants

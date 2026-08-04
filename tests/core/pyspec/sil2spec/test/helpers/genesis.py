@@ -4,10 +4,6 @@ from sil2spec.test.helpers.constants import (
     PHASE0,
     PREVIOUS_FORK_OF,
 )
-from sil2spec.test.helpers.sip7441 import (
-    compute_whisk_initial_k_commitment_cached,
-    compute_whisk_initial_tracker_cached,
-)
 from sil2spec.test.helpers.execution_payload import (
     compute_el_header_block_hash,
 )
@@ -16,12 +12,16 @@ from sil2spec.test.helpers.forks import (
     is_post_bellatrix,
     is_post_capella,
     is_post_deneb,
-    is_post_sip7441,
     is_post_electra,
     is_post_fulu,
     is_post_gloas,
+    is_post_sip7441,
 )
 from sil2spec.test.helpers.keys import pubkeys
+from sil2spec.test.helpers.sip7441 import (
+    compute_whisk_initial_k_commitment_cached,
+    compute_whisk_initial_tracker_cached,
+)
 
 
 def build_mock_validator(spec, i: int, balance: int):

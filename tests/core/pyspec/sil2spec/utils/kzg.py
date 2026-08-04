@@ -6,10 +6,10 @@ import os
 from collections.abc import Sequence
 from pathlib import Path
 
-from sil_utils import encode_hex
 from py_ecc.typing import (
     Optimized_Point3D,
 )
+from sil_utils import encode_hex
 
 from sil2spec.utils import bls
 from sil2spec.utils.bls import (

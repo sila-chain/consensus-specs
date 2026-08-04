@@ -1,10 +1,10 @@
 import random
 
-from sil_utils import (
-    to_tuple,
-)
 from renderers import (
     render_test_case,
+)
+from sil_utils import (
+    to_tuple,
 )
 from ssz.sedes import (
     UInt,

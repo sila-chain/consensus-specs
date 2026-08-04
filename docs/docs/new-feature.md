@@ -55,8 +55,8 @@ You can refer to the previous fork's `fork.md` file.
   [`constants.py`](https://github.com/sila/consensus-specs/blob/master/tests/core/pyspec/sil2spec/test/helpers/constants.py)
   with the new feature name.
 - Update helpers for
-  [`setup.py`](https://github.com/sila/consensus-specs/blob/master/setup.py)
-  for building the spec:
+  [`setup.py`](https://github.com/sila/consensus-specs/blob/master/setup.py) for
+  building the spec:
   - Update
     [`pysetup/constants.py`](https://github.com/sila/consensus-specs/blob/master/pysetup/constants.py)
     with the new feature name as Pyspec `constants.py` defined.

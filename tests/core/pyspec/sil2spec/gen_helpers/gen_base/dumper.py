@@ -1,5 +1,5 @@
-from sil_utils import encode_hex
 from ruamel.yaml import YAML
+from sil_utils import encode_hex
 from snappy import compress
 
 from sil2spec.test import context

@@ -9,9 +9,9 @@ import pytest
 from frozendict import frozendict
 from lru import LRU
 
+from pysetup.identity import python_module_token
 from sil2spec.utils import bls
 from tests.infra.yield_generator import vector_test
-from pysetup.identity import python_module_token
 
 from .exceptions import SkippedTest
 from .helpers.constants import (
@@ -21,9 +21,6 @@ from .helpers.constants import (
     BELLATRIX,
     CAPELLA,
     DENEB,
-    SIP7441,
-    SIP7805,
-    SIP7928,
     ELECTRA,
     FULU,
     GLOAS,
@@ -31,6 +28,9 @@ from .helpers.constants import (
     MINIMAL,
     PHASE0,
     POST_FORK_OF,
+    SIP7441,
+    SIP7805,
+    SIP7928,
 )
 from .helpers.forks import is_post_electra, is_post_fork
 from .helpers.genesis import create_genesis_state

@@ -84,9 +84,9 @@ This type of test receives two parameters:
 pre_slot = state.slot
 ```
 
-A slot is a unit of time (every 12 seconds in sila-mainnet), for which a specific
-validator (selected randomly but in a deterministic manner) is a proposer. The
-proposer can propose a block during that slot.
+A slot is a unit of time (every 12 seconds in sila-mainnet), for which a
+specific validator (selected randomly but in a deterministic manner) is a
+proposer. The proposer can propose a block during that slot.
 
 ```python
 pre_eth1_votes = len(state.sil1_data_votes)
@@ -283,9 +283,8 @@ the execution layer.
 For every slot there is also a randomly selected committee of validators that
 needs to vote whether the new consensus layer block is valid, which requires the
 proposed head of the execution chain to also be a valid block. These votes are
-called
-[attestations](https://notes.sila.org/@hww/aggregation#112-Attestation), and
-they are sent as independent messages. The proposer for a block is able to
+called [attestations](https://notes.sila.org/@hww/aggregation#112-Attestation),
+and they are sent as independent messages. The proposer for a block is able to
 include attestations from previous slots, which is how they get on chain to form
 consensus, reward honest validators, etc.
 

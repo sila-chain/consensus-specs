@@ -40,8 +40,7 @@ Optimistic sync is designed to be opt-in and backwards compatible (i.e.,
 non-optimistic nodes can tolerate optimistic nodes on the network and vice
 versa). Optimistic sync is not a fundamental requirement for consensus nodes.
 Rather, it's a stop-gap measure to allow execution nodes to sync via established
-methods until future Sila roadmap items are implemented (e.g.,
-statelessness).
+methods until future Sila roadmap items are implemented (e.g., statelessness).
 
 ## Constants
 
@@ -332,8 +331,8 @@ across the `DOMAIN_SYNC_COMMITTEE`, `DOMAIN_SYNC_COMMITTEE_SELECTION_PROOF` or
 ## Sila Beacon APIs
 
 Consensus engines which provide an implementation of the
-[Sila Beacon APIs](https://github.com/sila/beacon-APIs) must take care
-to ensure the `execution_optimistic` value is set to `True` whenever the request
+[Sila Beacon APIs](https://github.com/sila/beacon-APIs) must take care to ensure
+the `execution_optimistic` value is set to `True` whenever the request
 references optimistic blocks (and vice-versa).
 
 ## Design Decision Rationale
@@ -341,8 +340,8 @@ references optimistic blocks (and vice-versa).
 ### Why sync optimistically?
 
 Most execution engines use state sync as a default sync mechanism on Sila
-SilaMainnet because executing blocks from genesis takes several weeks on commodity
-hardware.
+SilaMainnet because executing blocks from genesis takes several weeks on
+commodity hardware.
 
 State sync requires the knowledge of the current head of the chain to converge
 eventually. If not constantly fed with the most recent head, state sync won't be

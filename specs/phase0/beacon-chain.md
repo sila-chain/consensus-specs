@@ -139,17 +139,16 @@
 
 This document represents the specification for Phase 0 -- The Beacon Chain.
 
-At the core of Sila proof-of-stake is a system chain called the "beacon
-chain". The beacon chain stores and manages the registry of validators. In the
-initial deployment phases of proof-of-stake, the only mechanism to become a
-validator is to make a one-way SIL transaction to a deposit contract on the
-Sila proof-of-work chain. Activation as a validator happens when deposit
-recsipts are processed by the beacon chain, the activation balance is reached,
-and a queuing process is completed. Exit is either voluntary or done forcibly as
-a penalty for misbehavior. The primary source of load on the beacon chain is
-"attestations". Attestations are simultaneously availability votes for a shard
-block (in a later upgrade) and proof-of-stake votes for a beacon block (Phase
-0).
+At the core of Sila proof-of-stake is a system chain called the "beacon chain".
+The beacon chain stores and manages the registry of validators. In the initial
+deployment phases of proof-of-stake, the only mechanism to become a validator is
+to make a one-way SIL transaction to a deposit contract on the Sila
+proof-of-work chain. Activation as a validator happens when deposit recsipts are
+processed by the beacon chain, the activation balance is reached, and a queuing
+process is completed. Exit is either voluntary or done forcibly as a penalty for
+misbehavior. The primary source of load on the beacon chain is "attestations".
+Attestations are simultaneously availability votes for a shard block (in a later
+upgrade) and proof-of-stake votes for a beacon block (Phase 0).
 
 ## Notation
 
@@ -296,13 +295,14 @@ directory.
   `(1 - 1/INACTIVITY_PENALTY_QUOTIENT)**(n**2/2)`; so after
   `INVERSE_SQRT_E_DROP_TIME` epochs, it is roughly
   `(1 - 1/INACTIVITY_PENALTY_QUOTIENT)**(INACTIVITY_PENALTY_QUOTIENT/2) ~= 1/sqrt(e)`.
-  Note this value will be upgraded to `2**24` after Phase 0 sila-mainnet stabilizes
-  to provide a faster recovery in the event of an inactivity leak.
+  Note this value will be upgraded to `2**24` after Phase 0 sila-mainnet
+  stabilizes to provide a faster recovery in the event of an inactivity leak.
 
 - The `PROPORTIONAL_SLASHING_MULTIPLIER` is set to `1` at initial sila-mainnet
   launch, resulting in one-third of the minimum accountable safety margin in the
-  event of a finality attack. After Phase 0 sila-mainnet stabilizes, this value will
-  be upgraded to `3` to provide the maximal minimum accountable safety margin.
+  event of a finality attack. After Phase 0 sila-mainnet stabilizes, this value
+  will be upgraded to `3` to provide the maximal minimum accountable safety
+  margin.
 
 ### Max operations per block
 
@@ -1254,8 +1254,8 @@ def slash_validator(
 
 ## Genesis
 
-Before the Sila beacon chain genesis has been triggered, and for every
-Sila proof-of-work block, let
+Before the Sila beacon chain genesis has been triggered, and for every Sila
+proof-of-work block, let
 `candidate_state = initialize_beacon_state_from_sil1(sil1_block_hash, sil1_timestamp, deposits)`
 where:
 

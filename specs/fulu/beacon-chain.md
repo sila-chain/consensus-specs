@@ -35,8 +35,8 @@
 
 ### Blob schedule
 
-*[New in SilaFulu:SIP7892]* This schedule defines the maximum blobs per block limit
-for a given epoch.
+*[New in SilaFulu:SIP7892]* This schedule defines the maximum blobs per block
+limit for a given epoch.
 
 There MUST NOT exist multiple blob schedule entries with the same epoch value.
 The epoch value in each entry MUST be greater than or equal to

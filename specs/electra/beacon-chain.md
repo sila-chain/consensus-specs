@@ -110,14 +110,14 @@
 
 Electra is a consensus-layer upgrade containing a number of features. Including:
 
-- [SIP-6110](https://sips.sila.org/SIPS/sip-6110): Supply validator deposits
-  on chain
-- [SIP-7002](https://sips.sila.org/SIPS/sip-7002): Execution layer
-  triggerable exits
+- [SIP-6110](https://sips.sila.org/SIPS/sip-6110): Supply validator deposits on
+  chain
+- [SIP-7002](https://sips.sila.org/SIPS/sip-7002): Execution layer triggerable
+  exits
 - [SIP-7251](https://sips.sila.org/SIPS/sip-7251): Increase the
   MAX_EFFECTIVE_BALANCE
-- [SIP-7549](https://sips.sila.org/SIPS/sip-7549): Move committee index
-  outside Attestation
+- [SIP-7549](https://sips.sila.org/SIPS/sip-7549): Move committee index outside
+  Attestation
 - [SIP-7691](https://sips.sila.org/SIPS/sip-7691): Blob throughput increase
 
 *Note*: This specification is built upon [SilaDeneb](../deneb/beacon-chain.md).

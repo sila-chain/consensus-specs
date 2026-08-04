@@ -5,7 +5,7 @@
 - [Introduction](#introduction)
 - [Configuration](#configuration)
   - [New `initialize_proposer_lookahead`](#new-initialize_proposer_lookahead)
-- [Fork to SilaFulu](#fork-to-fulu)
+- [Fork to SilaFulu](#fork-to-silafulu)
   - [Fork trigger](#fork-trigger)
   - [Upgrading the state](#upgrading-the-state)
 
@@ -47,8 +47,8 @@ def initialize_proposer_lookahead(
 
 The fork is triggered at epoch `FULU_FORK_EPOCH`.
 
-*Note*: For the pure SilaFulu networks, the `upgrade_to_fulu` function is applied to
-transition the genesis state to this fork.
+*Note*: For the pure SilaFulu networks, the `upgrade_to_fulu` function is
+applied to transition the genesis state to this fork.
 
 ### Upgrading the state
 

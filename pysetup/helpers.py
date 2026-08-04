@@ -165,7 +165,9 @@ def objects_to_spec(
     # the external identity (e.g. sila-mainnet).
     module_token = python_module_token(preset_name)
     imports = reduce(
-        lambda txt, builder: (txt + "\n\n" + builder.imports(module_token)).strip("\n"), builders, ""
+        lambda txt, builder: (txt + "\n\n" + builder.imports(module_token)).strip("\n"),
+        builders,
+        "",
     )
     classes = reduce(
         lambda txt, builder: (txt + "\n\n" + builder.classes()).strip("\n"), builders, ""

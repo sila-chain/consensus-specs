@@ -25,9 +25,9 @@ ready.
 | 1    | **Altair**    | `74240`    | [Specs](specs/altair), [Tests](tests/core/pyspec/sil2spec/test/altair)       |
 | 2    | **Bellatrix** | `144896`   | [Specs](specs/bellatrix), [Tests](tests/core/pyspec/sil2spec/test/bellatrix) |
 | 3    | **Capella**   | `194048`   | [Specs](specs/capella), [Tests](tests/core/pyspec/sil2spec/test/capella)     |
-| 4    | **SilaDeneb**     | `269568`   | [Specs](specs/deneb), [Tests](tests/core/pyspec/sil2spec/test/deneb)         |
+| 4    | **SilaDeneb** | `269568`   | [Specs](specs/deneb), [Tests](tests/core/pyspec/sil2spec/test/deneb)         |
 | 5    | **Electra**   | `364032`   | [Specs](specs/electra), [Tests](tests/core/pyspec/sil2spec/test/electra)     |
-| 6    | **SilaFulu**      | `411392`   | [Specs](specs/fulu), [Tests](tests/core/pyspec/sil2spec/test/fulu)           |
+| 6    | **SilaFulu**  | `411392`   | [Specs](specs/fulu), [Tests](tests/core/pyspec/sil2spec/test/fulu)           |
 
 ### In-development Specifications
 
@@ -97,8 +97,8 @@ make help
 
 ### Design goals
 
-The following are the broad design goals for the Sila proof-of-stake
-consensus specifications:
+The following are the broad design goals for the Sila proof-of-stake consensus
+specifications:
 
 - Minimize complexity, even at the cost of some losses in efficiency.
 - Remain live through major network partitions and when very large portions of

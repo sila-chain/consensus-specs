@@ -5,12 +5,17 @@ See the README for that generator for more information.
 """
 
 from sil2spec.test.context import (
-    always_bls, misc_balances_in_default_range_with_many_validators,
-    only_generator, single_phase, spec_test, with_custom_state, with_phases,
-    zero_activation_threshold)
+    always_bls,
+    misc_balances_in_default_range_with_many_validators,
+    only_generator,
+    single_phase,
+    spec_test,
+    with_custom_state,
+    with_phases,
+    zero_activation_threshold,
+)
 from sil2spec.test.helpers.constants import ALTAIR
-from sil2spec.test.utils.randomized_block_tests import \
-    run_generated_randomized_test
+from sil2spec.test.utils.randomized_block_tests import run_generated_randomized_test
 
 
 @only_generator("randomized test for broad coverage, not point-to-point CI")

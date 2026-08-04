@@ -76,10 +76,9 @@ def notify_forkchoice_updated(
 *Note*: The `(head_block_hash, finalized_block_hash)` values of the
 `notify_forkchoice_updated` function call maps on the `POS_FORKCHOICE_UPDATED`
 event defined in the
-[SIP-3675](https://sips.sila.org/SIPS/sip-3675#definitions). As per
-SIP-3675, before a post-transition block is finalized,
-`notify_forkchoice_updated` MUST be called with
-`finalized_block_hash = Hash32()`.
+[SIP-3675](https://sips.sila.org/SIPS/sip-3675#definitions). As per SIP-3675,
+before a post-transition block is finalized, `notify_forkchoice_updated` MUST be
+called with `finalized_block_hash = Hash32()`.
 
 *Note*: Client software MUST NOT call this function until the transition
 conditions are met on the PoW network, i.e. there exists a block for which

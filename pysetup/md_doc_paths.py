@@ -5,14 +5,14 @@ from .constants import (
     BELLATRIX,
     CAPELLA,
     DENEB,
-    SIP6800,
-    SIP7441,
-    SIP7805,
-    SIP7928,
     ELECTRA,
     FULU,
     GLOAS,
     PHASE0,
+    SIP6800,
+    SIP7441,
+    SIP7805,
+    SIP7928,
 )
 
 PREVIOUS_FORK_OF = {

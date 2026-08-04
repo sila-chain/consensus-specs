@@ -11,11 +11,6 @@ from py_ecc.bls.g2_primitives import (
 from py_ecc.optimized_bls12_381.optimized_curve import G1, multiply
 from py_ecc.typing import Optimized_Field, Optimized_Point3D
 
-from sil2spec.test.helpers.sip7441 import (
-    compute_whisk_tracker_and_commitment,
-    is_first_proposal,
-    resolve_known_tracker,
-)
 from sil2spec.test.helpers.execution_payload import (
     build_empty_execution_payload,
     build_empty_signed_execution_payload_bid,
@@ -23,11 +18,16 @@ from sil2spec.test.helpers.execution_payload import (
 from sil2spec.test.helpers.forks import (
     is_post_altair,
     is_post_bellatrix,
-    is_post_sip7441,
     is_post_electra,
     is_post_gloas,
+    is_post_sip7441,
 )
 from sil2spec.test.helpers.keys import privkeys, whisk_ks_final, whisk_ks_initial
+from sil2spec.test.helpers.sip7441 import (
+    compute_whisk_tracker_and_commitment,
+    is_first_proposal,
+    resolve_known_tracker,
+)
 from sil2spec.utils import bls
 from sil2spec.utils.bls import only_with_bls
 from sil2spec.utils.ssz.ssz_impl import hash_tree_root

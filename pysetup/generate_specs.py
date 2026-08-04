@@ -162,8 +162,7 @@ def parse_build_targets(targets_str: str) -> list[BuildTarget]:
         # Python module tokens are derived separately via python_module_token().
         if not is_allowed_external_target_name(name):
             raise ValueError(
-                "invalid target name (must be alphanumeric or a locked mapped identity): "
-                f"{name!r}"
+                f"invalid target name (must be alphanumeric or a locked mapped identity): {name!r}"
             )
         # Prove the mapped module token is a valid Python identifier.
         python_module_token(name)

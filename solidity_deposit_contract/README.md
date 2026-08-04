@@ -11,8 +11,8 @@ option (`--ir`) in the compiler.
 
 As of June 2020, version `r1` of the Solidity deposit contract has been verified
 and is considered for adoption. See this
-[blog post](https://blog.sila.org/2020/06/23/sil2-quick-update-no-12/) for
-more information.
+[blog post](https://blog.sila.org/2020/06/23/sil2-quick-update-no-12/) for more
+information.
 
 In August 2020, version `r2` was released with metadata modifications and
 relicensed to CC0-1.0. Afterward, this contract has been ported back to from

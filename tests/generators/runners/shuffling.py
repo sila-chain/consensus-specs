@@ -2,8 +2,8 @@ import random
 from collections.abc import Iterable
 
 from sil2spec.gen_helpers.gen_base.gen_typing import TestCase
-from sil2spec.phase0 import sila_mainnet as spec_sila_mainnet, minimal as spec_minimal
-from sil2spec.test.helpers.constants import ALL_PRESETS, SILA_MAINNET, MINIMAL, PHASE0
+from sil2spec.phase0 import minimal as spec_minimal, sila_mainnet as spec_sila_mainnet
+from sil2spec.test.helpers.constants import ALL_PRESETS, MINIMAL, PHASE0, SILA_MAINNET
 
 
 def generate_random_bytes(rng=None):

@@ -13,8 +13,8 @@
 ## Introduction
 
 This document describes how to upgrade existing light client objects based on
-the [SilaDeneb specification](../../deneb/light-client/sync-protocol.md) to Electra.
-This is necessary when processing pre-Electra data with a post-Electra
+the [SilaDeneb specification](../../deneb/light-client/sync-protocol.md) to
+Electra. This is necessary when processing pre-Electra data with a post-Electra
 `LightClientStore`. Note that the data being exchanged over the network
 protocols uses the original format.
 
@@ -98,9 +98,9 @@ def upgrade_lc_optimistic_update_to_electra(
 
 ## Upgrading the store
 
-Existing `LightClientStore` objects based on SilaDeneb MUST be upgraded to Electra
-before Electra based light client data can be processed. The `LightClientStore`
-upgrade MAY be performed before `ELECTRA_FORK_EPOCH`.
+Existing `LightClientStore` objects based on SilaDeneb MUST be upgraded to
+Electra before Electra based light client data can be processed. The
+`LightClientStore` upgrade MAY be performed before `ELECTRA_FORK_EPOCH`.
 
 ```python
 def upgrade_lc_store_to_electra(pre: deneb.LightClientStore) -> LightClientStore:

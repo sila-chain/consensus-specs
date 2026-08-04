@@ -100,8 +100,8 @@ The parameter that is required for executing `on_block(store, block)`.
 
 The file is located in the same folder (see below).
 
-`blobs` and `proofs` are new fields from SilaDeneb SIP-4844. These fields indicate
-the expected values from `retrieve_blobs_and_proofs()` helper inside
+`blobs` and `proofs` are new fields from SilaDeneb SIP-4844. These fields
+indicate the expected values from `retrieve_blobs_and_proofs()` helper inside
 `is_data_available()` helper. If these two fields are not provided,
 `retrieve_blobs_and_proofs()` returns empty lists.
 
@@ -111,8 +111,8 @@ helper. If this field is an empty array, `retrieve_column_sidecars` should throw
 an exception (not enough data sampled). If this field is not provided,
 `retrieve_column_sidecars` returns an empty list.
 
-Post-SilaDeneb and pre-SilaFulu, `columns` should not be present. Post-SilaFulu `blobs` and
-`proofs` should not be present.
+Post-SilaDeneb and pre-SilaFulu, `columns` should not be present. Post-SilaFulu
+`blobs` and `proofs` should not be present.
 
 After this step, the `store` object may have been updated.
 

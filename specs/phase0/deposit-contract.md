@@ -31,8 +31,8 @@ specification.
 ## Configuration
 
 *Note*: The default sila-mainnet configuration values are included here for
-spec-design purposes. The different configurations for sila-mainnet, testnets, and
-YAML-based testing can be found in the
+spec-design purposes. The different configurations for sila-mainnet, testnets,
+and YAML-based testing can be found in the
 [`configs/constant_presets`](../../configs) directory. These configurations are
 updated for releases and may be out of sync during `dev` changes.
 
@@ -45,13 +45,12 @@ updated for releases and may be out of sync during `dev` changes.
 ## Staking deposit contract
 
 The initial deployment phases of Sila proof-of-stake are implemented without
-consensus changes to the existing Sila proof-of-work chain. A deposit
-contract at address `DEPOSIT_CONTRACT_ADDRESS` is added to the Sila
-proof-of-work chain defined by the
-[chain-id](https://sips.sila.org/SIPS/sip-155) -- `DEPOSIT_CHAIN_ID` -- and
-the network-id -- `DEPOSIT_NETWORK_ID` -- for deposits of SIL to the beacon
-chain. Validator balances will be withdrawable to the execution-layer in a
-followup fork after Bellatrix upgrade.
+consensus changes to the existing Sila proof-of-work chain. A deposit contract
+at address `DEPOSIT_CONTRACT_ADDRESS` is added to the Sila proof-of-work chain
+defined by the [chain-id](https://sips.sila.org/SIPS/sip-155) --
+`DEPOSIT_CHAIN_ID` -- and the network-id -- `DEPOSIT_NETWORK_ID` -- for deposits
+of SIL to the beacon chain. Validator balances will be withdrawable to the
+execution-layer in a followup fork after Bellatrix upgrade.
 
 _Note_: See [here](https://chainid.network/) for a comprehensive list of public
 Sila chain chain-id's and network-id's.

@@ -38,8 +38,8 @@ unless explicitly noted or overridden.
 
 All terminology, constants, functions, and protocol mechanics defined in
 [SilaFulu -- Beacon Chain](./beacon-chain.md) and
-[SilaFulu -- Data Availability Sampling Core](./das-core.md) are requisite for this
-document and used throughout.
+[SilaFulu -- Data Availability Sampling Core](./das-core.md) are requisite for
+this document and used throughout.
 
 ## Configuration
 

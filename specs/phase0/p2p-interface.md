@@ -338,7 +338,8 @@ will be used:
 *Note*: Gossipsub v1.1 introduces a number of
 [additional parameters](https://github.com/libp2p/specs/blob/master/pubsub/gossipsub/gossipsub-v1.1.md#overview-of-new-parameters)
 for peer scoring and other attack mitigations. These are currently under
-investigation and will be spec'd and released to sila-mainnet when they are ready.
+investigation and will be spec'd and released to sila-mainnet when they are
+ready.
 
 #### Topics and messages
 
@@ -2047,8 +2048,8 @@ protocol/implementations with content routing and storage capabilities, both of
 which are irrelevant in this context.
 
 Sila execution-layer nodes will evolve to support discv5. By sharing the
-discovery network between Sila consensus-layer and execution-layer clients,
-we benefit from the additive effect on network size that enhances resilience and
+discovery network between Sila consensus-layer and execution-layer clients, we
+benefit from the additive effect on network size that enhances resilience and
 resistance against certain attacks, to which smaller networks are more
 vulnerable. It should also help light clients of both networks find nodes with
 specific capabilities.
@@ -2057,9 +2058,9 @@ discv5 is in the process of being audited.
 
 #### What is the difference between an ENR and a multiaddr, and why are we using ENRs?
 
-Sila Node Records are self-certified node records. Nodes craft and
-disseminate ENRs for themselves, proving authorship via a cryptographic
-signature. ENRs are sequentially indexed, enabling conflicts to be resolved.
+Sila Node Records are self-certified node records. Nodes craft and disseminate
+ENRs for themselves, proving authorship via a cryptographic signature. ENRs are
+sequentially indexed, enabling conflicts to be resolved.
 
 ENRs are key-value records with string-indexed ASCII keys. They can store
 arbitrary information, but SIP-778 specifies a pre-defined dictionary, including
@@ -2077,8 +2078,8 @@ discv5 uses ENRs and we will presumably need to:
    multiaddr under a reserved namespace in ENRs. – and/or –
 2. Define a bi-directional conversion function between multiaddrs and the
    corresponding denormalized fields in an ENR (ip, ip6, tcp, tcp6, etc.), for
-   compatibility with nodes that do not support multiaddr natively (e.g.
-   Sila execution-layer nodes).
+   compatibility with nodes that do not support multiaddr natively (e.g. Sila
+   execution-layer nodes).
 
 #### Why do we not form ENRs and find peers until genesis block/state is known?
 
@@ -2091,9 +2092,9 @@ intended chain. Once genesis data is known, we can then form ENRs and safely
 find peers.
 
 When using a proof-of-work deposit contract for deposits, `fork_digest` will be
-known `GENESIS_DELAY` (7 days in sila-mainnet configuration) before `genesis_time`,
-providing ample time to find peers and form initial connections and gossip
-subnets prior to genesis.
+known `GENESIS_DELAY` (7 days in sila-mainnet configuration) before
+`genesis_time`, providing ample time to find peers and form initial connections
+and gossip subnets prior to genesis.
 
 ### Compression/Encoding
 

@@ -2,7 +2,9 @@ from random import Random
 
 from lru import LRU
 
-from sil2spec.phase0.sila_mainnet import VALIDATOR_REGISTRY_LIMIT  # equal everywhere, fine to import
+from sil2spec.phase0.sila_mainnet import (
+    VALIDATOR_REGISTRY_LIMIT,  # equal everywhere, fine to import
+)
 from sil2spec.test.helpers.attestations import (
     cached_prepare_state_with_attestations,
 )
