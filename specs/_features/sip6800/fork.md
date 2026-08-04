@@ -57,7 +57,7 @@ def upgrade_to_sip6800(pre: deneb.BeaconState) -> BeaconState:
         parent_hash=pre.latest_execution_payload_header.parent_hash,
         fee_recipient=pre.latest_execution_payload_header.fee_recipient,
         state_root=pre.latest_execution_payload_header.state_root,
-        recsipts_root=pre.latest_execution_payload_header.recsipts_root,
+        receipts_root=pre.latest_execution_payload_header.receipts_root,
         logs_bloom=pre.latest_execution_payload_header.logs_bloom,
         prev_randao=pre.latest_execution_payload_header.prev_randao,
         block_number=pre.latest_execution_payload_header.block_number,

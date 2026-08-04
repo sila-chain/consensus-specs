@@ -25,7 +25,7 @@ def get_execution_payload_header(spec, state, execution_payload):
             parent_hash=execution_payload.parent_hash,
             fee_recipient=execution_payload.fee_recipient,
             state_root=execution_payload.state_root,
-            recsipts_root=execution_payload.recsipts_root,
+            receipts_root=execution_payload.receipts_root,
             logs_bloom=execution_payload.logs_bloom,
             prev_randao=execution_payload.prev_randao,
             block_number=execution_payload.block_number,
@@ -50,7 +50,7 @@ def get_execution_payload_header(spec, state, execution_payload):
         parent_hash=execution_payload.parent_hash,
         fee_recipient=execution_payload.fee_recipient,
         state_root=execution_payload.state_root,
-        recsipts_root=execution_payload.recsipts_root,
+        receipts_root=execution_payload.receipts_root,
         logs_bloom=execution_payload.logs_bloom,
         prev_randao=execution_payload.prev_randao,
         block_number=execution_payload.block_number,
@@ -146,8 +146,8 @@ def compute_el_header_block_hash(
         (Binary(32, 32), payload_header.state_root),
         # txs_root
         (Binary(32, 32), transactions_trie_root),
-        # recsipts_root
-        (Binary(32, 32), payload_header.recsipts_root),
+        # receipts_root
+        (Binary(32, 32), payload_header.receipts_root),
         # logs_bloom
         (Binary(256, 256), payload_header.logs_bloom),
         # difficulty
@@ -377,7 +377,7 @@ def build_empty_execution_payload(spec, state, randao_mix=None):
     payload = spec.ExecutionPayload(
         parent_hash=parent_hash,
         fee_recipient=spec.ExecutionAddress(),
-        recsipts_root=spec.Bytes32(
+        receipts_root=spec.Bytes32(
             bytes.fromhex("1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347")
         ),
         logs_bloom=spec.ByteVector[
@@ -413,7 +413,7 @@ def build_randomized_execution_payload(spec, state, rng):
     execution_payload = build_empty_execution_payload(spec, state)
     execution_payload.fee_recipient = spec.ExecutionAddress(get_random_bytes_list(rng, 20))
     execution_payload.state_root = spec.Bytes32(get_random_bytes_list(rng, 32))
-    execution_payload.recsipts_root = spec.Bytes32(get_random_bytes_list(rng, 32))
+    execution_payload.receipts_root = spec.Bytes32(get_random_bytes_list(rng, 32))
     execution_payload.logs_bloom = spec.ByteVector[spec.BYTES_PER_LOGS_BLOOM](
         get_random_bytes_list(rng, spec.BYTES_PER_LOGS_BLOOM)
     )

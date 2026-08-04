@@ -178,8 +178,8 @@ def test_deposit_tree(registration_contract, w3, assert_tx_failed):
         tx_hash = registration_contract.functions.deposit(
             *deposit_input,
         ).transact({"value": deposit_amount_list[i] * sil_utils.denoms.gwei})
-        recsipt = w3.sil.get_transaction_recsipt(tx_hash)
-        print("deposit transaction consumes %d gas" % recsipt['gasUsed'])
+        receipt = w3.sil.get_transaction_receipt(tx_hash)
+        print("deposit transaction consumes %d gas" % receipt['gasUsed'])
 
         logs = log_filter.get_new_entries()
         assert len(logs) == 1

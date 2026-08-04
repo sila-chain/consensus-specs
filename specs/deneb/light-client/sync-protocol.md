@@ -40,7 +40,7 @@ def get_lc_execution_root(header: LightClientHeader) -> Root:
             parent_hash=header.execution.parent_hash,
             fee_recipient=header.execution.fee_recipient,
             state_root=header.execution.state_root,
-            recsipts_root=header.execution.recsipts_root,
+            receipts_root=header.execution.receipts_root,
             logs_bloom=header.execution.logs_bloom,
             prev_randao=header.execution.prev_randao,
             block_number=header.execution.block_number,

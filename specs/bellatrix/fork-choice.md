@@ -104,7 +104,7 @@ an execution payload.
 If a beacon node knows it will propose the next block then it SHOULD NOT call
 `notify_forkchoice_updated` if it detects the current head to be weak and
 potentially capable of being re-orged. Complete information for evaluating
-`get_proposer_head` _will not_ be available immediately after the recsipt of a
+`get_proposer_head` _will not_ be available immediately after the receipt of a
 new block, so an approximation of those conditions should be used when deciding
 whether to send or suppress a fork choice notification. The exact conditions
 used may be implementation-specific, a suggested implementation is below.

@@ -51,9 +51,9 @@ def registration_contract(w3, tester):
         abi=contract_abi,
         bytecode=contract_bytecode)
     tx_hash = registration.constructor().transact()
-    tx_recsipt = w3.sil.wait_for_transaction_recsipt(tx_hash)
+    tx_receipt = w3.sil.wait_for_transaction_receipt(tx_hash)
     registration_deployed = w3.sil.contract(
-        address=tx_recsipt.contractAddress,
+        address=tx_receipt.contractAddress,
         abi=contract_abi
     )
     return registration_deployed

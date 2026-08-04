@@ -37,7 +37,7 @@ class ExecutionPayload(Container):
     parent_hash: Hash32
     fee_recipient: ExecutionAddress
     state_root: Bytes32
-    recsipts_root: Bytes32
+    receipts_root: Bytes32
     logs_bloom: ByteVector[BYTES_PER_LOGS_BLOOM]
     prev_randao: Bytes32
     block_number: uint64
@@ -62,7 +62,7 @@ class ExecutionPayloadHeader(Container):
     parent_hash: Hash32
     fee_recipient: ExecutionAddress
     state_root: Bytes32
-    recsipts_root: Bytes32
+    receipts_root: Bytes32
     logs_bloom: ByteVector[BYTES_PER_LOGS_BLOOM]
     prev_randao: Bytes32
     block_number: uint64
@@ -179,7 +179,7 @@ def process_execution_payload(
         parent_hash=payload.parent_hash,
         fee_recipient=payload.fee_recipient,
         state_root=payload.state_root,
-        recsipts_root=payload.recsipts_root,
+        receipts_root=payload.receipts_root,
         logs_bloom=payload.logs_bloom,
         prev_randao=payload.prev_randao,
         block_number=payload.block_number,

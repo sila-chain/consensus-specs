@@ -198,7 +198,7 @@ def process_execution_payload(
         parent_hash=payload.parent_hash,
         fee_recipient=payload.fee_recipient,
         state_root=payload.state_root,
-        recsipts_root=payload.recsipts_root,
+        receipts_root=payload.receipts_root,
         logs_bloom=payload.logs_bloom,
         prev_randao=payload.prev_randao,
         block_number=payload.block_number,

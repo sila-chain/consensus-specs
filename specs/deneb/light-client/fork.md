@@ -30,7 +30,7 @@ def upgrade_lc_header_to_deneb(pre: capella.LightClientHeader) -> LightClientHea
             parent_hash=pre.execution.parent_hash,
             fee_recipient=pre.execution.fee_recipient,
             state_root=pre.execution.state_root,
-            recsipts_root=pre.execution.recsipts_root,
+            receipts_root=pre.execution.receipts_root,
             logs_bloom=pre.execution.logs_bloom,
             prev_randao=pre.execution.prev_randao,
             block_number=pre.execution.block_number,

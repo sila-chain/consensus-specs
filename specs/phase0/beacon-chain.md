@@ -144,7 +144,7 @@ chain". The beacon chain stores and manages the registry of validators. In the
 initial deployment phases of proof-of-stake, the only mechanism to become a
 validator is to make a one-way SIL transaction to a deposit contract on the
 Sila proof-of-work chain. Activation as a validator happens when deposit
-recsipts are processed by the beacon chain, the activation balance is reached,
+receipts are processed by the beacon chain, the activation balance is reached,
 and a queuing process is completed. Exit is either voluntary or done forcibly as
 a penalty for misbehavior. The primary source of load on the beacon chain is
 "attestations". Attestations are simultaneously availability votes for a shard

@@ -25,6 +25,7 @@ Dependencies:
 
 import argparse
 import copy
+import json
 import sys
 from collections import OrderedDict
 from collections.abc import Sequence
@@ -52,6 +53,11 @@ from pysetup.md_doc_paths import get_md_doc_paths
 from pysetup.md_to_spec import MarkdownToSpec
 from pysetup.spec_builders import spec_builders
 from pysetup.typing import BuildTarget, SpecObject  # type: ignore[attr-defined]
+
+# Native pyspec JSON output state. Accumulation is enabled only when
+# --pyspec-json-output is requested; otherwise generation behavior is unchanged.
+_pyspec_json_output_enabled = False
+_pyspec_data: dict = {}
 
 
 def get_spec(
@@ -120,6 +126,12 @@ def build_spec(
     spec_object = all_specs[0]
     for value in all_specs[1:]:
         spec_object = combine_spec_objects(spec_object, value)
+
+    if _pyspec_json_output_enabled:
+        fork_specs = _pyspec_data.setdefault(preset_name, {}).setdefault(fork, {})
+        for key, value in spec_object._asdict().items():
+            fork_specs[key] = value.copy()
+
     spec_object = finalized_spec_object(spec_object)
 
     class_objects = {**spec_object.ssz_objects, **spec_object.dataclasses}
@@ -281,6 +293,10 @@ Examples:
   # Use custom build targets
   python pysetup/generate_specs.py --fork phase0 \\
       --build-targets "minimal:presets/minimal:configs/minimal.yaml"
+
+  # Generate all forks and write deterministic pyspec JSON
+  python pysetup/generate_specs.py --all-forks \\
+      --pyspec-json-output /tmp/pyspec.json
         """,
     )
 
@@ -324,7 +340,19 @@ Examples:
         help="Enable verbose output",
     )
 
+    parser.add_argument(
+        "--pyspec-json-output",
+        type=Path,
+        default=None,
+        help="Write the accumulated Sila specification dictionary as deterministic pyspec JSON to this path (missing parent directories are not created)",
+    )
+
     args = parser.parse_args()
+
+    global _pyspec_json_output_enabled, _pyspec_data
+    if args.pyspec_json_output is not None:
+        _pyspec_data = {}
+        _pyspec_json_output_enabled = True
 
     try:
         # Parse build targets
@@ -357,6 +385,13 @@ Examples:
                 build_targets=build_targets,
                 source_files=source_files,
                 verbose=args.verbose,
+            )
+
+        # Write the accumulated specification dictionary as pyspec JSON.
+        if args.pyspec_json_output is not None:
+            args.pyspec_json_output.write_text(
+                json.dumps(_pyspec_data) + "\n",
+                encoding="utf-8",
             )
 
         if args.verbose:
