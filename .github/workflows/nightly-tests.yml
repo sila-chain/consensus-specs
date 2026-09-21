@@ -5,6 +5,12 @@ defaults:
     shell: zsh -e {0}
 
 on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
     inputs:
       ref:
@@ -19,7 +25,7 @@ on:
 jobs:
   tests:
     timeout-minutes: 720 # 12 hours
-    runs-on: [self-hosted-ghr-custom, size-s-x64, profile-consensusSpecs]
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
