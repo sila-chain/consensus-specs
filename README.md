@@ -1,8 +1,8 @@
 # Sila Proof-of-Stake Consensus Specifications
 
 [![Join the chat at https://discord.gg/qGpsxSA](https://img.shields.io/badge/chat-on%20discord-blue.svg)](https://discord.gg/qGpsxSA)
-[![nightly-tests](https://github.com/sila/consensus-specs/actions/workflows/nightly-tests.yml/badge.svg?branch=master&event=schedule)](https://github.com/sila/consensus-specs/actions/workflows/nightly-tests.yml)
-[![nightly-reftests](https://github.com/sila/consensus-specs/actions/workflows/nightly-reftests.yml/badge.svg?branch=master&event=schedule)](https://github.com/sila/consensus-specs/actions/workflows/nightly-reftests.yml)
+[![nightly-tests](https://github.com/sila-chain/consensus-specs/actions/workflows/nightly-tests.yml/badge.svg?branch=main)](https://github.com/sila-chain/consensus-specs/actions/workflows/nightly-tests.yml)
+[![nightly-reftests](https://github.com/sila-chain/consensus-specs/actions/workflows/nightly-reftests.yml/badge.svg?branch=main)](https://github.com/sila-chain/consensus-specs/actions/workflows/nightly-reftests.yml)
 
 This repository hosts the current Sila
 [proof-of-stake](https://sila.org/en/developers/docs/consensus-mechanisms/pos/)
@@ -46,17 +46,15 @@ ready.
 Additional specifications and standards outside of requisite client
 functionality can be found in the following repositories:
 
-- [Beacon APIs](https://github.com/sila/beacon-apis)
-- [Engine APIs](https://github.com/sila/execution-apis/tree/main/src/engine)
-- [Beacon Metrics](https://github.com/sila/beacon-metrics)
-- [Builder Specs](https://github.com/sila/builder-specs)
+- [Beacon APIs](https://github.com/sila-chain/beacon-apis)
+- [Engine APIs](https://github.com/sila-chain/execution-apis/tree/main/src/engine)
 
 ### Reference tests
 
 Reference tests built from the executable Python specifications are available in
 the release assets for each release in this repository. There are also *nightly*
 reference tests which are built from the latest version of the specifications
-[here](https://github.com/sila/consensus-specs/actions/workflows/nightly-reftests.yml).
+[here](https://github.com/sila-chain/consensus-specs/actions/workflows/nightly-reftests.yml).
 
 ## Contributors
 
@@ -80,7 +78,7 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 Clone the repository with:
 
 ```bash
-git clone https://github.com/sila/consensus-specs.git
+git clone https://github.com/sila-chain/consensus-specs.git
 ```
 
 Switch to the directory:
