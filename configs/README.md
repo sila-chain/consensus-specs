@@ -11,9 +11,9 @@ Standard configs:
 - [`minimal.yaml`](./minimal.yaml): Minimal configuration, used in spec-testing
   along with the [`minimal`](../presets/minimal) preset.
 
-Not all network configurations are in scope for the specification, see
-[`github.com/sil-clients/sil2-networks`](https://github.com/sil-clients/sil2-networks)
-for common networks, and additional testnet assets.
+Not all network configurations are in scope for the specification. No canonical
+Sila network-configuration repository is currently published; this directory
+remains the in-repository authority for the configurations tracked here.
 
 ## Forking
 

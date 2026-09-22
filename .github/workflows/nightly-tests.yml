@@ -2,9 +2,15 @@ name: Nightly SilaMainnet Tests
 
 defaults:
   run:
-    shell: zsh -e {0}
+    shell: bash -e {0}
 
 on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
   workflow_dispatch:
     inputs:
       ref:
@@ -18,8 +24,8 @@ on:
 
 jobs:
   tests:
-    timeout-minutes: 720 # 12 hours
-    runs-on: [self-hosted-ghr-custom, size-s-x64, profile-consensusSpecs]
+    timeout-minutes: 360 # 6 hours on GitHub-hosted runners
+    runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
       matrix:
