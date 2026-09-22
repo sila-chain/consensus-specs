@@ -24,7 +24,7 @@ on:
 
 jobs:
   tests:
-    timeout-minutes: 720 # 12 hours
+    timeout-minutes: 360 # 6 hours on GitHub-hosted runners
     runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
