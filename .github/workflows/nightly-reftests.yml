@@ -3,12 +3,12 @@ name: Nightly Reference Tests
 # FULL_BUILD_11_SHARDS — prepared for static audit; NOT authorised to run by default.
 #
 # Locked plan:
-#   GEN_REF / EXPECTED_HEAD = e939311b482fe6cf2a2ed7deab4237c5fd2c9891
+#   Manual default GEN_REF / EXPECTED_HEAD = e939311b482fe6cf2a2ed7deab4237c5fd2c9891
 #   SHARD_COUNT=11
 #   THREADS_PER_SHARD=2 (hard-locked; any other dispatch value fails preflight)
 #   TIMEOUT_PER_SHARD=180 minutes
 #   FAIL_FAST=false
-#   workflow_dispatch only
+#   workflow_dispatch or reusable workflow_call
 #
 # Shard map (CLI runner_name values, not file stems):
 #   W1  ssz_static
@@ -33,10 +33,33 @@ name: Nightly Reference Tests
 #   DETERMINISM_RUN_2=NO  PR_MERGE=NO  MAIN_MODIFICATION=NO  TAG_RELEASE=NO
 
 on:
+  workflow_call:
+    inputs:
+      ref:
+        description: Locked generation ref
+        type: string
+        required: true
+      expected_head:
+        description: Exact commit SHA expected after checkout
+        type: string
+        required: true
+      threads:
+        description: Must be exactly 2 (hard-locked)
+        type: string
+        default: "2"
+      authorise_full_build:
+        description: Must be YES to execute Full Build
+        type: string
+        default: "NO"
   workflow_dispatch:
     inputs:
       ref:
         description: Locked generation SHA
+        default: e939311b482fe6cf2a2ed7deab4237c5fd2c9891
+        type: string
+        required: true
+      expected_head:
+        description: Exact commit SHA expected after checkout
         default: e939311b482fe6cf2a2ed7deab4237c5fd2c9891
         type: string
         required: true
@@ -72,7 +95,7 @@ jobs:
       - name: Static shard assignment gate
         id: gate
         env:
-          EXPECTED_HEAD: e939311b482fe6cf2a2ed7deab4237c5fd2c9891
+          EXPECTED_HEAD: ${{ inputs.expected_head }}
           GEN_REF: ${{ inputs.ref }}
           AUTHORISE: ${{ inputs.authorise_full_build }}
           THREADS_INPUT: ${{ inputs.threads }}
@@ -442,7 +465,7 @@ jobs:
     env:
       GEN_REPO: sila-chain/consensus-specs
       GEN_REF: ${{ inputs.ref }}
-      EXPECTED_HEAD: e939311b482fe6cf2a2ed7deab4237c5fd2c9891
+      EXPECTED_HEAD: ${{ inputs.expected_head }}
       # Hard-locked — do not read inputs.threads here.
       GEN_THREADS: "2"
       SHARD_ID: ${{ matrix.shard }}
@@ -597,11 +620,14 @@ jobs:
           ref: ${{ inputs.ref }}
 
       - name: Verify checkout SHA
+        env:
+          EXPECTED_HEAD: ${{ inputs.expected_head }}
         run: |
           set -euo pipefail
           HEAD=$(git -C consensus-specs rev-parse HEAD)
           echo "CHECKED_OUT_HEAD=${HEAD}"
-          test "$HEAD" = "e939311b482fe6cf2a2ed7deab4237c5fd2c9891"
+          echo "EXPECTED_HEAD=${EXPECTED_HEAD}"
+          test "$HEAD" = "$EXPECTED_HEAD"
 
       - name: Download shard test artifacts
         uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1

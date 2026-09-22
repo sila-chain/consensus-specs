@@ -6,77 +6,110 @@ on:
       - "v*"
 
 jobs:
-  release:
-    timeout-minutes: 1440 # 24 hours
-    runs-on: [self-hosted-ghr-custom, size-xl-x64, profile-consensusSpecs]
-    permissions:
-      contents: write
-      packages: write
-      pull-requests: read
-
+  version:
+    name: version gate
+    runs-on: ubuntu-24.04
     steps:
-      # Clone specs
       - name: Checkout repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-        with:
-          path: "consensus-specs"
+      - name: Verify tag matches package version
+        run: |
+          set -euo pipefail
+          tag="${{ github.ref_name }}"
+          version="v$(cat tests/core/pyspec/sil2spec/VERSION.txt)"
+          echo "TAG=${tag}"
+          echo "VERSION=${version}"
+          test "$tag" = "$version"
 
-      # Setup python
+  framework:
+    name: framework
+    needs: version
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Set up Python
         uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
-          python-version-file: "consensus-specs/pyproject.toml"
-
+          python-version-file: "pyproject.toml"
       - name: Install uv ${{ vars.UV_VERSION }}
         uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
         with:
           enable-cache: true
           version: ${{ vars.UV_VERSION }}
+      - name: Run framework tests
+        run: make test component=fw
 
-      # Check the tag matches the version
-      - name: Version check
-        run: |
-          tag="${{ github.ref_name }}"
-          version="v$(cat consensus-specs/tests/core/pyspec/sil2spec/VERSION.txt)"
-          if [ "$tag" != "$version" ]; then
-            echo "Tag ($tag) does not match version ($version)"
-            exit 1
-          fi
+  pyspec:
+    name: ${{ matrix.preset }} / ${{ matrix.fork }}
+    needs: version
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        preset:
+          - minimal
+          - sila-mainnet
+        fork:
+          - phase0
+          - altair
+          - bellatrix
+          - capella
+          - deneb
+          - electra
+          - fulu
+          - gloas
+          - sip7805
+          - sip7928
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Set up Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version-file: "pyproject.toml"
+      - name: Install uv ${{ vars.UV_VERSION }}
+        uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
+        with:
+          enable-cache: true
+          version: ${{ vars.UV_VERSION }}
+      - name: Run pyspec tests
+        run: make test component=pyspec preset=${{ matrix.preset }} fork=${{ matrix.fork }}
 
-      # Ensure framework tests pass
-      - name: Run tests for framework
-        run: |
-          cd consensus-specs
-          make test component=fw
+  reference-tests:
+    name: sharded reference tests
+    needs: [framework, pyspec]
+    uses: ./.github/workflows/nightly-reftests.yml
+    with:
+      ref: ${{ github.sha }}
+      expected_head: ${{ github.sha }}
+      threads: "2"
+      authorise_full_build: "YES"
 
-      # Ensure minimal tests pass
-      - name: Run tests for minimal
-        run: |
-          cd consensus-specs
-          make test component=pyspec preset=minimal
-
-      # Ensure sila-mainnet tests pass
-      - name: Run tests for sila-mainnet
-        run: |
-          cd consensus-specs
-          make test component=pyspec preset=sila-mainnet
-
-      # Write reference tests to the spec tests repo
-      - name: Generate reference tests
-        run: |
-          cd consensus-specs
-          make reftests verbose=true
-
-      # Make tarballs
-      - name: Archive configurations
-        run: |
-          cd consensus-spec-tests
-          tar -czvf general.tar.gz tests/general
-          tar -czvf minimal.tar.gz tests/minimal
-          tar -czvf sila-mainnet.tar.gz tests/sila-mainnet
-
-      # Publish the specs release. We use release-drafter to
-      # organize PRs into the appropriate section based on PR labels
+  publish:
+    name: publish release
+    needs: reference-tests
+    runs-on: ubuntu-24.04
+    permissions:
+      actions: read
+      contents: write
+      pull-requests: read
+    steps:
+      - name: Download general reference tests
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: General Test Configuration
+          path: release-assets
+      - name: Download minimal reference tests
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: Minimal Test Configuration
+          path: release-assets
+      - name: Download SilaMainnet reference tests
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          name: SilaMainnet Test Configuration
+          path: release-assets
       - name: Publish specs release
         uses: release-drafter/release-drafter@34d80673e067bdc0c24568d3af899c216adcfaa9 # v7.7.0
         with:
@@ -86,15 +119,13 @@ jobs:
           publish: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      # Upload spec test tarballs to the specs release
       - name: Upload spec test tarballs
         uses: softprops/action-gh-release@3d0d9888cb7fd7b750713d6e236d1fcb99157228 # v3.0.2
         with:
           tag_name: ${{ github.ref_name }}
           files: |
-            consensus-spec-tests/general.tar.gz
-            consensus-spec-tests/minimal.tar.gz
-            consensus-spec-tests/sila-mainnet.tar.gz
+            release-assets/general.tar.gz
+            release-assets/minimal.tar.gz
+            release-assets/sila-mainnet.tar.gz
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
